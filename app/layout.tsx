@@ -2,14 +2,14 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Advoverse – Digital Chamber Management System',
+  title: 'Advoverse ⚖ – Professional Litigation Infrastructure',
   description:
-    'Advoverse is a professional offline-first chamber management system for advocates, chambers, and law firms. Manage cases, hearings, documents, and your team from one system.',
-  keywords: 'chamber management, advocate software, legal case management, law firm software, India',
+    'Advoverse (Caseline) is an all‑in‑one litigation management infrastructure for advocates and law chambers. Built for organised litigation practice, strategic workflow and disciplined chamber operations.',
+  keywords: 'litigation management, chamber management, advocate software, legal case management, law firm software, India, caseline',
   openGraph: {
-    title: 'Advoverse – Digital Chamber Management System',
+    title: 'Advoverse ⚖ – Professional Litigation Infrastructure',
     description:
-      'Professional offline-first chamber management for advocates and law firms.',
+      'Organise. Strategize. Succeed. Professional litigation management infrastructure for advocates and chambers.',
     url: 'https://advoverse.com',
     siteName: 'Advoverse',
     type: 'website',
@@ -28,7 +28,7 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap"
           rel="stylesheet"
         />
       </head>

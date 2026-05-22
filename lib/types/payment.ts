@@ -2,6 +2,7 @@ export interface PricingPlan {
   name: string;
   price: number;
   displayPrice: string;
+  yearlyPrice?: number;
   desc: string;
   popular?: boolean;
 }
