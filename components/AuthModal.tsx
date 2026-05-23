@@ -44,7 +44,11 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onSuccess }: Au
           },
         });
 
-        if (signUpError) throw new Error(signUpError.message);
+        if (signUpError) {
+          console.error('Supabase signup error:', signUpError);
+          throw new Error(signUpError.message);
+        }
+        
         if (!data.session) {
           // Supabase email confirmation is on — tell user to check inbox
           // For production you can disable confirmation in Supabase dashboard
@@ -66,7 +70,10 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onSuccess }: Au
           password: form.password,
         });
 
-        if (signInError) throw new Error('Invalid email or password');
+        if (signInError) {
+          console.error('Supabase signin error:', signInError);
+          throw new Error('Invalid email or password');
+        }
 
         const userName =
           data.user?.user_metadata?.name ||
@@ -80,7 +87,8 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onSuccess }: Au
         });
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong');
+      console.error('Auth error:', err);
+      setError(err instanceof Error ? err.message : 'Something went wrong. Please check your connection and try again.');
     } finally {
       setIsLoading(false);
     }
@@ -100,9 +108,13 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onSuccess }: Au
         },
       });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Social login error:', error);
+        throw error;
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Social login failed');
+      console.error('Social login failed:', err);
+      setError(err instanceof Error ? err.message : 'Social login failed. Please try email login instead.');
       setIsLoading(false);
     }
   };

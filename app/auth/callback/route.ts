@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server';
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get('code');
+  const origin = requestUrl.origin;
 
   if (code) {
     const supabase = createClient();
@@ -11,5 +12,5 @@ export async function GET(request: Request) {
   }
 
   // Redirect to home page after successful authentication
-  return NextResponse.redirect(new URL('/', requestUrl.origin));
+  return NextResponse.redirect(`${origin}/`);
 }

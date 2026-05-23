@@ -22,37 +22,50 @@ export async function initiateRazorpayPayment(
   onSuccess: (response: RazorpayPaymentResponse, dbOrderId: number) => void
 ): Promise<void> {
   const loaded = await loadRazorpayScript();
-  if (!loaded) throw new Error('Failed to load Razorpay. Check your connection.');
-
-  const res = await fetch('/api/payment/razorpay/create-order', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({ planName }),
-  });
-
-  if (!res.ok) {
-    const err = await res.json();
-    throw new Error(err.error || 'Failed to create order');
+  if (!loaded) {
+    console.error('Failed to load Razorpay script');
+    throw new Error('Failed to load Razorpay. Check your connection.');
   }
 
-  const { orderId, dbOrderId, amount, currency } = await res.json();
+  try {
+    const res = await fetch('/api/payment/razorpay/create-order', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ planName }),
+    });
 
-  const rzp = new window.Razorpay({
-    key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID!,
-    amount,
-    currency,
-    name: 'Advoverse',
-    description: `${planName} Subscription`,
-    order_id: orderId,
-    prefill: { name: userName, email: userEmail },
-    theme: { color: '#f59e0b' },
-    handler: (response) => onSuccess(response, dbOrderId),
-  });
+    if (!res.ok) {
+      const err = await res.json();
+      console.error('Create order failed:', err);
+      throw new Error(err.error || 'Failed to create order');
+    }
 
-  rzp.open();
+    const { orderId, dbOrderId, amount, currency } = await res.json();
+
+    if (!window.Razorpay) {
+      throw new Error('Razorpay not loaded. Please refresh and try again.');
+    }
+
+    const rzp = new window.Razorpay({
+      key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID!,
+      amount,
+      currency,
+      name: 'Advoverse',
+      description: `${planName} Subscription`,
+      order_id: orderId,
+      prefill: { name: userName, email: userEmail },
+      theme: { color: '#f59e0b' },
+      handler: (response) => onSuccess(response, dbOrderId),
+    });
+
+    rzp.open();
+  } catch (error) {
+    console.error('Razorpay payment initiation error:', error);
+    throw error;
+  }
 }
 
 export async function verifyRazorpayPayment(
