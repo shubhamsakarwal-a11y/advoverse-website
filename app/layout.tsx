@@ -15,6 +15,10 @@ export const metadata: Metadata = {
     type: 'website',
   },
   metadataBase: new URL('https://advoverse.com'),
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default function RootLayout({
