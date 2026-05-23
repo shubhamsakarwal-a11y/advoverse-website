@@ -97,89 +97,98 @@ export default function AdvoverseWebsite() {
     <div className="min-h-screen bg-[#faf8f5] text-[#2c2416] font-serif">
 
       {/* ── HEADER ── */}
-      <header className="w-full border-b-2 border-[#8b7355] sticky top-0 z-50 bg-[#faf8f5]/95 backdrop-blur-sm">
-        <div className="max-w-7xl mx-auto px-6 py-5 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <span className="text-3xl">⚖</span>
-            <div>
-              <h1 className="text-2xl font-bold tracking-wide text-[#2c2416]">Advoverse</h1>
-              <p className="text-xs text-[#8b7355] uppercase tracking-wider">Traditional Legal Style</p>
-            </div>
-          </div>
-          <nav className="hidden md:flex gap-8 text-sm text-[#2c2416] font-medium">
-            <a href="#features" className="hover:text-[#8b7355] transition">Features</a>
-            <a href="#plans" className="hover:text-[#8b7355] transition">Plans</a>
-            <a href="#payments" className="hover:text-[#8b7355] transition">Payments</a>
-            <a href="#contact" className="hover:text-[#8b7355] transition">Contact</a>
-          </nav>
-          <div className="flex gap-3 text-sm">
-            {currentUser ? (
-              <div className="flex items-center gap-3">
-                <span className="text-[#2c2416] text-sm font-medium">{currentUser.name.split(' ')[0]}</span>
-                <button onClick={() => setCurrentUser(null)}
-                  className="px-4 py-2 border-2 border-[#8b7355] hover:bg-[#8b7355] hover:text-white transition font-medium">
-                  Logout
-                </button>
-              </div>
-            ) : (
-              <>
-                <button onClick={() => { setAuthMode('login'); setIsAuthModalOpen(true); }}
-                  className="px-4 py-2 border-2 border-[#8b7355] hover:bg-[#8b7355] hover:text-white transition font-medium">
-                  Login
-                </button>
-                <button onClick={() => { setAuthMode('register'); setIsAuthModalOpen(true); }}
-                  className="px-4 py-2 bg-[#8b7355] text-white font-medium hover:bg-[#6d5a43] transition">
-                  Register
-                </button>
-              </>
-            )}
+      <header className="w-full border-b border-[#8b7355] sticky top-0 z-50 bg-[#faf8f5]">
+        <div className="max-w-7xl mx-auto px-6 py-6 text-center border-b border-gray-200">
+          <div className="flex flex-col items-center gap-2">
+            <h1 className="text-4xl font-bold tracking-wide text-[#2c2416] italic">Advoverse ⚖</h1>
+            <p className="text-xs text-[#8b7355] uppercase tracking-[0.3em]">Traditional Legal Style</p>
           </div>
         </div>
+        <nav className="bg-[#1a1a2e] text-white">
+          <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+            <div className="hidden md:flex gap-8 text-sm font-medium mx-auto">
+              <a href="#features" className="hover:text-[#d4a574] transition">Features</a>
+              <a href="#plans" className="hover:text-[#d4a574] transition">Plans</a>
+              <a href="#payments" className="hover:text-[#d4a574] transition">Payments</a>
+              <a href="#contact" className="hover:text-[#d4a574] transition">Contact</a>
+            </div>
+            <div className="flex gap-3 text-sm ml-auto">
+              {currentUser ? (
+                <div className="flex items-center gap-3">
+                  <span className="text-white text-sm font-medium">{currentUser.name.split(' ')[0]}</span>
+                  <button onClick={() => setCurrentUser(null)}
+                    className="px-4 py-2 border border-white/30 hover:bg-white/10 transition font-medium">
+                    Logout
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <button onClick={() => { setAuthMode('login'); setIsAuthModalOpen(true); }}
+                    className="px-4 py-2 border border-white/30 hover:bg-white/10 transition font-medium">
+                    Login
+                  </button>
+                  <button onClick={() => { setAuthMode('register'); setIsAuthModalOpen(true); }}
+                    className="px-4 py-2 bg-[#8b7355] text-white font-medium hover:bg-[#6d5a43] transition">
+                    Register
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        </nav>
       </header>
 
       {/* ── HERO ── */}
-      <section className="bg-gradient-to-b from-[#f5f1eb] to-[#faf8f5] border-b-2 border-[#8b7355]">
-        <div className="max-w-6xl mx-auto px-6 py-20 text-center">
-          <div className="mb-8">
-            <span className="text-6xl">⚖</span>
-          </div>
-          <h2 className="text-5xl md:text-6xl font-bold leading-tight mb-6 text-[#2c2416]">
-            Professional Litigation Infrastructure
-          </h2>
-          <p className="text-2xl font-semibold text-[#8b7355] mb-8">
-            Organise. Strategize. Succeed.
-          </p>
-          <p className="text-lg text-[#5a4a3a] leading-relaxed mb-6 max-w-4xl mx-auto">
-            Your Practice. Effortless. Secure. Intelligent.
-          </p>
-          <p className="text-base text-[#5a4a3a] leading-relaxed mb-10 max-w-4xl mx-auto">
-            Advoverse (Caseline) is an all‑in‑one litigation management infrastructure for advocates and law chambers.
-            Built for organised litigation practice, strategic workflow and disciplined chamber operations.
-            Designed to streamline workflow, reduce operational confusion and strengthen strategic legal practice.
-          </p>
-          <div className="flex flex-wrap justify-center gap-4 mb-10">
-            <div className="flex items-center gap-2 text-[#2c2416]">
-              <span className="text-xl">⚖</span>
-              <span className="font-medium">Offline-First Privacy</span>
+      <section className="relative bg-gradient-to-br from-[#2c2416] via-[#3d3428] to-[#2c2416] text-white border-b-2 border-[#8b7355] overflow-hidden">
+        {/* Background pattern overlay */}
+        <div className="absolute inset-0 opacity-10" style={{backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'0.4\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")'}}></div>
+        
+        <div className="max-w-6xl mx-auto px-6 py-24 relative z-10">
+          <div className="max-w-3xl">
+            <div className="flex items-center gap-2 mb-6">
+              <span className="text-2xl">⚖</span>
+              <span className="text-sm uppercase tracking-wider text-[#d4a574]">Professional Litigation Infrastructure</span>
             </div>
-            <div className="flex items-center gap-2 text-[#2c2416]">
-              <span className="text-xl">⚖</span>
-              <span className="font-medium">Structured Chamber Workflow</span>
+            
+            <h2 className="text-5xl md:text-6xl font-bold leading-tight mb-8">
+              Organise. Strategize.<br />Succeed.
+            </h2>
+            
+            <p className="text-xl text-gray-300 mb-6">
+              Your Practice. Effortless. Secure. Intelligent.
+            </p>
+            
+            <p className="text-base text-gray-400 leading-relaxed mb-10 max-w-2xl">
+              Advoverse (Caseline) is an all‑in‑one litigation management infrastructure for advocates and law chambers. 
+              Built for organised litigation practice, strategic workflow and disciplined chamber operations. 
+              Designed to streamline workflow, reduce operational confusion and strengthen strategic legal practice.
+            </p>
+            
+            <div className="flex flex-wrap gap-6 mb-10 text-sm">
+              <div className="flex items-center gap-2">
+                <span className="text-[#d4a574]">⚖</span>
+                <span>Offline-First Privacy</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-[#d4a574]">⚖</span>
+                <span>Structured Chamber Workflow</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-[#d4a574]">⚖</span>
+                <span>Litigation Intelligence</span>
+              </div>
             </div>
-            <div className="flex items-center gap-2 text-[#2c2416]">
-              <span className="text-xl">⚖</span>
-              <span className="font-medium">Litigation Intelligence</span>
+            
+            <div className="flex flex-wrap gap-4">
+              <a href="#plans"
+                className="px-8 py-4 bg-[#8b7355] text-white font-semibold hover:bg-[#6d5a43] transition shadow-lg">
+                View Subscription Plans
+              </a>
+              <a href="#features"
+                className="px-8 py-4 border-2 border-white/30 text-white font-semibold hover:bg-white/10 transition">
+                Explore Features
+              </a>
             </div>
-          </div>
-          <div className="flex flex-wrap justify-center gap-4">
-            <a href="#plans"
-              className="px-8 py-4 bg-[#8b7355] text-white font-semibold hover:bg-[#6d5a43] transition shadow-lg">
-              View Subscription Plans
-            </a>
-            <a href="#features"
-              className="px-8 py-4 border-2 border-[#8b7355] text-[#2c2416] font-semibold hover:bg-[#8b7355] hover:text-white transition">
-              Explore Features
-            </a>
           </div>
         </div>
       </section>
