@@ -102,9 +102,6 @@ export default function AdvoverseWebsite() {
           <nav className="flex flex-col items-center gap-4">
             <div className="w-full text-center" style={{ fontFamily: 'Playfair Display, serif', fontSize: '72px', fontStyle: 'italic', fontWeight: 500, color: '#2f1d16', lineHeight: 1, letterSpacing: '1px' }}>
               Advoverse ⚖
-              <div style={{ marginTop: '10px', fontSize: '18px', fontStyle: 'normal', letterSpacing: '3px', color: '#7a604f' }}>
-                TRADITIONAL LEGAL STYLE
-              </div>
             </div>
             <div className="flex justify-center w-full gap-10 py-4" style={{ fontSize: '15px', color: '#f4e7d3', background: 'linear-gradient(to right, #07111d, #0f1d2e)', borderTop: '1px solid #3d2b21', borderBottom: '1px solid #3d2b21' }}>
               <a href="#features" className="transition-opacity hover:opacity-80">Features</a>
@@ -151,6 +148,77 @@ export default function AdvoverseWebsite() {
               <a href="#features" className="px-9 py-4 rounded-xl text-white transition-colors" style={{ border: '1px solid rgba(255,255,255,0.4)' }} onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'} onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
                 Explore Features
               </a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* DOWNLOAD APPLICATION */}
+      <section className="py-24" style={{ background: '#f1ebe4' }}>
+        <div className="max-w-[1300px] mx-auto w-[90%]">
+          <h2 className="text-center mb-5" style={{ fontFamily: 'Playfair Display, serif', fontSize: '46px', color: '#3b2a22' }}>
+            Download Advoverse Application
+          </h2>
+          <p className="max-w-[800px] mx-auto mb-16 text-center" style={{ color: '#666', fontSize: '18px' }}>
+            Get started with our desktop application. 30-day free trial included. No credit card required.
+          </p>
+          <div className="max-w-[900px] mx-auto bg-white rounded-3xl" style={{ padding: '50px', boxShadow: '0 10px 30px rgba(0,0,0,0.05)', border: '1px solid #ddd' }}>
+            <div className="grid md:grid-cols-2 gap-12 items-center">
+              <div>
+                <h3 className="mb-6" style={{ fontSize: '32px', color: '#3b2a22', fontFamily: 'Playfair Display, serif' }}>
+                  Windows Desktop App
+                </h3>
+                <ul className="space-y-3" style={{ color: '#666' }}>
+                  <li className="flex items-start gap-3">
+                    <span style={{ color: '#6b4b3e', fontSize: '20px' }}>✓</span>
+                    <span>Version: 1.0.0 (Coming Soon)</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <span style={{ color: '#6b4b3e', fontSize: '20px' }}>✓</span>
+                    <span>Size: ~150 MB</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <span style={{ color: '#6b4b3e', fontSize: '20px' }}>✓</span>
+                    <span>Requires: Windows 10 or later</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <span style={{ color: '#6b4b3e', fontSize: '20px' }}>✓</span>
+                    <span>30-Day Free Trial Included</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <span style={{ color: '#6b4b3e', fontSize: '20px' }}>✓</span>
+                    <span>Offline-First Architecture</span>
+                  </li>
+                </ul>
+              </div>
+              <div className="text-center">
+                <div className="mb-6" style={{ fontSize: '80px' }}>💻</div>
+                <button 
+                  disabled
+                  className="w-full py-4 rounded-xl text-white font-semibold text-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{ background: '#3b2a22' }}
+                >
+                  Download for Windows
+                </button>
+                <p className="mt-4" style={{ color: '#6b4b3e', fontStyle: 'italic' }}>Coming Soon</p>
+              </div>
+            </div>
+          </div>
+          <div className="grid md:grid-cols-3 gap-8 mt-12 max-w-[900px] mx-auto">
+            <div className="bg-white rounded-2xl text-center" style={{ padding: '35px', boxShadow: '0 10px 25px rgba(0,0,0,0.04)' }}>
+              <div className="mb-4" style={{ fontSize: '48px' }}>📥</div>
+              <h4 className="mb-3" style={{ fontSize: '20px', color: '#3b2a22', fontFamily: 'Playfair Display, serif' }}>1. Download</h4>
+              <p style={{ color: '#666', fontSize: '15px' }}>Download the installer from our secure server</p>
+            </div>
+            <div className="bg-white rounded-2xl text-center" style={{ padding: '35px', boxShadow: '0 10px 25px rgba(0,0,0,0.04)' }}>
+              <div className="mb-4" style={{ fontSize: '48px' }}>⚙️</div>
+              <h4 className="mb-3" style={{ fontSize: '20px', color: '#3b2a22', fontFamily: 'Playfair Display, serif' }}>2. Install</h4>
+              <p style={{ color: '#666', fontSize: '15px' }}>Run the installer and follow simple setup steps</p>
+            </div>
+            <div className="bg-white rounded-2xl text-center" style={{ padding: '35px', boxShadow: '0 10px 25px rgba(0,0,0,0.04)' }}>
+              <div className="mb-4" style={{ fontSize: '48px' }}>🚀</div>
+              <h4 className="mb-3" style={{ fontSize: '20px', color: '#3b2a22', fontFamily: 'Playfair Display, serif' }}>3. Start Trial</h4>
+              <p style={{ color: '#666', fontSize: '15px' }}>Launch app and start your 30-day free trial</p>
             </div>
           </div>
         </div>
