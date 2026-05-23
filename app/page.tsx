@@ -7,13 +7,13 @@ import { PricingPlan, RazorpayPaymentResponse } from '@/lib/types/payment';
 import { initiateRazorpayPayment, verifyRazorpayPayment, createStripeSession } from '@/lib/payment';
 
 const PRICING_PLANS: PricingPlan[] = [
-  { name: 'Junior Advocate', price: 100, displayPrice: '₹100/month', yearlyPrice: 1000, desc: '0 Additional Users • 20 Cases • Ideal for beginners' },
-  { name: 'Solo Advocate', price: 200, displayPrice: '₹200/month', yearlyPrice: 2000, desc: '0 Additional Users • 60 Cases • Independent practice setup' },
-  { name: 'Advocate + Clerk', price: 300, displayPrice: '₹300/month', yearlyPrice: 3000, desc: '1 Additional User • 120 Cases • Clerk coordination workflow', popular: true },
-  { name: 'Chamber Lite', price: 800, displayPrice: '₹800/month', yearlyPrice: 8000, desc: '3 Users • 200 Cases • Small chamber management' },
-  { name: 'Chamber', price: 1500, displayPrice: '₹1500/month', yearlyPrice: 15000, desc: '6 Users • 500 Cases • Professional chamber workflow' },
-  { name: 'Chamber Pro', price: 3000, displayPrice: '₹3000/month', yearlyPrice: 30000, desc: '9 Users • Unlimited Cases • Advanced litigation management' },
-  { name: 'Exclusive', price: 5000, displayPrice: '₹5000/month', yearlyPrice: 50000, desc: 'Unlimited Users • Unlimited Cases • Enterprise legal operations' },
+  { name: 'Junior Advocate', price: 100, displayPrice: '₹100/month', yearlyPrice: 1000, desc: '0 Additional Users\n20 Cases\nIdeal for beginners' },
+  { name: 'Solo Advocate', price: 200, displayPrice: '₹200/month', yearlyPrice: 2000, desc: '0 Additional Users\n60 Cases\nIndependent practice setup' },
+  { name: 'Advocate + Clerk', price: 300, displayPrice: '₹300/month', yearlyPrice: 3000, desc: '1 Additional User\n120 Cases\nClerk coordination workflow', popular: true },
+  { name: 'Chamber Lite', price: 800, displayPrice: '₹800/month', yearlyPrice: 8000, desc: '3 Users\n200 Cases\nSmall chamber management' },
+  { name: 'Chamber', price: 1500, displayPrice: '₹1500/month', yearlyPrice: 15000, desc: '6 Users\n500 Cases\nProfessional chamber workflow' },
+  { name: 'Chamber Pro', price: 3000, displayPrice: '₹3000/month', yearlyPrice: 30000, desc: '9 Users\nUnlimited Cases\nAdvanced litigation management' },
+  { name: 'Exclusive', price: 5000, displayPrice: '₹5000/month', yearlyPrice: 50000, desc: 'Unlimited Users\nUnlimited Cases\nEnterprise legal operations' },
 ];
 
 type CurrentUser = { name: string; email: string; token: string };
@@ -68,7 +68,7 @@ export default function AdvoverseWebsite() {
             );
             alert(`✅ Payment Successful!\n\nYour license key has been sent to ${currentUser.email}.\nPlease check your inbox (and spam folder).`);
           } catch (err) {
-            alert(err instanceof Error ? err.message : 'Verification failed. Contact support@advoverse.in');
+            alert(err instanceof Error ? err.message : 'Verification failed. Contact support@advoverse.com');
           }
         }
       );
@@ -94,109 +94,106 @@ export default function AdvoverseWebsite() {
   };
 
   return (
-    <div className="min-h-screen bg-[#faf8f5] text-[#2c2416] font-serif">
-
-      {/* ── HEADER ── */}
-      <header className="w-full border-b border-[#8b7355] sticky top-0 z-50 bg-[#faf8f5]">
-        <div className="max-w-7xl mx-auto px-6 py-6 text-center border-b border-gray-200">
-          <div className="flex flex-col items-center gap-2">
-            <h1 className="text-4xl font-bold tracking-wide text-[#2c2416] italic">Advoverse ⚖</h1>
-            <p className="text-xs text-[#8b7355] uppercase tracking-[0.3em]">Traditional Legal Style</p>
-          </div>
+    <div className="min-h-screen bg-[#e8e3d8]">
+      
+      {/* ══════════════════════════════════════════════════════════════════════════════ */}
+      {/* HEADER - Beige background with centered branding */}
+      {/* ══════════════════════════════════════════════════════════════════════════════ */}
+      <header className="bg-[#e8e3d8] border-b border-[#c4b5a0]">
+        <div className="max-w-7xl mx-auto px-6 py-8 text-center">
+          <h1 className="text-5xl md:text-6xl font-serif italic text-[#2c2416] mb-2">
+            Advoverse ⚖
+          </h1>
+          <p className="text-xs uppercase tracking-[0.3em] text-[#6b5d4f]">
+            Traditional Legal Style
+          </p>
         </div>
-        <nav className="bg-[#1a1a2e] text-white">
-          <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-            <div className="hidden md:flex gap-8 text-sm font-medium mx-auto">
-              <a href="#features" className="hover:text-[#d4a574] transition">Features</a>
-              <a href="#plans" className="hover:text-[#d4a574] transition">Plans</a>
-              <a href="#payments" className="hover:text-[#d4a574] transition">Payments</a>
-              <a href="#contact" className="hover:text-[#d4a574] transition">Contact</a>
-            </div>
-            <div className="flex gap-3 text-sm ml-auto">
-              {currentUser ? (
-                <div className="flex items-center gap-3">
-                  <span className="text-white text-sm font-medium">{currentUser.name.split(' ')[0]}</span>
-                  <button onClick={() => setCurrentUser(null)}
-                    className="px-4 py-2 border border-white/30 hover:bg-white/10 transition font-medium">
-                    Logout
-                  </button>
-                </div>
-              ) : (
-                <>
-                  <button onClick={() => { setAuthMode('login'); setIsAuthModalOpen(true); }}
-                    className="px-4 py-2 border border-white/30 hover:bg-white/10 transition font-medium">
-                    Login
-                  </button>
-                  <button onClick={() => { setAuthMode('register'); setIsAuthModalOpen(true); }}
-                    className="px-4 py-2 bg-[#8b7355] text-white font-medium hover:bg-[#6d5a43] transition">
-                    Register
-                  </button>
-                </>
-              )}
+
+        {/* Dark Navigation Bar */}
+        <nav className="bg-[#1a1f2e] text-white">
+          <div className="max-w-7xl mx-auto px-6">
+            <div className="flex items-center justify-center gap-12 py-4">
+              <a href="#features" className="text-sm hover:text-[#d4a574] transition">Features</a>
+              <a href="#plans" className="text-sm hover:text-[#d4a574] transition">Plans</a>
+              <a href="#payments" className="text-sm hover:text-[#d4a574] transition">Payments</a>
+              <a href="#contact" className="text-sm hover:text-[#d4a574] transition">Contact</a>
             </div>
           </div>
         </nav>
       </header>
 
-      {/* ── HERO ── */}
-      <section className="relative bg-gradient-to-br from-[#2c2416] via-[#3d3428] to-[#2c2416] text-white border-b-2 border-[#8b7355] overflow-hidden">
-        {/* Background pattern overlay */}
-        <div className="absolute inset-0 opacity-10" style={{backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'0.4\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")'}}></div>
-        
-        <div className="max-w-6xl mx-auto px-6 py-24 relative z-10">
-          <div className="max-w-3xl">
-            <div className="flex items-center gap-2 mb-6">
-              <span className="text-2xl">⚖</span>
-              <span className="text-sm uppercase tracking-wider text-[#d4a574]">Professional Litigation Infrastructure</span>
-            </div>
-            
-            <h2 className="text-5xl md:text-6xl font-bold leading-tight mb-8">
-              Organise. Strategize.<br />Succeed.
-            </h2>
-            
-            <p className="text-xl text-gray-300 mb-6">
-              Your Practice. Effortless. Secure. Intelligent.
-            </p>
-            
-            <p className="text-base text-gray-400 leading-relaxed mb-10 max-w-2xl">
-              Advoverse (Caseline) is an all‑in‑one litigation management infrastructure for advocates and law chambers. 
-              Built for organised litigation practice, strategic workflow and disciplined chamber operations. 
-              Designed to streamline workflow, reduce operational confusion and strengthen strategic legal practice.
-            </p>
-            
-            <div className="flex flex-wrap gap-6 mb-10 text-sm">
-              <div className="flex items-center gap-2">
-                <span className="text-[#d4a574]">⚖</span>
-                <span>Offline-First Privacy</span>
+      {/* ══════════════════════════════════════════════════════════════════════════════ */}
+      {/* HERO SECTION - Background image with dark overlay and content box */}
+      {/* ══════════════════════════════════════════════════════════════════════════════ */}
+      <section 
+        className="relative min-h-[600px] bg-cover bg-center bg-no-repeat"
+        style={{
+          backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('https://images.unsplash.com/photo-1589829545856-d10d557cf95f?q=80&w=2070&auto=format&fit=crop')`
+        }}
+      >
+        <div className="max-w-7xl mx-auto px-6 py-20">
+          <div className="max-w-2xl">
+            {/* Content Box with dark semi-transparent background */}
+            <div className="bg-black/60 backdrop-blur-sm p-10 rounded-lg">
+              <div className="flex items-center gap-2 text-white/80 text-sm mb-6">
+                <span>⚖</span>
+                <span>Professional Litigation Infrastructure</span>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-[#d4a574]">⚖</span>
-                <span>Structured Chamber Workflow</span>
+
+              <h2 className="text-5xl md:text-6xl font-serif font-bold text-white leading-tight mb-6">
+                Organise. Strategize.<br />Succeed.
+              </h2>
+
+              <p className="text-lg text-white/90 mb-6">
+                Your Practice. Effortless. Secure. Intelligent.
+              </p>
+
+              <p className="text-base text-white/80 leading-relaxed mb-8">
+                Advoverse (Caseline) is an all‑in‑one litigation management infrastructure for advocates and law chambers. 
+                Built for organised litigation practice, strategic workflow and disciplined chamber operations. 
+                Designed to streamline workflow, reduce operational confusion and strengthen strategic legal practice.
+              </p>
+
+              <div className="flex flex-wrap gap-6 text-sm text-white/80 mb-8">
+                <div className="flex items-center gap-2">
+                  <span>⚖</span>
+                  <span>Offline-First Privacy</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span>⚖</span>
+                  <span>Structured Chamber Workflow</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span>⚖</span>
+                  <span>Litigation Intelligence</span>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-[#d4a574]">⚖</span>
-                <span>Litigation Intelligence</span>
+
+              <div className="flex flex-wrap gap-4">
+                <a 
+                  href="#plans"
+                  className="px-8 py-3 bg-[#8b7355] text-white font-medium hover:bg-[#6d5a43] transition"
+                >
+                  View Subscription Plans
+                </a>
+                <a 
+                  href="#features"
+                  className="px-8 py-3 border-2 border-white/30 text-white font-medium hover:bg-white/10 transition"
+                >
+                  Explore Features
+                </a>
               </div>
-            </div>
-            
-            <div className="flex flex-wrap gap-4">
-              <a href="#plans"
-                className="px-8 py-4 bg-[#8b7355] text-white font-semibold hover:bg-[#6d5a43] transition shadow-lg">
-                View Subscription Plans
-              </a>
-              <a href="#features"
-                className="px-8 py-4 border-2 border-white/30 text-white font-semibold hover:bg-white/10 transition">
-                Explore Features
-              </a>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ── PROBLEMS VS SOLUTIONS ── */}
+      {/* ══════════════════════════════════════════════════════════════════════════════ */}
+      {/* PROBLEMS VS SOLUTIONS */}
+      {/* ══════════════════════════════════════════════════════════════════════════════ */}
       <section className="bg-white border-b-2 border-[#8b7355]">
         <div className="max-w-6xl mx-auto px-6 py-20">
-          <h2 className="text-4xl font-bold text-center mb-6 text-[#2c2416]">
+          <h2 className="text-4xl font-serif font-bold text-center mb-6 text-[#2c2416]">
             Most Chambers Operate in Chaos.
           </h2>
           <p className="text-center text-lg text-[#5a4a3a] mb-16 max-w-3xl mx-auto">
@@ -205,79 +202,53 @@ export default function AdvoverseWebsite() {
           </p>
           <div className="grid md:grid-cols-2 gap-12">
             <div className="border-2 border-[#d4a574] bg-[#fef9f3] p-8">
-              <h3 className="text-2xl font-bold mb-6 text-[#8b4513]">Operational Problems</h3>
+              <h3 className="text-2xl font-serif font-bold mb-6 text-[#8b4513]">Operational Problems</h3>
               <ul className="space-y-3 text-[#5a4a3a]">
-                <li className="flex items-start gap-3">
-                  <span className="text-[#8b4513] mt-1">•</span>
-                  <span>Scattered case files</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <span className="text-[#8b4513] mt-1">•</span>
-                  <span>Missed hearing dates</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <span className="text-[#8b4513] mt-1">•</span>
-                  <span>Unstructured client records</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <span className="text-[#8b4513] mt-1">•</span>
-                  <span>Document confusion</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <span className="text-[#8b4513] mt-1">•</span>
-                  <span>Dependency on memory</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <span className="text-[#8b4513] mt-1">•</span>
-                  <span>Clerk coordination issues</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <span className="text-[#8b4513] mt-1">•</span>
-                  <span>No centralised chamber workflow</span>
-                </li>
+                {[
+                  'Scattered case files',
+                  'Missed hearing dates',
+                  'Unstructured client records',
+                  'Document confusion',
+                  'Dependency on memory',
+                  'Clerk coordination issues',
+                  'No centralised chamber workflow'
+                ].map((item, i) => (
+                  <li key={i} className="flex items-start gap-3">
+                    <span className="text-[#8b4513] mt-1">•</span>
+                    <span>{item}</span>
+                  </li>
+                ))}
               </ul>
             </div>
             <div className="border-2 border-[#8b7355] bg-[#f5f1eb] p-8">
-              <h3 className="text-2xl font-bold mb-6 text-[#2c2416]">Caseline Solutions</h3>
+              <h3 className="text-2xl font-serif font-bold mb-6 text-[#2c2416]">Caseline Solutions</h3>
               <ul className="space-y-3 text-[#5a4a3a]">
-                <li className="flex items-start gap-3">
-                  <span className="text-[#8b7355] mt-1">✓</span>
-                  <span>Organised litigation dashboard</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <span className="text-[#8b7355] mt-1">✓</span>
-                  <span>Structured client management</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <span className="text-[#8b7355] mt-1">✓</span>
-                  <span>Case-wise document organisation</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <span className="text-[#8b7355] mt-1">✓</span>
-                  <span>Hearing and deadline tracking</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <span className="text-[#8b7355] mt-1">✓</span>
-                  <span>Strategic litigation notes</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <span className="text-[#8b7355] mt-1">✓</span>
-                  <span>Searchable legal records</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <span className="text-[#8b7355] mt-1">✓</span>
-                  <span>Efficient chamber coordination</span>
-                </li>
+                {[
+                  'Organised litigation dashboard',
+                  'Structured client management',
+                  'Case-wise document organisation',
+                  'Hearing and deadline tracking',
+                  'Strategic litigation notes',
+                  'Searchable legal records',
+                  'Efficient chamber coordination'
+                ].map((item, i) => (
+                  <li key={i} className="flex items-start gap-3">
+                    <span className="text-[#8b7355] mt-1">✓</span>
+                    <span>{item}</span>
+                  </li>
+                ))}
               </ul>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ── FEATURES ── */}
+      {/* ══════════════════════════════════════════════════════════════════════════════ */}
+      {/* FEATURES */}
+      {/* ══════════════════════════════════════════════════════════════════════════════ */}
       <section id="features" className="bg-[#faf8f5] border-b-2 border-[#8b7355]">
         <div className="max-w-6xl mx-auto px-6 py-20">
-          <h2 className="text-4xl font-bold text-center mb-6 text-[#2c2416]">
+          <h2 className="text-4xl font-serif font-bold text-center mb-6 text-[#2c2416]">
             Built for Organised Litigation Practice
           </h2>
           <p className="text-center text-lg text-[#5a4a3a] mb-16 max-w-3xl mx-auto">
@@ -301,7 +272,7 @@ export default function AdvoverseWebsite() {
               { title: 'Calendar & Hearings', desc: 'Monitor hearings, limitation periods, filing deadlines and procedural timelines without depending on manual memory.' },
             ].map((feature, i) => (
               <div key={i} className="border-2 border-[#d4a574] bg-white p-6 hover:shadow-lg transition">
-                <h3 className="text-xl font-bold mb-3 text-[#2c2416]">{feature.title}</h3>
+                <h3 className="text-xl font-serif font-bold mb-3 text-[#2c2416]">{feature.title}</h3>
                 <p className="text-sm text-[#5a4a3a] leading-relaxed">{feature.desc}</p>
               </div>
             ))}
@@ -309,7 +280,9 @@ export default function AdvoverseWebsite() {
         </div>
       </section>
 
-      {/* ── QUOTES ── */}
+      {/* ══════════════════════════════════════════════════════════════════════════════ */}
+      {/* QUOTES */}
+      {/* ══════════════════════════════════════════════════════════════════════════════ */}
       <section className="bg-[#f5f1eb] border-b-2 border-[#8b7355]">
         <div className="max-w-4xl mx-auto px-6 py-20">
           <div className="space-y-12">
@@ -327,13 +300,15 @@ export default function AdvoverseWebsite() {
         </div>
       </section>
 
-      {/* ── PHILOSOPHY ── */}
+      {/* ══════════════════════════════════════════════════════════════════════════════ */}
+      {/* PHILOSOPHY */}
+      {/* ══════════════════════════════════════════════════════════════════════════════ */}
       <section className="bg-white border-b-2 border-[#8b7355]">
         <div className="max-w-4xl mx-auto px-6 py-20 text-center">
           <div className="mb-8">
             <span className="text-5xl">⚖</span>
           </div>
-          <h2 className="text-4xl font-bold mb-8 text-[#2c2416]">
+          <h2 className="text-4xl font-serif font-bold mb-8 text-[#2c2416]">
             An Organised Chamber Wins Time Before It Wins Cases.
           </h2>
           <div className="space-y-6 text-lg text-[#5a4a3a] leading-relaxed">
@@ -352,14 +327,16 @@ export default function AdvoverseWebsite() {
         </div>
       </section>
 
-      {/* ── PRICING ── */}
+      {/* ══════════════════════════════════════════════════════════════════════════════ */}
+      {/* PRICING PLANS */}
+      {/* ══════════════════════════════════════════════════════════════════════════════ */}
       <section id="plans" className="bg-[#faf8f5] border-b-2 border-[#8b7355]">
         <div className="max-w-6xl mx-auto px-6 py-20">
           <div className="text-center mb-16">
             <div className="mb-6">
               <span className="text-4xl">⚖</span>
             </div>
-            <h2 className="text-4xl font-bold mb-4 text-[#2c2416]">Subscription Plans</h2>
+            <h2 className="text-4xl font-serif font-bold mb-4 text-[#2c2416]">Subscription Plans</h2>
             <p className="text-[#5a4a3a]">Monthly and yearly subscription structures for advocates, chambers and expanding litigation practices.</p>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -370,7 +347,7 @@ export default function AdvoverseWebsite() {
                     POPULAR
                   </div>
                 )}
-                <h3 className="text-xl font-bold mb-4 text-[#2c2416]">{plan.name}</h3>
+                <h3 className="text-xl font-serif font-bold mb-4 text-[#2c2416]">{plan.name}</h3>
                 <div className="text-3xl font-bold text-[#8b7355] mb-2">{plan.displayPrice}</div>
                 <div className="text-sm text-[#5a4a3a] mb-6">₹{plan.yearlyPrice} per year</div>
                 <div className="text-sm text-[#5a4a3a] mb-6 flex-1 leading-relaxed whitespace-pre-line">{plan.desc}</div>
@@ -387,10 +364,12 @@ export default function AdvoverseWebsite() {
         </div>
       </section>
 
-      {/* ── PAYMENTS ── */}
+      {/* ══════════════════════════════════════════════════════════════════════════════ */}
+      {/* PAYMENTS */}
+      {/* ══════════════════════════════════════════════════════════════════════════════ */}
       <section id="payments" className="bg-white border-b-2 border-[#8b7355]">
         <div className="max-w-4xl mx-auto px-6 py-20 text-center">
-          <h2 className="text-4xl font-bold mb-6 text-[#2c2416]">
+          <h2 className="text-4xl font-serif font-bold mb-6 text-[#2c2416]">
             Secure Subscription Payments
           </h2>
           <p className="text-lg text-[#5a4a3a] mb-12 max-w-2xl mx-auto">
@@ -405,10 +384,12 @@ export default function AdvoverseWebsite() {
         </div>
       </section>
 
-      {/* ── CONTACT ── */}
+      {/* ══════════════════════════════════════════════════════════════════════════════ */}
+      {/* CONTACT */}
+      {/* ══════════════════════════════════════════════════════════════════════════════ */}
       <section id="contact" className="bg-[#faf8f5] border-b-2 border-[#8b7355]">
         <div className="max-w-4xl mx-auto px-6 py-20">
-          <h2 className="text-4xl font-bold text-center mb-6 text-[#2c2416]">
+          <h2 className="text-4xl font-serif font-bold text-center mb-6 text-[#2c2416]">
             Contact Advoverse
           </h2>
           <p className="text-center text-lg text-[#5a4a3a] mb-16">
@@ -416,17 +397,17 @@ export default function AdvoverseWebsite() {
           </p>
           <div className="grid md:grid-cols-3 gap-8">
             <div className="border-2 border-[#d4a574] bg-white p-6 text-center">
-              <h3 className="text-xl font-bold mb-3 text-[#2c2416]">Email</h3>
+              <h3 className="text-xl font-serif font-bold mb-3 text-[#2c2416]">Email</h3>
               <a href="mailto:support@advoverse.com" className="text-[#8b7355] hover:underline">
                 support@advoverse.com
               </a>
             </div>
             <div className="border-2 border-[#d4a574] bg-white p-6 text-center">
-              <h3 className="text-xl font-bold mb-3 text-[#2c2416]">Phone</h3>
+              <h3 className="text-xl font-serif font-bold mb-3 text-[#2c2416]">Phone</h3>
               <p className="text-[#5a4a3a]">+91 XXXXX XXXXX</p>
             </div>
             <div className="border-2 border-[#d4a574] bg-white p-6 text-center">
-              <h3 className="text-xl font-bold mb-3 text-[#2c2416]">Support Hours</h3>
+              <h3 className="text-xl font-serif font-bold mb-3 text-[#2c2416]">Support Hours</h3>
               <p className="text-[#5a4a3a]">Monday to Saturday</p>
               <p className="text-[#5a4a3a]">10:00 AM — 7:00 PM</p>
             </div>
@@ -434,13 +415,15 @@ export default function AdvoverseWebsite() {
         </div>
       </section>
 
-      {/* ── FOOTER ── */}
+      {/* ══════════════════════════════════════════════════════════════════════════════ */}
+      {/* FOOTER */}
+      {/* ══════════════════════════════════════════════════════════════════════════════ */}
       <footer className="bg-[#2c2416] text-white border-t-2 border-[#8b7355]">
         <div className="max-w-6xl mx-auto px-6 py-12">
           <div className="text-center mb-6">
             <div className="flex items-center justify-center gap-3 mb-4">
               <span className="text-3xl">⚖</span>
-              <h3 className="text-2xl font-bold">Advoverse</h3>
+              <h3 className="text-2xl font-serif font-bold">Advoverse</h3>
             </div>
             <p className="text-sm text-gray-400 max-w-2xl mx-auto leading-relaxed">
               Traditional Legal Style branding inspired by premium litigation chambers,
@@ -459,7 +442,9 @@ export default function AdvoverseWebsite() {
         </div>
       </footer>
 
-      {/* ── MODALS ── */}
+      {/* ══════════════════════════════════════════════════════════════════════════════ */}
+      {/* MODALS */}
+      {/* ══════════════════════════════════════════════════════════════════════════════ */}
       <AuthModal
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
