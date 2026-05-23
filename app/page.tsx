@@ -199,7 +199,7 @@ export default function AdvoverseWebsite() {
           <p className="max-w-[800px] mx-auto mb-16 text-center" style={{ color: '#666', fontSize: '18px' }}>
             Every feature inside Caseline is designed to improve legal workflow, reduce confusion and increase operational discipline.
           </p>
-          <div className="grid gap-8" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))' }}>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {[
               { title: 'Case Dashboard', desc: 'Track every matter with structured case data, hearing stages, court details, procedural progress and advocate notes.' },
               { title: 'Client Management', desc: 'Maintain organised client profiles with associated matters, contact information, payment tracking and communication records.' },
@@ -207,6 +207,13 @@ export default function AdvoverseWebsite() {
               { title: 'Document Organisation', desc: 'Centralise pleadings, annexures, applications and drafting references for instant retrieval and reduced clerical confusion.' },
               { title: 'Forms & Drafting System', desc: 'Maintain organised legal forms, procedural templates, drafting structures and reusable litigation formats.' },
               { title: 'Case Compendium', desc: 'Build matter-wise compendiums containing pleadings, evidence, judgments, notes, authorities and indexed references.' },
+              { title: 'Study Material Organisation', desc: 'Organise legal research material, landmark judgments, bare acts, procedural references and subject-wise legal study resources.' },
+              { title: 'Appointments Diary', desc: 'Maintain professional scheduling for conferences, consultations, hearings, drafting sessions and office appointments.' },
+              { title: 'Internal Chamber Chatroom', desc: 'Coordinate securely between advocates, clerks, office staff and agents through an inbuilt internal communication system.' },
+              { title: 'Hindi Translation Support', desc: 'Improve accessibility and workflow through integrated Hindi translation support for litigation drafting and office coordination.' },
+              { title: 'Offline Privacy Architecture', desc: 'Designed with offline-first functionality to reduce dependency on cloud exposure, helping advocates maintain greater confidentiality.' },
+              { title: 'Chamber Workflow', desc: 'Coordinate effectively between advocates, juniors, clerks and office staff within one operational ecosystem.' },
+              { title: 'Calendar & Hearings', desc: 'Monitor hearings, limitation periods, filing deadlines and procedural timelines without depending on manual memory.' },
             ].map((feature, i) => (
               <div key={i} className="bg-white rounded-2xl transition-transform hover:-translate-y-1.5" style={{ padding: '35px', boxShadow: '0 10px 30px rgba(0,0,0,0.05)' }}>
                 <h3 className="mb-5" style={{ fontSize: '26px', color: '#3b2a22', fontFamily: 'Playfair Display, serif' }}>
@@ -261,7 +268,7 @@ export default function AdvoverseWebsite() {
           <p className="max-w-[800px] mx-auto mb-16 text-center" style={{ color: '#666', fontSize: '18px' }}>
             Monthly and yearly subscription structures for advocates and chambers.
           </p>
-          <div className="grid gap-7" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))' }}>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-7">
             {PRICING_PLANS.map((plan, i) => (
               <div key={i} className="bg-white rounded-2xl transition-transform hover:-translate-y-1.5" style={{ padding: '38px', border: '1px solid #ddd', boxShadow: '0 8px 25px rgba(0,0,0,0.04)' }}>
                 <h3 className="mb-2.5" style={{ fontSize: '28px', color: '#3b2a22', fontFamily: 'Playfair Display, serif' }}>
