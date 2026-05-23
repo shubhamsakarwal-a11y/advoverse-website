@@ -7,13 +7,13 @@ import { PricingPlan, RazorpayPaymentResponse } from '@/lib/types/payment';
 import { initiateRazorpayPayment, verifyRazorpayPayment, createStripeSession } from '@/lib/payment';
 
 const PRICING_PLANS: PricingPlan[] = [
-  { name: 'Junior Advocate', price: 100, displayPrice: '₹100/month', yearlyPrice: 1000, desc: '0 Additional Users\n20 Cases\nIdeal for beginners' },
-  { name: 'Solo Advocate', price: 200, displayPrice: '₹200/month', yearlyPrice: 2000, desc: '0 Additional Users\n60 Cases\nIndependent practice setup' },
-  { name: 'Advocate + Clerk', price: 300, displayPrice: '₹300/month', yearlyPrice: 3000, desc: '1 Additional User\n120 Cases\nClerk coordination workflow', popular: true },
-  { name: 'Chamber Lite', price: 800, displayPrice: '₹800/month', yearlyPrice: 8000, desc: '3 Users\n200 Cases\nSmall chamber management' },
-  { name: 'Chamber', price: 1500, displayPrice: '₹1500/month', yearlyPrice: 15000, desc: '6 Users\n500 Cases\nProfessional chamber workflow' },
-  { name: 'Chamber Pro', price: 3000, displayPrice: '₹3000/month', yearlyPrice: 30000, desc: '9 Users\nUnlimited Cases\nAdvanced litigation management' },
-  { name: 'Exclusive', price: 5000, displayPrice: '₹5000/month', yearlyPrice: 50000, desc: 'Unlimited Users\nUnlimited Cases\nEnterprise legal operations' },
+  { name: 'Junior Advocate', price: 100, displayPrice: '₹100', yearlyPrice: 1000, desc: '20 Cases\nIdeal for beginners' },
+  { name: 'Solo Advocate', price: 200, displayPrice: '₹200', yearlyPrice: 2000, desc: '60 Cases\nIndependent practice setup' },
+  { name: 'Advocate + Clerk', price: 300, displayPrice: '₹300', yearlyPrice: 3000, desc: '1 Additional User\n120 Cases\nClerk coordination workflow', popular: true },
+  { name: 'Chamber Lite', price: 800, displayPrice: '₹800', yearlyPrice: 8000, desc: '3 Users\n200 Cases\nSmall chamber management' },
+  { name: 'Chamber', price: 1500, displayPrice: '₹1500', yearlyPrice: 15000, desc: '6 Users\n500 Cases\nProfessional chamber workflow' },
+  { name: 'Chamber Pro', price: 3000, displayPrice: '₹3000', yearlyPrice: 30000, desc: '9 Users\nUnlimited Cases\nAdvanced litigation management' },
+  { name: 'Exclusive', price: 5000, displayPrice: '₹5000', yearlyPrice: 50000, desc: 'Unlimited Users\nUnlimited Cases\nEnterprise legal operations' },
 ];
 
 type CurrentUser = { name: string; email: string; token: string };
@@ -94,218 +94,95 @@ export default function AdvoverseWebsite() {
   };
 
   return (
-    <div className="min-h-screen bg-[#e8e3d8]">
+    <div className="min-h-screen" style={{ background: '#f7f4ef', fontFamily: 'Inter, sans-serif', color: '#2d2d2d' }}>
       
-      {/* ══════════════════════════════════════════════════════════════════════════════ */}
-      {/* HEADER - Beige background with centered branding */}
-      {/* ══════════════════════════════════════════════════════════════════════════════ */}
-      <header className="bg-[#e8e3d8] border-b border-[#c4b5a0]">
-        <div className="max-w-7xl mx-auto px-6 py-8 text-center">
-          <h1 className="text-5xl md:text-6xl font-serif italic text-[#2c2416] mb-2">
-            Advoverse ⚖
-          </h1>
-          <p className="text-xs uppercase tracking-[0.3em] text-[#6b5d4f]">
-            Traditional Legal Style
-          </p>
-        </div>
-
-        {/* Dark Navigation Bar */}
-        <nav className="bg-[#1a1f2e] text-white">
-          <div className="max-w-7xl mx-auto px-6">
-            <div className="flex items-center justify-center gap-12 py-4">
-              <a href="#features" className="text-sm hover:text-[#d4a574] transition">Features</a>
-              <a href="#plans" className="text-sm hover:text-[#d4a574] transition">Plans</a>
-              <a href="#payments" className="text-sm hover:text-[#d4a574] transition">Payments</a>
-              <a href="#contact" className="text-sm hover:text-[#d4a574] transition">Contact</a>
+      {/* HEADER */}
+      <header style={{ background: '#f5eee4', paddingTop: '18px', borderBottom: '1px solid #cbb8a4' }}>
+        <div className="max-w-[1300px] mx-auto w-[90%]">
+          <nav className="flex flex-col items-center gap-4">
+            <div className="w-full text-center" style={{ fontFamily: 'Playfair Display, serif', fontSize: '72px', fontStyle: 'italic', fontWeight: 500, color: '#2f1d16', lineHeight: 1, letterSpacing: '1px' }}>
+              Advoverse ⚖
+              <div style={{ marginTop: '10px', fontSize: '18px', fontStyle: 'normal', letterSpacing: '3px', color: '#7a604f' }}>
+                TRADITIONAL LEGAL STYLE
+              </div>
             </div>
-          </div>
-        </nav>
+            <div className="flex justify-center w-full gap-10 py-4" style={{ fontSize: '15px', color: '#f4e7d3', background: 'linear-gradient(to right, #07111d, #0f1d2e)', borderTop: '1px solid #3d2b21', borderBottom: '1px solid #3d2b21' }}>
+              <a href="#features" className="transition-opacity hover:opacity-80">Features</a>
+              <a href="#pricing" className="transition-opacity hover:opacity-80">Plans</a>
+              <a href="#payment" className="transition-opacity hover:opacity-80">Payments</a>
+              <a href="#contact" className="transition-opacity hover:opacity-80">Contact</a>
+            </div>
+          </nav>
+        </div>
       </header>
 
-      {/* ══════════════════════════════════════════════════════════════════════════════ */}
-      {/* HERO SECTION - Background image with dark overlay and content box */}
-      {/* ══════════════════════════════════════════════════════════════════════════════ */}
+      {/* HERO */}
       <section 
-        className="relative min-h-[600px] bg-cover bg-center bg-no-repeat"
+        className="min-h-[96vh] flex items-center text-white"
         style={{
-          backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('https://images.unsplash.com/photo-1589829545856-d10d557cf95f?q=80&w=2070&auto=format&fit=crop')`
+          background: 'linear-gradient(rgba(24, 14, 10, 0.76), rgba(24, 14, 10, 0.76)), url(https://images.unsplash.com/photo-1589829545856-d10d557cf95f?q=80&w=2000&auto=format&fit=crop)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center'
         }}
       >
-        <div className="max-w-7xl mx-auto px-6 py-20">
-          <div className="max-w-2xl">
-            {/* Content Box with dark semi-transparent background */}
-            <div className="bg-black/60 backdrop-blur-sm p-10 rounded-lg">
-              <div className="flex items-center gap-2 text-white/80 text-sm mb-6">
-                <span>⚖</span>
-                <span>Professional Litigation Infrastructure</span>
-              </div>
-
-              <h2 className="text-5xl md:text-6xl font-serif font-bold text-white leading-tight mb-6">
-                Organise. Strategize.<br />Succeed.
-              </h2>
-
-              <p className="text-lg text-white/90 mb-6">
-                Your Practice. Effortless. Secure. Intelligent.
-              </p>
-
-              <p className="text-base text-white/80 leading-relaxed mb-8">
-                Advoverse (Caseline) is an all‑in‑one litigation management infrastructure for advocates and law chambers. 
-                Built for organised litigation practice, strategic workflow and disciplined chamber operations. 
-                Designed to streamline workflow, reduce operational confusion and strengthen strategic legal practice.
-              </p>
-
-              <div className="flex flex-wrap gap-6 text-sm text-white/80 mb-8">
-                <div className="flex items-center gap-2">
-                  <span>⚖</span>
-                  <span>Offline-First Privacy</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span>⚖</span>
-                  <span>Structured Chamber Workflow</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span>⚖</span>
-                  <span>Litigation Intelligence</span>
-                </div>
-              </div>
-
-              <div className="flex flex-wrap gap-4">
-                <a 
-                  href="#plans"
-                  className="px-8 py-3 bg-[#8b7355] text-white font-medium hover:bg-[#6d5a43] transition"
-                >
-                  View Subscription Plans
-                </a>
-                <a 
-                  href="#features"
-                  className="px-8 py-3 border-2 border-white/30 text-white font-medium hover:bg-white/10 transition"
-                >
-                  Explore Features
-                </a>
-              </div>
+        <div className="max-w-[1300px] mx-auto w-[90%]">
+          <div className="max-w-[760px]" style={{ padding: '45px', borderRadius: '18px', background: 'rgba(10, 7, 5, 0.42)', border: '1px solid rgba(255,255,255,0.08)' }}>
+            <div style={{ marginBottom: '22px', fontSize: '18px', color: '#d8c6b7', letterSpacing: '1px' }}>
+              ⚖ Professional Litigation Infrastructure
+            </div>
+            <h1 style={{ fontFamily: 'Playfair Display, serif', fontSize: '68px', lineHeight: 1.15, fontWeight: 700, marginBottom: '28px' }}>
+              Organise. Strategize. Succeed.
+            </h1>
+            <p style={{ fontSize: '20px', color: '#e8dfd5', marginBottom: '35px' }}>
+              Your Practice. Effortless. Secure. Intelligent.<br /><br />
+              Advoverse (Caseline) is an all-in-one litigation management infrastructure for advocates and law chambers.
+              Built for organised litigation practice, strategic workflow and disciplined chamber operations.
+              Designed to streamline workflow, reduce operational confusion and strengthen strategic legal practice.
+            </p>
+            <div className="flex flex-wrap gap-7" style={{ margin: '34px 0', padding: '18px 24px', fontSize: '17px', color: '#ead7c4', background: 'rgba(0,0,0,0.18)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.06)' }}>
+              <span>⚖ Offline-First Privacy</span>
+              <span>⚖ Structured Chamber Workflow</span>
+              <span>⚖ Litigation Intelligence</span>
+            </div>
+            <div className="flex flex-wrap gap-5">
+              <a href="#pricing" className="px-9 py-4 rounded-xl text-white transition-colors" style={{ background: '#6b4b3e' }} onMouseEnter={(e) => e.currentTarget.style.background = '#7a5647'} onMouseLeave={(e) => e.currentTarget.style.background = '#6b4b3e'}>
+                View Subscription Plans
+              </a>
+              <a href="#features" className="px-9 py-4 rounded-xl text-white transition-colors" style={{ border: '1px solid rgba(255,255,255,0.4)' }} onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'} onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
+                Explore Features
+              </a>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ══════════════════════════════════════════════════════════════════════════════ */}
-      {/* DOWNLOAD APPLICATION SECTION */}
-      {/* ══════════════════════════════════════════════════════════════════════════════ */}
-      <section className="bg-gradient-to-b from-[#f5f1eb] to-[#faf8f5] border-b-2 border-[#8b7355]">
-        <div className="max-w-5xl mx-auto px-6 py-20 text-center">
-          <div className="mb-8">
-            <span className="text-5xl">💻</span>
-          </div>
-          <h2 className="text-4xl font-serif font-bold mb-6 text-[#2c2416]">
-            Download Advoverse Application
-          </h2>
-          <p className="text-lg text-[#5a4a3a] mb-8 max-w-2xl mx-auto">
-            Get started with our desktop application. 30-day free trial included. No credit card required.
-          </p>
-          
-          <div className="bg-white rounded-2xl shadow-xl p-10 mb-8 max-w-3xl mx-auto border-2 border-[#d4a574]">
-            <div className="flex flex-col md:flex-row items-center justify-between gap-8">
-              <div className="text-left flex-1">
-                <h3 className="text-2xl font-serif font-bold mb-3 text-[#2c2416]">Windows Desktop App</h3>
-                <ul className="space-y-2 text-[#5a4a3a]">
-                  <li className="flex items-center gap-2">
-                    <span className="text-[#8b7355]">✓</span>
-                    <span>Version: 1.0.0 (Coming Soon)</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <span className="text-[#8b7355]">✓</span>
-                    <span>Size: ~150 MB</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <span className="text-[#8b7355]">✓</span>
-                    <span>Requires: Windows 10 or later</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <span className="text-[#8b7355]">✓</span>
-                    <span>30-Day Free Trial Included</span>
-                  </li>
-                </ul>
-              </div>
-              <div className="flex flex-col gap-4">
-                <button 
-                  className="px-10 py-4 bg-[#8b7355] text-white font-bold text-lg hover:bg-[#6d5a43] transition shadow-lg rounded-lg"
-                  disabled
-                >
-                  Download for Windows
-                </button>
-                <p className="text-sm text-[#8b7355] italic">Coming Soon</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-6 max-w-3xl mx-auto text-sm text-[#5a4a3a]">
-            <div className="bg-white rounded-lg shadow-md p-6 border border-[#d4a574]">
-              <div className="text-3xl mb-3">📥</div>
-              <h4 className="font-bold mb-2 text-[#2c2416]">1. Download</h4>
-              <p>Download the installer from our secure server</p>
-            </div>
-            <div className="bg-white rounded-lg shadow-md p-6 border border-[#d4a574]">
-              <div className="text-3xl mb-3">⚙️</div>
-              <h4 className="font-bold mb-2 text-[#2c2416]">2. Install</h4>
-              <p>Run the installer and follow simple setup steps</p>
-            </div>
-            <div className="bg-white rounded-lg shadow-md p-6 border border-[#d4a574]">
-              <div className="text-3xl mb-3">🚀</div>
-              <h4 className="font-bold mb-2 text-[#2c2416]">3. Start Trial</h4>
-              <p>Launch app and start your 30-day free trial</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ══════════════════════════════════════════════════════════════════════════════ */}
-      {/* PROBLEMS VS SOLUTIONS */}
-      {/* ══════════════════════════════════════════════════════════════════════════════ */}
-      <section className="bg-white border-b-2 border-[#8b7355]">
-        <div className="max-w-6xl mx-auto px-6 py-20">
-          <h2 className="text-4xl font-serif font-bold text-center mb-6 text-[#2c2416]">
+      {/* PROBLEMS */}
+      <section className="py-24">
+        <div className="max-w-[1300px] mx-auto w-[90%]">
+          <h2 className="text-center mb-5" style={{ fontFamily: 'Playfair Display, serif', fontSize: '46px', color: '#3b2a22' }}>
             Most Chambers Operate in Chaos.
           </h2>
-          <p className="text-center text-lg text-[#5a4a3a] mb-16 max-w-3xl mx-auto">
-            Caseline transforms scattered litigation practice into an organised,
-            strategic and streamlined legal workflow.
+          <p className="max-w-[800px] mx-auto mb-16 text-center" style={{ color: '#666', fontSize: '18px' }}>
+            Caseline transforms scattered litigation practice into an organised, strategic and streamlined legal workflow.
           </p>
-          <div className="grid md:grid-cols-2 gap-12">
-            <div className="bg-white rounded-2xl shadow-lg p-8 border border-[#d4a574]">
-              <h3 className="text-2xl font-serif font-bold mb-6 text-[#2c2416]">Operational Problems</h3>
-              <ul className="space-y-3 text-[#5a4a3a]">
-                {[
-                  'Scattered case files',
-                  'Missed hearing dates',
-                  'Unstructured client records',
-                  'Document confusion',
-                  'Dependency on memory',
-                  'Clerk coordination issues',
-                  'No centralised chamber workflow'
-                ].map((item, i) => (
-                  <li key={i} className="flex items-start gap-3">
-                    <span className="text-[#8b4513] mt-1">•</span>
-                    <span>{item}</span>
-                  </li>
+          <div className="grid gap-10" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))' }}>
+            <div className="bg-white rounded-2xl" style={{ padding: '40px', borderLeft: '5px solid #6b4b3e', boxShadow: '0 10px 40px rgba(0,0,0,0.06)' }}>
+              <h3 className="mb-6" style={{ fontSize: '28px', color: '#3b2a22', fontFamily: 'Playfair Display, serif' }}>
+                Operational Problems
+              </h3>
+              <ul>
+                {['Scattered case files', 'Missed hearing dates', 'Unstructured client records', 'Document confusion', 'Dependency on memory', 'Clerk coordination issues', 'No centralised chamber workflow'].map((item, i) => (
+                  <li key={i} className="py-2.5" style={{ color: '#555', borderBottom: '1px solid #eee' }}>{item}</li>
                 ))}
               </ul>
             </div>
-            <div className="bg-white rounded-2xl shadow-lg p-8 border border-[#8b7355]">
-              <h3 className="text-2xl font-serif font-bold mb-6 text-[#2c2416]">Caseline Solutions</h3>
-              <ul className="space-y-3 text-[#5a4a3a]">
-                {[
-                  'Organised litigation dashboard',
-                  'Structured client management',
-                  'Case-wise document organisation',
-                  'Hearing and deadline tracking',
-                  'Strategic litigation notes',
-                  'Searchable legal records',
-                  'Efficient chamber coordination'
-                ].map((item, i) => (
-                  <li key={i} className="flex items-start gap-3">
-                    <span className="text-[#8b7355] mt-1">✓</span>
-                    <span>{item}</span>
-                  </li>
+            <div className="bg-white rounded-2xl" style={{ padding: '40px', borderLeft: '5px solid #6b4b3e', boxShadow: '0 10px 40px rgba(0,0,0,0.06)' }}>
+              <h3 className="mb-6" style={{ fontSize: '28px', color: '#3b2a22', fontFamily: 'Playfair Display, serif' }}>
+                Caseline Solutions
+              </h3>
+              <ul>
+                {['Organised litigation dashboard', 'Structured client management', 'Case-wise document organisation', 'Hearing and deadline tracking', 'Strategic litigation notes', 'Searchable legal records', 'Efficient chamber coordination'].map((item, i) => (
+                  <li key={i} className="py-2.5" style={{ color: '#555', borderBottom: '1px solid #eee' }}>{item}</li>
                 ))}
               </ul>
             </div>
@@ -313,19 +190,16 @@ export default function AdvoverseWebsite() {
         </div>
       </section>
 
-      {/* ══════════════════════════════════════════════════════════════════════════════ */}
       {/* FEATURES */}
-      {/* ══════════════════════════════════════════════════════════════════════════════ */}
-      <section id="features" className="bg-[#faf8f5] border-b-2 border-[#8b7355]">
-        <div className="max-w-6xl mx-auto px-6 py-20">
-          <h2 className="text-4xl font-serif font-bold text-center mb-6 text-[#2c2416]">
+      <section id="features" className="py-24" style={{ background: '#f1ebe4' }}>
+        <div className="max-w-[1300px] mx-auto w-[90%]">
+          <h2 className="text-center mb-5" style={{ fontFamily: 'Playfair Display, serif', fontSize: '46px', color: '#3b2a22' }}>
             Built for Organised Litigation Practice
           </h2>
-          <p className="text-center text-lg text-[#5a4a3a] mb-16 max-w-3xl mx-auto">
-            Every feature inside Caseline is designed to improve legal workflow,
-            reduce confusion and increase operational discipline.
+          <p className="max-w-[800px] mx-auto mb-16 text-center" style={{ color: '#666', fontSize: '18px' }}>
+            Every feature inside Caseline is designed to improve legal workflow, reduce confusion and increase operational discipline.
           </p>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid gap-8" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))' }}>
             {[
               { title: 'Case Dashboard', desc: 'Track every matter with structured case data, hearing stages, court details, procedural progress and advocate notes.' },
               { title: 'Client Management', desc: 'Maintain organised client profiles with associated matters, contact information, payment tracking and communication records.' },
@@ -333,104 +207,82 @@ export default function AdvoverseWebsite() {
               { title: 'Document Organisation', desc: 'Centralise pleadings, annexures, applications and drafting references for instant retrieval and reduced clerical confusion.' },
               { title: 'Forms & Drafting System', desc: 'Maintain organised legal forms, procedural templates, drafting structures and reusable litigation formats.' },
               { title: 'Case Compendium', desc: 'Build matter-wise compendiums containing pleadings, evidence, judgments, notes, authorities and indexed references.' },
-              { title: 'Study Material Organisation', desc: 'Organise legal research material, landmark judgments, bare acts, procedural references and subject-wise legal study resources.' },
-              { title: 'Appointments Diary', desc: 'Maintain professional scheduling for conferences, consultations, hearings, drafting sessions and office appointments.' },
-              { title: 'Internal Chamber Chatroom', desc: 'Coordinate securely between advocates, clerks, office staff and agents through an inbuilt internal communication system.' },
-              { title: 'Hindi Translation Support', desc: 'Improve accessibility and workflow through integrated Hindi translation support for litigation drafting and office coordination.' },
-              { title: 'Offline Privacy Architecture', desc: 'Designed with offline-first functionality to reduce dependency on cloud exposure, helping advocates maintain greater confidentiality.' },
-              { title: 'Chamber Workflow', desc: 'Coordinate effectively between advocates, juniors, clerks and office staff within one operational ecosystem.' },
-              { title: 'Calendar & Hearings', desc: 'Monitor hearings, limitation periods, filing deadlines and procedural timelines without depending on manual memory.' },
             ].map((feature, i) => (
-              <div key={i} className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition border border-[#e8e3d8]">
-                <h3 className="text-lg font-serif font-bold mb-3 text-[#2c2416]">{feature.title}</h3>
-                <p className="text-sm text-[#5a4a3a] leading-relaxed">{feature.desc}</p>
+              <div key={i} className="bg-white rounded-2xl transition-transform hover:-translate-y-1.5" style={{ padding: '35px', boxShadow: '0 10px 30px rgba(0,0,0,0.05)' }}>
+                <h3 className="mb-5" style={{ fontSize: '26px', color: '#3b2a22', fontFamily: 'Playfair Display, serif' }}>
+                  {feature.title}
+                </h3>
+                <p style={{ color: '#666' }}>{feature.desc}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ══════════════════════════════════════════════════════════════════════════════ */}
-      {/* QUOTES */}
-      {/* ══════════════════════════════════════════════════════════════════════════════ */}
-      <section className="bg-[#f5f1eb] border-b-2 border-[#8b7355]">
-        <div className="max-w-4xl mx-auto px-6 py-20">
-          <div className="space-y-12">
-            {[
-              '"An organised chamber is an advocate\'s greatest procedural advantage."',
-              '"Discipline in preparation creates confidence in litigation."',
-              '"The strength of advocacy lies in organised thought."',
-              '"Professional growth begins with operational structure."'
-            ].map((quote, i) => (
-              <blockquote key={i} className="text-2xl md:text-3xl font-serif italic text-center text-[#2c2416] border-l-4 border-[#8b7355] pl-6">
-                {quote}
-              </blockquote>
-            ))}
+      {/* QUOTES STRIP */}
+      <section className="py-9" style={{ background: '#2d1d15', color: '#f0e6da', borderTop: '1px solid #4f392d', borderBottom: '1px solid #4f392d' }}>
+        <div className="max-w-[1300px] mx-auto w-[90%]">
+          <div className="grid gap-6 text-center" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', fontSize: '15px' }}>
+            <div>"An organised chamber is an advocate's greatest procedural advantage."</div>
+            <div>"Discipline in preparation creates confidence in litigation."</div>
+            <div>"The strength of advocacy lies in organised thought."</div>
+            <div>"Professional growth begins with operational structure."</div>
           </div>
         </div>
       </section>
 
-      {/* ══════════════════════════════════════════════════════════════════════════════ */}
-      {/* PHILOSOPHY - Dark background with library aesthetic */}
-      {/* ══════════════════════════════════════════════════════════════════════════════ */}
+      {/* QUOTE SECTION */}
       <section 
-        className="relative bg-cover bg-center border-b-2 border-[#8b7355]"
+        className="text-center text-white py-24"
         style={{
-          backgroundImage: `linear-gradient(rgba(30, 20, 10, 0.92), rgba(30, 20, 10, 0.92)), url('https://images.unsplash.com/photo-1521587760476-6c12a4b040da?q=80&w=2070&auto=format&fit=crop')`,
-          backgroundColor: '#3d2817'
+          background: 'linear-gradient(rgba(40,25,18,0.90), rgba(40,25,18,0.90)), url(https://images.unsplash.com/photo-1568667256549-094345857637?q=80&w=1600&auto=format&fit=crop)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center'
         }}
       >
-        <div className="max-w-5xl mx-auto px-6 py-20 text-center">
-          <div className="mb-8">
-            <span className="text-5xl">⚖</span>
-          </div>
-          <h2 className="text-4xl md:text-5xl font-serif font-bold mb-8 text-white">
-            An Organised Chamber Wins Time Before It Wins Cases.
+        <div className="max-w-[1300px] mx-auto w-[90%]">
+          <h2 className="mb-8" style={{ fontFamily: 'Playfair Display, serif', fontSize: '58px', lineHeight: 1.3 }}>
+            ⚖ An Organised Chamber Wins Time Before It Wins Cases.
           </h2>
-          <div className="space-y-6 text-lg text-white/90 leading-relaxed max-w-3xl mx-auto">
-            <p className="italic text-xl">
-              "Discipline is the silent strength behind every successful litigation practice."
-            </p>
-            <p className="italic text-xl">
-              "An advocate should never waste time searching for what should already be organised."
-            </p>
-            <p className="text-white/80">
-              Caseline is built to reduce operational confusion inside litigation practice.
-              It helps advocates think strategically, retrieve information instantly,
-              coordinate efficiently and maintain professional discipline.
-            </p>
-          </div>
+          <p className="max-w-[850px] mx-auto" style={{ color: '#ddd', fontSize: '19px' }}>
+            "Discipline is the silent strength behind every successful litigation practice."<br /><br />
+            "An advocate should never waste time searching for what should already be organised."<br /><br />
+            Caseline is built to reduce operational confusion inside litigation practice.
+          </p>
         </div>
       </section>
 
-      {/* ══════════════════════════════════════════════════════════════════════════════ */}
-      {/* PRICING PLANS */}
-      {/* ══════════════════════════════════════════════════════════════════════════════ */}
-      <section id="plans" className="bg-[#faf8f5] border-b-2 border-[#8b7355]">
-        <div className="max-w-6xl mx-auto px-6 py-20">
-          <div className="text-center mb-16">
-            <div className="mb-6">
-              <span className="text-4xl">⚖</span>
-            </div>
-            <h2 className="text-4xl font-serif font-bold mb-4 text-[#2c2416]">Subscription Plans</h2>
-            <p className="text-[#5a4a3a]">Monthly and yearly subscription structures for advocates, chambers and expanding litigation practices.</p>
-          </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+      {/* PRICING */}
+      <section id="pricing" className="py-24">
+        <div className="max-w-[1300px] mx-auto w-[90%]">
+          <h2 className="text-center mb-5" style={{ fontFamily: 'Playfair Display, serif', fontSize: '46px', color: '#3b2a22' }}>
+            ⚖ Subscription Plans
+          </h2>
+          <p className="max-w-[800px] mx-auto mb-16 text-center" style={{ color: '#666', fontSize: '18px' }}>
+            Monthly and yearly subscription structures for advocates and chambers.
+          </p>
+          <div className="grid gap-7" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))' }}>
             {PRICING_PLANS.map((plan, i) => (
-              <div key={i} className={`bg-white rounded-xl shadow-lg p-6 flex flex-col relative border ${plan.popular ? 'border-[#8b7355] ring-2 ring-[#8b7355]' : 'border-[#e8e3d8]'}`}>
-                {plan.popular && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#8b7355] text-white text-xs font-bold px-3 py-1 rounded-full">
-                    POPULAR
-                  </div>
-                )}
-                <h3 className="text-xl font-serif font-bold mb-4 text-[#2c2416]">{plan.name}</h3>
-                <div className="text-3xl font-bold text-[#2c2416] mb-1">{plan.displayPrice}</div>
-                <div className="text-sm text-[#8b7355] mb-6">₹{plan.yearlyPrice} per year</div>
-                <div className="text-sm text-[#5a4a3a] mb-6 flex-1 leading-relaxed whitespace-pre-line">{plan.desc}</div>
+              <div key={i} className="bg-white rounded-2xl transition-transform hover:-translate-y-1.5" style={{ padding: '38px', border: '1px solid #ddd', boxShadow: '0 8px 25px rgba(0,0,0,0.04)' }}>
+                <h3 className="mb-2.5" style={{ fontSize: '28px', color: '#3b2a22', fontFamily: 'Playfair Display, serif' }}>
+                  {plan.name}
+                </h3>
+                <div className="mb-4" style={{ fontSize: '42px', fontWeight: 600, color: '#6b4b3e' }}>
+                  {plan.displayPrice}<span style={{ fontSize: '16px', color: '#777' }}> / month</span>
+                </div>
+                <div className="mb-5" style={{ color: '#777' }}>₹{plan.yearlyPrice} per year</div>
+                <ul>
+                  {plan.desc.split('\n').map((item, j) => (
+                    <li key={j} className="py-2.5" style={{ color: '#666', borderBottom: '1px solid #eee' }}>{item}</li>
+                  ))}
+                </ul>
                 <button
                   onClick={() => handlePlanClick(plan)}
                   disabled={isLoading}
-                  className={`w-full py-3 font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed rounded-lg ${plan.popular ? 'bg-[#2c2416] text-white hover:bg-[#1a1410]' : 'bg-[#2c2416] text-white hover:bg-[#1a1410]'}`}
+                  className="w-full mt-5 py-3.5 rounded-xl text-center text-white transition-colors disabled:opacity-50"
+                  style={{ background: '#3b2a22' }}
+                  onMouseEnter={(e) => !isLoading && (e.currentTarget.style.background = '#4a352b')}
+                  onMouseLeave={(e) => !isLoading && (e.currentTarget.style.background = '#3b2a22')}
                 >
                   {isLoading ? 'Processing...' : 'Choose Plan'}
                 </button>
@@ -440,112 +292,74 @@ export default function AdvoverseWebsite() {
         </div>
       </section>
 
-      {/* ══════════════════════════════════════════════════════════════════════════════ */}
-      {/* PAYMENTS */}
-      {/* ══════════════════════════════════════════════════════════════════════════════ */}
-      <section id="payments" className="bg-gradient-to-b from-[#e8f4f8] to-[#d4e8f0] border-b-2 border-[#8b7355]">
-        <div className="max-w-4xl mx-auto px-6 py-20">
-          <div className="bg-white rounded-2xl shadow-xl p-12 text-center border-2 border-[#d4a574]">
-            <div className="mb-6">
-              <span className="text-5xl">💳</span>
-            </div>
-            <h2 className="text-4xl font-serif font-bold mb-6 text-[#2c2416]">
+      {/* PAYMENT */}
+      <section id="payment" className="text-center py-24" style={{ background: '#dce8f2' }}>
+        <div className="max-w-[1300px] mx-auto w-[90%]">
+          <div className="max-w-[900px] mx-auto bg-white rounded-3xl" style={{ padding: '50px', boxShadow: '0 10px 30px rgba(0,0,0,0.05)' }}>
+            <h3 className="mb-5" style={{ fontSize: '38px', color: '#3b2a22', fontFamily: 'Playfair Display, serif' }}>
               Secure Subscription Payments
-            </h2>
-            <p className="text-lg text-[#5a4a3a] mb-12 max-w-2xl mx-auto">
-              Subscribe securely through integrated online payment systems.
-              Simple onboarding. Monthly access. Professional support.
+            </h3>
+            <p className="mb-6" style={{ color: '#666', fontSize: '18px' }}>
+              Subscribe securely through integrated online payment systems. Simple onboarding. Monthly access. Professional support.
             </p>
-            <div className="flex flex-wrap justify-center gap-12 items-center">
-              <div className="text-3xl font-bold text-[#5374f8]">Razorpay</div>
-              <div className="text-3xl font-bold text-[#00bfa5]">Cashfree</div>
-              <div className="text-3xl font-bold text-[#3c8dbc]">PayU</div>
-            </div>
-            <div className="mt-10 pt-8 border-t border-[#e8e3d8]">
-              <p className="text-sm text-[#5a4a3a]">
-                All transactions are encrypted and secure. Your payment information is never stored on our servers.
-              </p>
+            <div className="flex justify-center flex-wrap gap-5">
+              <span className="px-6 py-3 rounded-xl" style={{ background: '#f1ebe4', color: '#3b2a22' }}>Razorpay</span>
+              <span className="px-6 py-3 rounded-xl" style={{ background: '#f1ebe4', color: '#3b2a22' }}>Cashfree</span>
+              <span className="px-6 py-3 rounded-xl" style={{ background: '#f1ebe4', color: '#3b2a22' }}>PayU</span>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ══════════════════════════════════════════════════════════════════════════════ */}
       {/* CONTACT */}
-      {/* ══════════════════════════════════════════════════════════════════════════════ */}
-      <section id="contact" className="bg-[#faf8f5] border-b-2 border-[#8b7355]">
-        <div className="max-w-4xl mx-auto px-6 py-20">
-          <div className="mb-8 text-center">
-            <span className="text-5xl">📞</span>
-          </div>
-          <h2 className="text-4xl font-serif font-bold text-center mb-6 text-[#2c2416]">
+      <section id="contact" className="py-24">
+        <div className="max-w-[1300px] mx-auto w-[90%]">
+          <h2 className="text-center mb-5" style={{ fontFamily: 'Playfair Display, serif', fontSize: '46px', color: '#3b2a22' }}>
             Contact Advoverse
           </h2>
-          <p className="text-center text-lg text-[#5a4a3a] mb-16">
+          <p className="max-w-[800px] mx-auto mb-16 text-center" style={{ color: '#666', fontSize: '18px' }}>
             For subscriptions, onboarding support and chamber integration assistance.
           </p>
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="bg-white rounded-xl shadow-lg p-8 text-center border border-[#e8e3d8] hover:shadow-xl transition">
-              <div className="text-4xl mb-4">📧</div>
-              <h3 className="text-xl font-serif font-bold mb-3 text-[#2c2416]">Email</h3>
-              <a href="mailto:support@advoverse.com" className="text-[#8b7355] hover:underline font-medium">
-                support@advoverse.com
-              </a>
+          <div className="grid gap-8" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))' }}>
+            <div className="bg-white rounded-2xl" style={{ padding: '35px', boxShadow: '0 10px 25px rgba(0,0,0,0.04)' }}>
+              <h3 className="mb-4" style={{ fontSize: '28px', color: '#3b2a22', fontFamily: 'Playfair Display, serif' }}>Email</h3>
+              <p style={{ color: '#666' }}>support@advoverse.com</p>
             </div>
-            <div className="bg-white rounded-xl shadow-lg p-8 text-center border border-[#e8e3d8] hover:shadow-xl transition">
-              <div className="text-4xl mb-4">📱</div>
-              <h3 className="text-xl font-serif font-bold mb-3 text-[#2c2416]">Phone</h3>
-              <p className="text-[#5a4a3a] font-medium">+91 XXXXX XXXXX</p>
+            <div className="bg-white rounded-2xl" style={{ padding: '35px', boxShadow: '0 10px 25px rgba(0,0,0,0.04)' }}>
+              <h3 className="mb-4" style={{ fontSize: '28px', color: '#3b2a22', fontFamily: 'Playfair Display, serif' }}>Phone</h3>
+              <p style={{ color: '#666' }}>+91 XXXXX XXXXX</p>
             </div>
-            <div className="bg-white rounded-xl shadow-lg p-8 text-center border border-[#e8e3d8] hover:shadow-xl transition">
-              <div className="text-4xl mb-4">🕐</div>
-              <h3 className="text-xl font-serif font-bold mb-3 text-[#2c2416]">Support Hours</h3>
-              <p className="text-[#5a4a3a] font-medium">Monday to Saturday</p>
-              <p className="text-[#5a4a3a] font-medium">10:00 AM — 7:00 PM</p>
+            <div className="bg-white rounded-2xl" style={{ padding: '35px', boxShadow: '0 10px 25px rgba(0,0,0,0.04)' }}>
+              <h3 className="mb-4" style={{ fontSize: '28px', color: '#3b2a22', fontFamily: 'Playfair Display, serif' }}>Support Hours</h3>
+              <p style={{ color: '#666' }}>Monday to Saturday<br />10:00 AM — 7:00 PM</p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ══════════════════════════════════════════════════════════════════════════════ */}
+      {/* FOOTER BRAND */}
+      <section className="py-20 text-center" style={{ background: '#efe7dd', borderTop: '1px solid #d8cabc', borderBottom: '1px solid #d8cabc' }}>
+        <div className="max-w-[1300px] mx-auto w-[90%]">
+          <div className="mb-5" style={{ fontSize: '72px', fontStyle: 'italic', color: '#3b2a22', fontFamily: 'Playfair Display, serif' }}>
+            ⚖ Advoverse
+          </div>
+          <p className="max-w-[850px] mx-auto" style={{ color: '#6b5a4d', fontSize: '18px' }}>
+            Traditional Legal Style branding inspired by premium litigation chambers, law libraries, judicial discipline and organised professional advocacy.
+          </p>
+        </div>
+      </section>
+
       {/* FOOTER */}
-      {/* ══════════════════════════════════════════════════════════════════════════════ */}
-      <footer className="bg-gradient-to-b from-[#2c2416] to-[#1a1410] text-white border-t-4 border-[#8b7355]">
-        <div className="max-w-6xl mx-auto px-6 py-16">
-          <div className="text-center mb-8">
-            <div className="flex items-center justify-center gap-3 mb-6">
-              <span className="text-4xl">⚖</span>
-              <h3 className="text-3xl font-serif font-bold italic">Advoverse</h3>
-            </div>
-            <p className="text-base text-gray-300 max-w-2xl mx-auto leading-relaxed mb-6">
-              Traditional Legal Style branding inspired by premium litigation chambers,
-              law libraries, judicial discipline and organised professional advocacy.
-            </p>
-            <div className="flex justify-center gap-8 text-sm text-gray-400 mb-6">
-              <a href="#features" className="hover:text-[#d4a574] transition">Features</a>
-              <a href="#plans" className="hover:text-[#d4a574] transition">Plans</a>
-              <a href="#payments" className="hover:text-[#d4a574] transition">Payments</a>
-              <a href="#contact" className="hover:text-[#d4a574] transition">Contact</a>
-            </div>
-          </div>
-          <div className="text-center pt-8 border-t border-gray-700">
-            <p className="text-base text-gray-300 font-serif mb-2">⚖ Advoverse | Caseline ⚖</p>
-            <p className="text-sm text-gray-400 mt-3">
-              Professional litigation management infrastructure for advocates and chambers.
-            </p>
-            <p className="text-sm text-gray-500 mt-6 italic font-serif">
-              "Organisation in litigation is not convenience — it is professional strength."
-            </p>
-            <p className="text-xs text-gray-600 mt-8">
-              © 2026 Advoverse. All rights reserved.
-            </p>
-          </div>
+      <footer className="py-12 text-center text-white" style={{ background: '#3b2a22' }}>
+        <div className="max-w-[1300px] mx-auto w-[90%]">
+          <h2 className="mb-4" style={{ fontFamily: 'Playfair Display, serif' }}>⚖ Advoverse | Caseline ⚖</h2>
+          <p style={{ color: '#c9c1b8' }}>
+            Professional litigation management infrastructure for advocates and chambers.
+          </p>
         </div>
       </footer>
 
-      {/* ══════════════════════════════════════════════════════════════════════════════ */}
       {/* MODALS */}
-      {/* ══════════════════════════════════════════════════════════════════════════════ */}
       <AuthModal
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
