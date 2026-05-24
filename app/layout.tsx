@@ -19,6 +19,9 @@ export const metadata: Metadata = {
     index: true,
     follow: true,
   },
+  verification: {
+    google: 'advoverse-verification',
+  },
 };
 
 export default function RootLayout({
