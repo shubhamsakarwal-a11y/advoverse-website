@@ -13,6 +13,12 @@ interface License {
   created_at: string;
   auto_renewal_enabled: boolean;
   razorpay_subscription_id: string | null;
+  activation?: {
+    machine_id: string;
+    machine_name: string;
+    activated_at: string;
+    last_validated_at: string | null;
+  } | null;
 }
 
 export default function MyLicensesPage() {
@@ -41,9 +47,28 @@ export default function MyLicensesPage() {
 
       if (error) {
         console.error('Error fetching licenses:', error);
-      } else {
-        setLicenses(data || []);
+        setLoading(false);
+        return;
       }
+
+      // Fetch active machine activations for each license
+      const licensesWithActivations = await Promise.all(
+        (data || []).map(async (license) => {
+          const { data: activation } = await supabase
+            .from('license_activations')
+            .select('machine_id, machine_name, activated_at, last_validated_at')
+            .eq('license_id', license.id)
+            .eq('is_active', true)
+            .single();
+
+          return {
+            ...license,
+            activation: activation || null,
+          };
+        })
+      );
+
+      setLicenses(licensesWithActivations);
       setLoading(false);
     };
 
@@ -227,6 +252,56 @@ export default function MyLicensesPage() {
                         {license.auto_renewal_enabled ? 'Disable' : 'Enable'}
                       </button>
                     </div>
+                  </div>
+
+                  {/* Machine Activation Section */}
+                  <div className="mt-6 rounded-xl" style={{ background: license.activation ? '#dcfce7' : '#f3f4f6', padding: '24px', border: `2px solid ${license.activation ? '#22c55e' : '#d1d5db'}` }}>
+                    <h4 className="mb-3" style={{ fontSize: '18px', color: '#374151', fontWeight: 600 }}>
+                      💻 Machine Activation
+                    </h4>
+                    {license.activation ? (
+                      <div>
+                        <div className="grid grid-cols-2 gap-4 mb-4">
+                          <div>
+                            <p style={{ color: '#6b7280', fontSize: '13px', marginBottom: '4px' }}>Active Machine</p>
+                            <p style={{ color: '#166534', fontSize: '16px', fontWeight: 600 }}>{license.activation.machine_name}</p>
+                          </div>
+                          <div>
+                            <p style={{ color: '#6b7280', fontSize: '13px', marginBottom: '4px' }}>Activated On</p>
+                            <p style={{ color: '#166534', fontSize: '16px', fontWeight: 600 }}>
+                              {new Date(license.activation.activated_at).toLocaleDateString('en-IN')}
+                            </p>
+                          </div>
+                        </div>
+                        {license.activation.last_validated_at && (
+                          <p style={{ color: '#6b7280', fontSize: '12px', marginBottom: '12px' }}>
+                            Last validated: {new Date(license.activation.last_validated_at).toLocaleString('en-IN')}
+                          </p>
+                        )}
+                        <div className="rounded-lg" style={{ background: '#fef3c7', padding: '16px', border: '1px solid #fbbf24' }}>
+                          <p style={{ color: '#92400e', fontSize: '13px', marginBottom: '8px', fontWeight: 600 }}>
+                            ⚠️ One License = One Machine
+                          </p>
+                          <p style={{ color: '#92400e', fontSize: '12px' }}>
+                            To use this license on a different machine, enter the license key on the new machine. You'll receive an email to approve the transfer.
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div>
+                        <p style={{ color: '#6b7280', fontSize: '14px', marginBottom: '12px' }}>
+                          This license is not activated on any machine yet.
+                        </p>
+                        <div className="rounded-lg" style={{ background: '#e0f2fe', padding: '16px', border: '1px solid #0ea5e9' }}>
+                          <p style={{ color: '#075985', fontSize: '13px', fontWeight: 600, marginBottom: '4px' }}>
+                            💡 How to Activate
+                          </p>
+                          <p style={{ color: '#075985', fontSize: '12px' }}>
+                            Open Caseline desktop app, enter your license key, and click "Activate". The license will be activated on that machine.
+                          </p>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
