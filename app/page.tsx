@@ -160,6 +160,15 @@ export default function AdvoverseWebsite() {
                         {currentUser.email}
                       </div>
                     </div>
+                    <a
+                      href="/my-licenses"
+                      className="px-5 py-2 rounded-lg text-white transition-colors"
+                      style={{ background: '#f59e0b', fontSize: '14px', textDecoration: 'none' }}
+                      onMouseEnter={(e) => e.currentTarget.style.background = '#d97706'}
+                      onMouseLeave={(e) => e.currentTarget.style.background = '#f59e0b'}
+                    >
+                      My Licenses
+                    </a>
                     <button
                       onClick={handleSignOut}
                       className="px-5 py-2 rounded-lg text-white transition-colors"
