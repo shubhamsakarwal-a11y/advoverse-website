@@ -152,21 +152,6 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onSuccess }: Au
               </svg>
               Continue with Google
             </button>
-            
-            <button
-              type="button"
-              onClick={() => handleSocialLogin('azure')}
-              disabled={isLoading}
-              className="w-full py-3 rounded-xl bg-[#0078D4] text-white font-medium hover:bg-[#106EBE] transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
-            >
-              <svg className="w-5 h-5" viewBox="0 0 23 23" fill="none">
-                <path d="M0 0h10.377v10.377H0z" fill="#f25022"/>
-                <path d="M12.623 0H23v10.377H12.623z" fill="#7fba00"/>
-                <path d="M0 12.623h10.377V23H0z" fill="#00a4ef"/>
-                <path d="M12.623 12.623H23V23H12.623z" fill="#ffb900"/>
-              </svg>
-              Continue with Microsoft
-            </button>
           </div>
 
           <div className="relative">
