@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { PaymentMethodModal } from '@/components/PaymentMethodModal';
 import { AuthModal } from '@/components/AuthModal';
 import { PricingPlan, RazorpayPaymentResponse } from '@/lib/types/payment';
 import { initiateRazorpayPayment, verifyRazorpayPayment, createStripeSession } from '@/lib/payment';
+import { createClient } from '@/lib/supabase/client';
 
 const PRICING_PLANS: PricingPlan[] = [
   { name: 'Junior Advocate', price: 100, displayPrice: '₹100', yearlyPrice: 1000, desc: '20 Cases\nIdeal for beginners' },
@@ -26,6 +27,42 @@ export default function AdvoverseWebsite() {
   const [selectedPlan, setSelectedPlan] = useState<PricingPlan | null>(null);
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
 
+  // Check for logged-in user on mount
+  useEffect(() => {
+    const checkUser = async () => {
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session?.user) {
+        const userName = session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'User';
+        setCurrentUser({
+          name: userName,
+          email: session.user.email!,
+          token: session.access_token,
+        });
+      }
+    };
+    
+    checkUser();
+
+    // Listen for auth changes
+    const supabase = createClient();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        const userName = session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'User';
+        setCurrentUser({
+          name: userName,
+          email: session.user.email!,
+          token: session.access_token,
+        });
+      } else {
+        setCurrentUser(null);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
   const handlePlanClick = (plan: PricingPlan) => {
     setSelectedPlan(plan);
     if (!currentUser) {
@@ -40,6 +77,13 @@ export default function AdvoverseWebsite() {
     setCurrentUser(user);
     setIsAuthModalOpen(false);
     if (selectedPlan) setIsPaymentModalOpen(true);
+  };
+
+  const handleSignOut = async () => {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    setCurrentUser(null);
+    alert('You have been signed out successfully.');
   };
 
   const closePaymentModal = () => {
@@ -100,8 +144,47 @@ export default function AdvoverseWebsite() {
       <header style={{ background: '#f5eee4', paddingTop: '18px', borderBottom: '1px solid #cbb8a4' }}>
         <div className="max-w-[1300px] mx-auto w-[90%]">
           <nav className="flex flex-col items-center gap-4">
-            <div className="w-full text-center" style={{ fontFamily: 'Playfair Display, serif', fontSize: '72px', fontStyle: 'italic', fontWeight: 500, color: '#2f1d16', lineHeight: 1, letterSpacing: '1px' }}>
-              Advoverse ⚖
+            <div className="w-full flex justify-between items-center">
+              <div className="flex-1"></div>
+              <div className="flex-1 text-center" style={{ fontFamily: 'Playfair Display, serif', fontSize: '72px', fontStyle: 'italic', fontWeight: 500, color: '#2f1d16', lineHeight: 1, letterSpacing: '1px' }}>
+                Advoverse ⚖
+              </div>
+              <div className="flex-1 flex justify-end items-center gap-4">
+                {currentUser ? (
+                  <div className="flex items-center gap-4">
+                    <div className="text-right">
+                      <div style={{ fontSize: '14px', color: '#6b4b3e', fontWeight: 600 }}>
+                        {currentUser.name}
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#999' }}>
+                        {currentUser.email}
+                      </div>
+                    </div>
+                    <button
+                      onClick={handleSignOut}
+                      className="px-5 py-2 rounded-lg text-white transition-colors"
+                      style={{ background: '#6b4b3e', fontSize: '14px' }}
+                      onMouseEnter={(e) => e.currentTarget.style.background = '#7a5647'}
+                      onMouseLeave={(e) => e.currentTarget.style.background = '#6b4b3e'}
+                    >
+                      Sign Out
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => {
+                      setAuthMode('login');
+                      setIsAuthModalOpen(true);
+                    }}
+                    className="px-5 py-2 rounded-lg text-white transition-colors"
+                    style={{ background: '#6b4b3e', fontSize: '14px' }}
+                    onMouseEnter={(e) => e.currentTarget.style.background = '#7a5647'}
+                    onMouseLeave={(e) => e.currentTarget.style.background = '#6b4b3e'}
+                  >
+                    Sign In
+                  </button>
+                )}
+              </div>
             </div>
             <div className="flex justify-center w-full gap-10 py-4" style={{ fontSize: '15px', color: '#f4e7d3', background: 'linear-gradient(to right, #07111d, #0f1d2e)', borderTop: '1px solid #3d2b21', borderBottom: '1px solid #3d2b21' }}>
               <a href="#features" className="transition-opacity hover:opacity-80">Features</a>
