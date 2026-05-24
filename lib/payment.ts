@@ -16,6 +16,8 @@ function loadRazorpayScript(): Promise<boolean> {
 
 export async function initiateRazorpayPayment(
   planName: string,
+  duration: 'monthly' | 'quarterly' | 'yearly',
+  price: number,
   token: string,
   userName: string,
   userEmail: string,
@@ -34,7 +36,7 @@ export async function initiateRazorpayPayment(
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ planName }),
+      body: JSON.stringify({ planName, duration, price }),
     });
 
     if (!res.ok) {
@@ -49,12 +51,14 @@ export async function initiateRazorpayPayment(
       throw new Error('Razorpay not loaded. Please refresh and try again.');
     }
 
+    const durationLabel = duration === 'monthly' ? 'Monthly' : duration === 'quarterly' ? 'Quarterly' : 'Yearly';
+
     const rzp = new window.Razorpay({
       key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID!,
       amount,
       currency,
       name: 'Advoverse',
-      description: `${planName} Subscription`,
+      description: `${planName} - ${durationLabel} Subscription`,
       order_id: orderId,
       prefill: { name: userName, email: userEmail },
       theme: { color: '#f59e0b' },

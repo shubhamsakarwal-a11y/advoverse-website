@@ -1,8 +1,9 @@
 export interface PricingPlan {
   name: string;
-  price: number;
+  price: number;              // Monthly price
   displayPrice: string;
-  yearlyPrice?: number;
+  quarterlyPrice?: number;    // 3 months (10% discount)
+  yearlyPrice?: number;       // 12 months (20% discount)
   desc: string;
   popular?: boolean;
 }

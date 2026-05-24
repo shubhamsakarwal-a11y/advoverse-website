@@ -3,18 +3,69 @@
 import { useState, useEffect } from 'react';
 import { PaymentMethodModal } from '@/components/PaymentMethodModal';
 import { AuthModal } from '@/components/AuthModal';
+import { DurationSelectionModal } from '@/components/DurationSelectionModal';
 import { PricingPlan, RazorpayPaymentResponse } from '@/lib/types/payment';
 import { initiateRazorpayPayment, verifyRazorpayPayment, createStripeSession } from '@/lib/payment';
 import { createClient } from '@/lib/supabase/client';
 
 const PRICING_PLANS: PricingPlan[] = [
-  { name: 'Junior Advocate', price: 100, displayPrice: '₹100', yearlyPrice: 1000, desc: '20 Cases\nIdeal for beginners' },
-  { name: 'Solo Advocate', price: 200, displayPrice: '₹200', yearlyPrice: 2000, desc: '60 Cases\nIndependent practice setup' },
-  { name: 'Advocate + Clerk', price: 300, displayPrice: '₹300', yearlyPrice: 3000, desc: '1 Additional User\n120 Cases\nClerk coordination workflow', popular: true },
-  { name: 'Chamber Lite', price: 800, displayPrice: '₹800', yearlyPrice: 8000, desc: '3 Users\n200 Cases\nSmall chamber management' },
-  { name: 'Chamber', price: 1500, displayPrice: '₹1500', yearlyPrice: 15000, desc: '6 Users\n500 Cases\nProfessional chamber workflow' },
-  { name: 'Chamber Pro', price: 3000, displayPrice: '₹3000', yearlyPrice: 30000, desc: '9 Users\nUnlimited Cases\nAdvanced litigation management' },
-  { name: 'Exclusive', price: 5000, displayPrice: '₹5000', yearlyPrice: 50000, desc: 'Unlimited Users\nUnlimited Cases\nEnterprise legal operations' },
+  { 
+    name: 'Junior Advocate', 
+    price: 100, 
+    displayPrice: '₹100', 
+    quarterlyPrice: 270,  // 10% discount
+    yearlyPrice: 960,     // 20% discount
+    desc: '20 Cases\nIdeal for beginners' 
+  },
+  { 
+    name: 'Solo Advocate', 
+    price: 200, 
+    displayPrice: '₹200', 
+    quarterlyPrice: 540,
+    yearlyPrice: 1920, 
+    desc: '60 Cases\nIndependent practice setup' 
+  },
+  { 
+    name: 'Advocate + Clerk', 
+    price: 300, 
+    displayPrice: '₹300', 
+    quarterlyPrice: 810,
+    yearlyPrice: 2880, 
+    desc: '1 Additional User\n120 Cases\nClerk coordination workflow', 
+    popular: true 
+  },
+  { 
+    name: 'Chamber Lite', 
+    price: 800, 
+    displayPrice: '₹800', 
+    quarterlyPrice: 2160,
+    yearlyPrice: 7680, 
+    desc: '3 Users\n200 Cases\nSmall chamber management' 
+  },
+  { 
+    name: 'Chamber', 
+    price: 1500, 
+    displayPrice: '₹1500', 
+    quarterlyPrice: 4050,
+    yearlyPrice: 14400, 
+    desc: '6 Users\n500 Cases\nProfessional chamber workflow' 
+  },
+  { 
+    name: 'Chamber Pro', 
+    price: 3000, 
+    displayPrice: '₹3000', 
+    quarterlyPrice: 8100,
+    yearlyPrice: 28800, 
+    desc: '9 Users\nUnlimited Cases\nAdvanced litigation management' 
+  },
+  { 
+    name: 'Exclusive', 
+    price: 5000, 
+    displayPrice: '₹5000', 
+    quarterlyPrice: 13500,
+    yearlyPrice: 48000, 
+    desc: 'Unlimited Users\nUnlimited Cases\nEnterprise legal operations' 
+  },
 ];
 
 type CurrentUser = { name: string; email: string; token: string };
@@ -23,8 +74,11 @@ export default function AdvoverseWebsite() {
   const [isLoading, setIsLoading] = useState(false);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isDurationModalOpen, setIsDurationModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'register'>('register');
   const [selectedPlan, setSelectedPlan] = useState<PricingPlan | null>(null);
+  const [selectedDuration, setSelectedDuration] = useState<'monthly' | 'quarterly' | 'yearly'>('monthly');
+  const [selectedPrice, setSelectedPrice] = useState<number>(0);
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
 
   // Check for logged-in user on mount
@@ -69,14 +123,21 @@ export default function AdvoverseWebsite() {
       setAuthMode('register');
       setIsAuthModalOpen(true);
     } else {
-      setIsPaymentModalOpen(true);
+      // Show duration selection modal
+      setIsDurationModalOpen(true);
     }
+  };
+
+  const handleDurationSelect = (duration: 'monthly' | 'quarterly' | 'yearly', price: number) => {
+    setSelectedDuration(duration);
+    setSelectedPrice(price);
+    setIsPaymentModalOpen(true);
   };
 
   const handleAuthSuccess = (user: CurrentUser) => {
     setCurrentUser(user);
     setIsAuthModalOpen(false);
-    if (selectedPlan) setIsPaymentModalOpen(true);
+    if (selectedPlan) setIsDurationModalOpen(true);
   };
 
   const handleSignOut = async () => {
@@ -98,6 +159,8 @@ export default function AdvoverseWebsite() {
     try {
       await initiateRazorpayPayment(
         selectedPlan.name,
+        selectedDuration,
+        selectedPrice,
         currentUser.token,
         currentUser.name,
         currentUser.email,
@@ -434,11 +497,45 @@ export default function AdvoverseWebsite() {
                 <h3 className="mb-2.5" style={{ fontSize: '28px', color: '#3b2a22', fontFamily: 'Playfair Display, serif' }}>
                   {plan.name}
                 </h3>
-                <div className="mb-4" style={{ fontSize: '42px', fontWeight: 600, color: '#6b4b3e' }}>
-                  {plan.displayPrice}<span style={{ fontSize: '16px', color: '#777' }}> / month</span>
+                
+                {/* Monthly Option */}
+                <div className="mb-3 p-3 rounded-lg" style={{ background: '#f9fafb', border: '1px solid #e5e7eb' }}>
+                  <div style={{ fontSize: '13px', color: '#6b7280', marginBottom: '4px' }}>Monthly</div>
+                  <div style={{ fontSize: '32px', fontWeight: 600, color: '#6b4b3e' }}>
+                    {plan.displayPrice}<span style={{ fontSize: '14px', color: '#777' }}> / month</span>
+                  </div>
+                  <div style={{ fontSize: '12px', color: '#999' }}>30 days validity</div>
                 </div>
-                <div className="mb-5" style={{ color: '#777' }}>₹{plan.yearlyPrice} per year</div>
-                <ul>
+
+                {/* Quarterly Option */}
+                {plan.quarterlyPrice && (
+                  <div className="mb-3 p-3 rounded-lg" style={{ background: '#fef3c7', border: '1px solid #fbbf24' }}>
+                    <div className="flex justify-between items-center mb-1">
+                      <div style={{ fontSize: '13px', color: '#92400e' }}>Quarterly</div>
+                      <div style={{ fontSize: '11px', color: '#92400e', background: '#fbbf24', padding: '2px 8px', borderRadius: '4px', fontWeight: 600 }}>SAVE 10%</div>
+                    </div>
+                    <div style={{ fontSize: '32px', fontWeight: 600, color: '#92400e' }}>
+                      ₹{plan.quarterlyPrice}<span style={{ fontSize: '14px', color: '#92400e' }}> / 3 months</span>
+                    </div>
+                    <div style={{ fontSize: '12px', color: '#92400e' }}>90 days validity</div>
+                  </div>
+                )}
+
+                {/* Yearly Option */}
+                {plan.yearlyPrice && (
+                  <div className="mb-4 p-3 rounded-lg" style={{ background: '#dcfce7', border: '1px solid #22c55e' }}>
+                    <div className="flex justify-between items-center mb-1">
+                      <div style={{ fontSize: '13px', color: '#14532d' }}>Yearly</div>
+                      <div style={{ fontSize: '11px', color: '#14532d', background: '#22c55e', padding: '2px 8px', borderRadius: '4px', fontWeight: 600 }}>SAVE 20%</div>
+                    </div>
+                    <div style={{ fontSize: '32px', fontWeight: 600, color: '#14532d' }}>
+                      ₹{plan.yearlyPrice}<span style={{ fontSize: '14px', color: '#14532d' }}> / year</span>
+                    </div>
+                    <div style={{ fontSize: '12px', color: '#14532d' }}>365 days validity</div>
+                  </div>
+                )}
+
+                <ul className="mb-5">
                   {plan.desc.split('\n').map((item, j) => (
                     <li key={j} className="py-2.5" style={{ color: '#666', borderBottom: '1px solid #eee' }}>{item}</li>
                   ))}
@@ -534,11 +631,17 @@ export default function AdvoverseWebsite() {
         onModeChange={setAuthMode}
         onSuccess={handleAuthSuccess}
       />
+      <DurationSelectionModal
+        isOpen={isDurationModalOpen}
+        onClose={() => setIsDurationModalOpen(false)}
+        plan={selectedPlan}
+        onSelectDuration={handleDurationSelect}
+      />
       <PaymentMethodModal
         isOpen={isPaymentModalOpen}
         onClose={closePaymentModal}
         planName={selectedPlan?.name || ''}
-        price={selectedPlan?.price || 0}
+        price={selectedPrice}
         onSelectRazorpay={handleRazorpayPayment}
         onSelectStripe={handleStripePayment}
         isLoading={isLoading}
