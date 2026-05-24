@@ -2,7 +2,7 @@
 # Copy these one by one into Vercel
 
 # ===== SUPABASE =====
-NEXT_PUBLIC_SUPABASE_URL=https://nvzqwtaglkhsdqfobmr.supabase.co
+NEXT_PUBLIC_SUPABASE_URL=https://nvzqxwtaglkhsdqfobmr.supabase.co
 
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52enF4d3RhZ2xraHNkcWZvYm1yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzNTg3NTAsImV4cCI6MjA5NDkzNDc1MH0.lwbG0ombv3kn0A95SjyJPFesGNSWgTBnbMTwqdbN3Jw
 
