@@ -1,11 +1,7 @@
--- ═══════════════════════════════════════════════════════════════
---  ADVOVERSE - DATABASE SCHEMA UPDATES
---  Phase 1: Machine Activation & Auto-Renewal System
--- ═══════════════════════════════════════════════════════════════
+-- ADVOVERSE - DATABASE SCHEMA UPDATES
+-- Phase 1: Machine Activation & Auto-Renewal System
 
--- ───────────────────────────────────────────────────────────────
 -- 1. UPDATE LICENSES TABLE - Add Auto-Renewal Fields
--- ───────────────────────────────────────────────────────────────
 ALTER TABLE public.licenses 
 ADD COLUMN IF NOT EXISTS auto_renewal_enabled BOOLEAN DEFAULT false,
 ADD COLUMN IF NOT EXISTS razorpay_subscription_id TEXT,
@@ -15,9 +11,7 @@ ADD COLUMN IF NOT EXISTS renewal_failure_count INTEGER DEFAULT 0,
 ADD COLUMN IF NOT EXISTS duration_type TEXT DEFAULT 'monthly', -- 'monthly', 'quarterly', 'yearly'
 ADD COLUMN IF NOT EXISTS grace_period_until TIMESTAMPTZ;
 
--- ───────────────────────────────────────────────────────────────
 -- 2. LICENSE ACTIVATIONS TABLE - Track Machine Usage
--- ───────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS public.license_activations (
   id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   license_id BIGINT REFERENCES public.licenses(id) ON DELETE CASCADE NOT NULL,
@@ -38,9 +32,7 @@ CREATE INDEX IF NOT EXISTS idx_license_activations_license_id ON public.license_
 CREATE INDEX IF NOT EXISTS idx_license_activations_machine_id ON public.license_activations(machine_id);
 CREATE INDEX IF NOT EXISTS idx_license_activations_active ON public.license_activations(license_id, is_active);
 
--- ───────────────────────────────────────────────────────────────
 -- 3. TRANSFER REQUESTS TABLE - Machine Transfer Approval System
--- ───────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS public.transfer_requests (
   id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   license_id BIGINT REFERENCES public.licenses(id) ON DELETE CASCADE NOT NULL,
@@ -63,9 +55,7 @@ CREATE INDEX IF NOT EXISTS idx_transfer_requests_license_id ON public.transfer_r
 CREATE INDEX IF NOT EXISTS idx_transfer_requests_token ON public.transfer_requests(approval_token);
 CREATE INDEX IF NOT EXISTS idx_transfer_requests_status ON public.transfer_requests(status);
 
--- ───────────────────────────────────────────────────────────────
 -- 4. BLOCKED MACHINES TABLE - Permanently Denied Machines
--- ───────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS public.blocked_machines (
   id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   license_id BIGINT REFERENCES public.licenses(id) ON DELETE CASCADE NOT NULL,
@@ -82,9 +72,7 @@ CREATE TABLE IF NOT EXISTS public.blocked_machines (
 CREATE INDEX IF NOT EXISTS idx_blocked_machines_license_id ON public.blocked_machines(license_id);
 CREATE INDEX IF NOT EXISTS idx_blocked_machines_machine_id ON public.blocked_machines(machine_id);
 
--- ───────────────────────────────────────────────────────────────
 -- 5. RENEWAL HISTORY TABLE - Track All Renewal Attempts
--- ───────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS public.renewal_history (
   id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   license_id BIGINT REFERENCES public.licenses(id) ON DELETE CASCADE NOT NULL,
@@ -103,9 +91,7 @@ CREATE TABLE IF NOT EXISTS public.renewal_history (
 CREATE INDEX IF NOT EXISTS idx_renewal_history_license_id ON public.renewal_history(license_id);
 CREATE INDEX IF NOT EXISTS idx_renewal_history_attempted_at ON public.renewal_history(attempted_at);
 
--- ───────────────────────────────────────────────────────────────
 -- 6. TRANSFER COOLDOWN TABLE - Enforce 24-Hour Transfer Limit
--- ───────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS public.transfer_cooldowns (
   id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   license_id BIGINT REFERENCES public.licenses(id) ON DELETE CASCADE NOT NULL,
@@ -117,9 +103,7 @@ CREATE TABLE IF NOT EXISTS public.transfer_cooldowns (
 -- Index for fast lookups
 CREATE INDEX IF NOT EXISTS idx_transfer_cooldowns_license_id ON public.transfer_cooldowns(license_id);
 
--- ───────────────────────────────────────────────────────────────
 -- 7. ROW LEVEL SECURITY POLICIES
--- ───────────────────────────────────────────────────────────────
 
 -- Enable RLS on new tables
 ALTER TABLE public.license_activations ENABLE ROW LEVEL SECURITY;
@@ -164,9 +148,7 @@ CREATE POLICY "Users can view own renewal history"
     )
   );
 
--- ───────────────────────────────────────────────────────────────
 -- 8. HELPER FUNCTIONS
--- ───────────────────────────────────────────────────────────────
 
 -- Function to check if transfer is allowed (not in cooldown)
 CREATE OR REPLACE FUNCTION public.can_transfer_license(p_license_id BIGINT)
@@ -216,9 +198,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- ───────────────────────────────────────────────────────────────
 -- 9. ADMIN USER SETUP
--- ───────────────────────────────────────────────────────────────
 
 -- Create admin_users table for dashboard access
 CREATE TABLE IF NOT EXISTS public.admin_users (
@@ -241,7 +221,5 @@ CREATE POLICY "Admin users have full access"
   ON public.admin_users FOR ALL
   USING (email = auth.jwt()->>'email');
 
--- ═══════════════════════════════════════════════════════════════
---  END OF SCHEMA UPDATES
---  Run this in: Supabase Dashboard → SQL Editor → New Query
--- ═══════════════════════════════════════════════════════════════
+-- END OF SCHEMA UPDATES
+-- Run this in: Supabase Dashboard → SQL Editor → New Query
