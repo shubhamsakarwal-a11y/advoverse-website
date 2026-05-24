@@ -11,6 +11,8 @@ interface License {
   expires_at: string | null;
   is_active: boolean;
   created_at: string;
+  auto_renewal_enabled: boolean;
+  razorpay_subscription_id: string | null;
 }
 
 export default function MyLicensesPage() {
@@ -51,6 +53,46 @@ export default function MyLicensesPage() {
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
     alert('License key copied to clipboard!');
+  };
+
+  const handleToggleAutoRenewal = async (license: License) => {
+    const supabase = createClient();
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session) return;
+
+    if (license.auto_renewal_enabled) {
+      // Disable auto-renewal
+      if (!confirm('Are you sure you want to disable auto-renewal? You will need to renew manually before expiry.')) {
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/subscription/cancel', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({ licenseId: license.id }),
+        });
+
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.error);
+        }
+
+        alert('✅ Auto-renewal disabled successfully');
+        // Refresh licenses
+        window.location.reload();
+      } catch (err) {
+        alert(err instanceof Error ? err.message : 'Failed to disable auto-renewal');
+      }
+    } else {
+      // Enable auto-renewal
+      alert('To enable auto-renewal, please contact support@advoverse.com or use the Razorpay payment link.');
+      // TODO: Implement Razorpay subscription UI
+    }
   };
 
   if (loading) {
@@ -154,6 +196,37 @@ export default function MyLicensesPage() {
                       <li>Paste the license key above and click "Activate"</li>
                       <li>Start using all features of your {license.plan_name} plan</li>
                     </ol>
+                  </div>
+
+                  {/* Auto-Renewal Section */}
+                  <div className="mt-6 rounded-xl" style={{ background: license.auto_renewal_enabled ? '#dcfce7' : '#fef3c7', padding: '24px', border: `2px solid ${license.auto_renewal_enabled ? '#22c55e' : '#fbbf24'}` }}>
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h4 className="mb-2" style={{ fontSize: '18px', color: '#374151', fontWeight: 600 }}>
+                          🔄 Auto-Renewal
+                        </h4>
+                        <p style={{ color: '#4b5563', fontSize: '14px', marginBottom: '12px' }}>
+                          {license.auto_renewal_enabled 
+                            ? 'Your license will automatically renew before expiry. You can cancel anytime.'
+                            : 'Enable auto-renewal to never worry about license expiry. Your payment method will be charged automatically.'}
+                        </p>
+                        {license.auto_renewal_enabled && license.expires_at && (
+                          <p style={{ color: '#16a34a', fontSize: '13px', fontWeight: 600 }}>
+                            Next billing: {new Date(license.expires_at).toLocaleDateString('en-IN')}
+                          </p>
+                        )}
+                      </div>
+                      <button
+                        onClick={() => handleToggleAutoRenewal(license)}
+                        className="px-6 py-2 rounded-lg transition-colors font-semibold"
+                        style={{ 
+                          background: license.auto_renewal_enabled ? '#dc2626' : '#16a34a',
+                          color: 'white'
+                        }}
+                      >
+                        {license.auto_renewal_enabled ? 'Disable' : 'Enable'}
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
