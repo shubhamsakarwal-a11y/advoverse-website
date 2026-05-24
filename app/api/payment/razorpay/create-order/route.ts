@@ -8,9 +8,13 @@ const razorpay = new Razorpay({
 });
 
 const VALID_PLANS: Record<string, number> = {
-  'Solo Advocate': 999,
-  'Chamber Pro': 2999,
-  'Lifetime License': 24999,
+  'Junior Advocate': 100,
+  'Solo Advocate': 200,
+  'Advocate + Clerk': 300,
+  'Chamber Lite': 800,
+  'Chamber': 1500,
+  'Chamber Pro': 3000,
+  'Exclusive': 5000,
 };
 
 export async function POST(req: NextRequest) {
