@@ -125,10 +125,10 @@ export default function AdminDashboard() {
 
     // Get user emails from auth.users
     if (recentOrders) {
-      const userIds = recentOrders.map(o => o.profiles?.id).filter(Boolean);
+      const userIds = recentOrders.map((o: any) => o.profiles?.id).filter(Boolean);
       const { data: users } = await supabase.auth.admin.listUsers();
       
-      const transactions = recentOrders.map(order => ({
+      const transactions = recentOrders.map((order: any) => ({
         id: order.id,
         created_at: order.created_at,
         user_email: users?.users.find(u => u.id === order.profiles?.id)?.email || 'Unknown',
