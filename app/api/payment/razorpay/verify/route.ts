@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import { createAdminClient } from '@/lib/supabase/server';
 import { issueLicense } from '@/lib/issue-license';
@@ -17,7 +18,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid session' }, { status: 401 });
     }
 
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, dbOrderId } =
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, dbOrderId, caselinePassword } =
       await req.json();
 
     // Verify Razorpay signature
@@ -59,6 +60,45 @@ export async function POST(req: NextRequest) {
       paymentId: razorpay_payment_id,
       gateway: 'razorpay',
     });
+
+    // Save Caseline password to users table (create or update)
+    if (caselinePassword && caselinePassword.length >= 8) {
+      try {
+        const passwordHash = await bcrypt.hash(caselinePassword, 10);
+        const userEmail = user.email!.toLowerCase();
+        const userName = profile?.name || user.email!;
+
+        // Check if user already exists in users table
+        const { data: existingUser } = await supabase
+          .from('users')
+          .select('id')
+          .eq('email', userEmail)
+          .single();
+
+        if (existingUser) {
+          // Update password
+          await supabase
+            .from('users')
+            .update({ password_hash: passwordHash, updated_at: new Date().toISOString() })
+            .eq('email', userEmail);
+        } else {
+          // Create new Caseline user
+          await supabase
+            .from('users')
+            .insert({
+              email: userEmail,
+              password_hash: passwordHash,
+              name: userName,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            });
+        }
+        console.log('Caseline user password saved for:', userEmail);
+      } catch (pwdErr) {
+        // Non-fatal - license still issued
+        console.error('Failed to save Caseline password (non-fatal):', pwdErr);
+      }
+    }
 
     return NextResponse.json({ success: true, licenseKey });
   } catch (err) {

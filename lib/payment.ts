@@ -77,7 +77,8 @@ export async function verifyRazorpayPayment(
   razorpay_payment_id: string,
   razorpay_signature: string,
   dbOrderId: number,
-  token: string
+  token: string,
+  caselinePassword?: string
 ): Promise<{ success: boolean }> {
   const res = await fetch('/api/payment/razorpay/verify', {
     method: 'POST',
@@ -85,7 +86,7 @@ export async function verifyRazorpayPayment(
       'Content-Type': 'application/json',
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify({ razorpay_order_id, razorpay_payment_id, razorpay_signature, dbOrderId }),
+    body: JSON.stringify({ razorpay_order_id, razorpay_payment_id, razorpay_signature, dbOrderId, caselinePassword }),
   });
 
   if (!res.ok) {

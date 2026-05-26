@@ -79,6 +79,7 @@ export default function AdvoverseWebsite() {
   const [selectedPlan, setSelectedPlan] = useState<PricingPlan | null>(null);
   const [selectedDuration, setSelectedDuration] = useState<'monthly' | 'quarterly' | 'yearly'>('monthly');
   const [selectedPrice, setSelectedPrice] = useState<number>(0);
+  const [caselinePassword, setCaselinePassword] = useState<string>('');
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
 
   // Check for logged-in user on mount
@@ -152,7 +153,8 @@ export default function AdvoverseWebsite() {
     setSelectedPlan(null);
   };
 
-  const handleRazorpayPayment = async () => {
+  const handleRazorpayPayment = async (password: string) => {
+    setCaselinePassword(password);
     if (!selectedPlan || !currentUser) return;
     setIsLoading(true);
     closePaymentModal();
@@ -171,7 +173,8 @@ export default function AdvoverseWebsite() {
               response.razorpay_payment_id,
               response.razorpay_signature,
               dbOrderId,
-              currentUser.token
+              currentUser.token,
+              password
             );
             alert(`✅ Payment Successful!\n\nYour license key has been sent to ${currentUser.email}.\nPlease check your inbox (and spam folder).`);
           } catch (err) {
@@ -642,7 +645,7 @@ export default function AdvoverseWebsite() {
         onClose={closePaymentModal}
         planName={selectedPlan?.name || ''}
         price={selectedPrice}
-        onSelectRazorpay={handleRazorpayPayment}
+        onSelectRazorpay={(pwd) => handleRazorpayPayment(pwd)}
         onSelectStripe={handleStripePayment}
         isLoading={isLoading}
       />
