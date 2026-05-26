@@ -4,6 +4,21 @@ import crypto from 'crypto';
 import { createAdminClient } from '@/lib/supabase/server';
 import { issueLicense } from '@/lib/issue-license';
 
+
+// Map advoverse plan name to Caseline package code
+function getPlanMapping(planName: string): { code: string; label: string; clients: number; users: number; days: number } {
+  const name = planName.toLowerCase();
+  if (name.includes('exclusive')) return { code: 'EXCLUSIVE', label: 'Exclusive', clients: 999999, users: 999999, days: 30 };
+  if (name.includes('chamber pro')) return { code: 'CHAMBER_PRO', label: 'Chamber Pro', clients: 999999, users: 9, days: 30 };
+  if (name.includes('chamber lite')) return { code: 'CHAMBER_LITE', label: 'Chamber Lite', clients: 200, users: 3, days: 30 };
+  if (name.includes('chamber')) return { code: 'CHAMBER', label: 'Chamber', clients: 500, users: 6, days: 30 };
+  if (name.includes('advocate + clerk') || name.includes('advocate+clerk')) return { code: 'ADVOCATE_CLERK', label: 'Advocate + Clerk', clients: 120, users: 2, days: 30 };
+  if (name.includes('solo')) return { code: 'SOLO_ADVOCATE', label: 'Solo Advocate', clients: 60, users: 1, days: 30 };
+  // quarterly/yearly multipliers
+  const days = name.includes('yearly') ? 365 : name.includes('quarterly') ? 90 : 30;
+  return { code: 'JUNIOR_ADVOCATE', label: 'Junior Advocate', clients: 20, users: 1, days };
+}
+
 export async function POST(req: NextRequest) {
   try {
     const authHeader = req.headers.get('Authorization');
@@ -98,6 +113,58 @@ export async function POST(req: NextRequest) {
         // Non-fatal - license still issued
         console.error('Failed to save Caseline password (non-fatal):', pwdErr);
       }
+    }
+
+    // ── Write subscription to Caseline-Auth Supabase ──
+    try {
+      const { createClient } = require('@supabase/supabase-js');
+      const caselineDB = createClient(
+        process.env.CASELINE_SUPABASE_URL!,
+        process.env.CASELINE_SUPABASE_SERVICE_KEY!,
+        { auth: { autoRefreshToken: false, persistSession: false } }
+      );
+
+      const userEmail = user.email!.toLowerCase();
+      const pkg = getPlanMapping(order.plan_name);
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + pkg.days);
+
+      // Find user in Caseline by email
+      const { data: caselineUser } = await caselineDB
+        .from('users')
+        .select('id')
+        .eq('email', userEmail)
+        .single();
+
+      if (caselineUser) {
+        // Deactivate old subscriptions
+        await caselineDB
+          .from('subscriptions')
+          .update({ status: 'expired' })
+          .eq('user_id', caselineUser.id)
+          .eq('status', 'active');
+
+        // Insert new subscription
+        await caselineDB
+          .from('subscriptions')
+          .insert({
+            user_id: caselineUser.id,
+            package_code: pkg.code,
+            package_label: pkg.label,
+            clients_allowed: pkg.clients,
+            users_allowed: pkg.users,
+            created_at: new Date().toISOString(),
+            expires_at: expiresAt.toISOString(),
+            status: 'active'
+          });
+
+        console.log('Caseline subscription created for:', userEmail, pkg.code);
+      } else {
+        console.log('Caseline user not found for:', userEmail, '- will be created on first login');
+      }
+    } catch (subErr) {
+      // Non-fatal - license still issued, user can manually refresh
+      console.error('Failed to sync Caseline subscription (non-fatal):', subErr);
     }
 
     return NextResponse.json({ success: true, licenseKey });
