@@ -82,7 +82,7 @@ export async function POST(req: NextRequest) {
     const resend = new Resend(process.env.RESEND_API_KEY);
 
     const { error: emailError } = await resend.emails.send({
-      from: process.env.EMAIL_FROM || 'Advoverse <support@advoverse.in>',
+      from: process.env.EMAIL_FROM || 'onboarding@resend.dev',
       to: normalizedEmail,
       subject: isFirstTime ? 'Set Your Caseline Password' : 'Reset Your Caseline Password',
       html: '<div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;">'
