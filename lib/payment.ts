@@ -34,9 +34,8 @@ export async function initiateRazorpayPayment(
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ planName, duration, price }),
+      body: JSON.stringify({ planName, duration, price, email: userEmail, name: userName }),
     });
 
     if (!res.ok) {

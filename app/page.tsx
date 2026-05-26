@@ -645,6 +645,7 @@ export default function AdvoverseWebsite() {
         onClose={closePaymentModal}
         planName={selectedPlan?.name || ''}
         price={selectedPrice}
+        userEmail={currentUser?.email}
         onSelectRazorpay={(pwd) => handleRazorpayPayment(pwd)}
         onSelectStripe={handleStripePayment}
         isLoading={isLoading}
