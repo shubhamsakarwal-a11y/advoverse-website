@@ -1,14 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
-import { createClient } from '@supabase/supabase-js';
+import { createAdminClient } from '@/lib/supabase/server';
 
-function getCaselineSupabase() {
-  return createClient(
-    process.env.CASELINE_SUPABASE_URL!,
-    process.env.CASELINE_SUPABASE_SERVICE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  );
-}
+
 
 export async function POST(req: NextRequest) {
   try {
@@ -20,7 +14,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: 'Password must be at least 8 characters' }, { status: 400 });
     }
 
-    const supabase = getCaselineSupabase();
+    const supabase = createAdminClient();
 
     const { data: resetToken } = await supabase
       .from('password_reset_tokens')

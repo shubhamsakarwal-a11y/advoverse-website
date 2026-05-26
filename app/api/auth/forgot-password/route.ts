@@ -1,15 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
-import { createClient } from '@supabase/supabase-js';
-import { Resend } from 'resend';
 
-function getCaselineSupabase() {
-  return createClient(
-    process.env.CASELINE_SUPABASE_URL!,
-    process.env.CASELINE_SUPABASE_SERVICE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  );
-}
+import { Resend } from 'resend';
+import { createAdminClient } from '@/lib/supabase/server';
+
+
 
 export async function POST(req: NextRequest) {
   try {
@@ -18,7 +13,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: 'Valid email required' }, { status: 400 });
     }
 
-    const supabase = getCaselineSupabase();
+    const supabase = createAdminClient();
     const normalizedEmail = email.toLowerCase().trim();
 
     const { data: user } = await supabase
