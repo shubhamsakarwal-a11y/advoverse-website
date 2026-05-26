@@ -18,19 +18,15 @@ function getPlanMapping(planName: string): { code: string; label: string; client
 
 export async function POST(req: NextRequest) {
   try {
-    // Session is optional - payment can complete without active session
+    const supabase = createAdminClient();
+
+    // Get session if available
     let sessionUserId: string | null = null;
-    let sessionUserEmail: string | null = null;
-    
     const authHeader = req.headers.get('Authorization');
     if (authHeader?.startsWith('Bearer ')) {
       try {
-        const supabase = createAdminClient();
         const { data: { user } } = await supabase.auth.getUser(authHeader.slice(7));
-        if (user) {
-          sessionUserId = user.id;
-          sessionUserEmail = user.email || null;
-        }
+        if (user) sessionUserId = user.id;
       } catch {}
     }
 
@@ -47,65 +43,93 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Signature mismatch' }, { status: 400 });
     }
 
-    const supabase = createAdminClient();
-
-    // Try to get order from DB (works if session active)
+    // Get order details from DB or Razorpay
     let planName = '';
     let orderAmount = 0;
-    let userEmail = sessionUserEmail || '';
-    let userName = userEmail;
+    let userEmail = '';
+    let userName = '';
+    let finalUserId: string = sessionUserId || '';
 
+    // Try from DB first
     if (dbOrderId && dbOrderId > 0) {
       try {
-        // Try with user_id filter first
-        const query = sessionUserId
-          ? supabase.from('orders').select('id, plan_name, amount').eq('id', dbOrderId).eq('user_id', sessionUserId).single()
-          : supabase.from('orders').select('id, plan_name, amount').eq('id', dbOrderId).single();
-        
-        const { data: order } = await query;
+        const qb = sessionUserId
+          ? supabase.from('orders').select('id, plan_name, amount, user_id').eq('id', dbOrderId).eq('user_id', sessionUserId)
+          : supabase.from('orders').select('id, plan_name, amount, user_id').eq('id', dbOrderId);
+        const { data: order } = await qb.single();
         if (order) {
           planName = order.plan_name;
           orderAmount = order.amount;
+          if (!finalUserId && order.user_id) finalUserId = order.user_id;
         }
       } catch {}
     }
 
-    // If we couldn't get from DB, get from Razorpay order notes
-    if (!planName || !userEmail) {
-      try {
-        const Razorpay = require('razorpay');
-        const rzp = new Razorpay({
-          key_id: process.env.RAZORPAY_KEY_ID!,
-          key_secret: process.env.RAZORPAY_KEY_SECRET!,
-        });
-        const rzpOrder = await rzp.orders.fetch(razorpay_order_id);
-        const notes = rzpOrder.notes || {};
-        
-        if (!planName && notes.planName) planName = notes.planName + (notes.duration ? ' (' + notes.duration + ')' : '');
-        if (!userEmail && notes.email) userEmail = notes.email;
-        if (!userName && notes.customerName) userName = notes.customerName;
-        if (!orderAmount) orderAmount = rzpOrder.amount;
-      } catch (e) {
-        console.error('Could not fetch Razorpay order notes:', e);
-      }
+    // Get email from Razorpay order notes (always available)
+    try {
+      const Razorpay = require('razorpay');
+      const rzp = new Razorpay({ key_id: process.env.RAZORPAY_KEY_ID!, key_secret: process.env.RAZORPAY_KEY_SECRET! });
+      const rzpOrder = await rzp.orders.fetch(razorpay_order_id);
+      const notes = rzpOrder.notes || {};
+      if (!planName && notes.planName) planName = notes.planName + (notes.duration ? ' (' + notes.duration + ')' : '');
+      if (notes.email) userEmail = notes.email;
+      if (notes.customerName) userName = notes.customerName;
+      if (!orderAmount) orderAmount = rzpOrder.amount;
+    } catch (e) {
+      console.error('Could not fetch Razorpay order notes:', e);
     }
 
     if (!userEmail) {
-      return NextResponse.json({ error: 'Could not determine user email from payment' }, { status: 400 });
+      return NextResponse.json({ error: 'Could not determine user email' }, { status: 400 });
     }
     if (!planName) {
-      return NextResponse.json({ error: 'Could not determine plan from payment' }, { status: 400 });
+      return NextResponse.json({ error: 'Could not determine plan' }, { status: 400 });
     }
 
-    // Get or create profile
-    if (sessionUserId) {
-      const { data: profile } = await supabase.from('profiles').select('name').eq('id', sessionUserId).single();
-      if (profile?.name) userName = profile.name;
+    // If no userId from session/order, look up by email in Supabase Auth
+    if (!finalUserId) {
+      try {
+        const { data: authUsers } = await supabase.auth.admin.listUsers({ perPage: 1000 });
+        const authUser = authUsers?.users?.find((u: any) => u.email?.toLowerCase() === userEmail.toLowerCase());
+        if (authUser) {
+          finalUserId = authUser.id;
+          if (!userName && authUser.user_metadata?.full_name) userName = authUser.user_metadata.full_name;
+        }
+      } catch {}
     }
 
-    // Issue license
+    // Fallback: create a Supabase auth user if they don't exist
+    if (!finalUserId) {
+      try {
+        const { data: newAuthUser, error: createErr } = await supabase.auth.admin.createUser({
+          email: userEmail,
+          email_confirm: true,
+          user_metadata: { name: userName || userEmail }
+        });
+        if (!createErr && newAuthUser?.user) {
+          finalUserId = newAuthUser.user.id;
+        }
+      } catch {}
+    }
+
+    if (!finalUserId) {
+      // Last resort: use email as identifier
+      finalUserId = userEmail;
+    }
+
+    // Get profile name
+    if (finalUserId && finalUserId !== userEmail) {
+      try {
+        const { data: profile } = await supabase.from('profiles').select('name').eq('id', finalUserId).single();
+        if (profile?.name) userName = profile.name;
+      } catch {}
+    }
+
+    console.log('Processing payment for:', userEmail, 'userId:', finalUserId, 'plan:', planName);
+
+    // Issue license - this creates the license record and sends email
     const licenseKey = await issueLicense({
-      userId: sessionUserId || userEmail,
+      userId: finalUserId,
       userEmail,
       userName: userName || userEmail,
       orderId: dbOrderId || Date.now(),
@@ -115,9 +139,10 @@ export async function POST(req: NextRequest) {
       gateway: 'razorpay',
     });
 
-    // Save Caseline user + subscription
+    // Sync Caseline subscription
     try {
-      const caselineSupabase = require('@supabase/supabase-js').createClient(
+      const { createClient } = require('@supabase/supabase-js');
+      const caselineDB = createClient(
         process.env.CASELINE_SUPABASE_URL!,
         process.env.CASELINE_SUPABASE_SERVICE_KEY!,
         { auth: { autoRefreshToken: false, persistSession: false } }
@@ -129,29 +154,25 @@ export async function POST(req: NextRequest) {
       expiresAt.setDate(expiresAt.getDate() + pkg.days);
 
       // Find or create caseline user
-      let { data: cu } = await caselineSupabase.from('caseline_users').select('id').eq('email', emailLower).single();
-      
+      let { data: cu } = await caselineDB.from('caseline_users').select('id').eq('email', emailLower).single();
+
       if (!cu) {
-        const passwordHash = caselinePassword && caselinePassword.length >= 8
+        const pwHash = caselinePassword?.length >= 8
           ? await bcrypt.hash(caselinePassword, 10)
           : 'SET_VIA_FORGOT_PASSWORD';
-        
-        const { data: newUser } = await caselineSupabase
+        const { data: nu } = await caselineDB
           .from('caseline_users')
-          .insert({ email: emailLower, password_hash: passwordHash, name: userName, created_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+          .insert({ email: emailLower, password_hash: pwHash, name: userName || emailLower, created_at: new Date().toISOString(), updated_at: new Date().toISOString() })
           .select('id').single();
-        cu = newUser;
-      } else if (caselinePassword && caselinePassword.length >= 8) {
-        const passwordHash = await bcrypt.hash(caselinePassword, 10);
-        await caselineSupabase.from('caseline_users').update({ password_hash: passwordHash, updated_at: new Date().toISOString() }).eq('id', cu.id);
+        cu = nu;
+      } else if (caselinePassword?.length >= 8) {
+        const pwHash = await bcrypt.hash(caselinePassword, 10);
+        await caselineDB.from('caseline_users').update({ password_hash: pwHash, updated_at: new Date().toISOString() }).eq('id', cu.id);
       }
 
       if (cu) {
-        // Deactivate old subscriptions
-        await caselineSupabase.from('caseline_subscriptions').update({ status: 'expired' }).eq('user_id', cu.id).eq('status', 'active');
-        
-        // Create new subscription
-        await caselineSupabase.from('caseline_subscriptions').insert({
+        await caselineDB.from('caseline_subscriptions').update({ status: 'expired' }).eq('user_id', cu.id).eq('status', 'active');
+        await caselineDB.from('caseline_subscriptions').insert({
           user_id: cu.id,
           package_code: pkg.code,
           package_label: pkg.label,
@@ -161,11 +182,10 @@ export async function POST(req: NextRequest) {
           expires_at: expiresAt.toISOString(),
           status: 'active'
         });
-        
-        console.log('Caseline subscription created for:', emailLower, pkg.code);
+        console.log('Caseline subscription created:', emailLower, pkg.code);
       }
     } catch (subErr) {
-      console.error('Caseline subscription sync failed (non-fatal):', subErr);
+      console.error('Caseline subscription sync (non-fatal):', subErr);
     }
 
     return NextResponse.json({ success: true, licenseKey });
