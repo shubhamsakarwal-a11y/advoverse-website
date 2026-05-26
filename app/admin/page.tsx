@@ -4,143 +4,105 @@ import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 
-interface DashboardStats {
-  totalRevenue: number;
-  activeLicenses: number;
-  totalUsers: number;
-  thisMonthRevenue: number;
-  expiringSoon: number;
+type AdminTab = 'overview' | 'users' | 'flagged' | 'removals' | 'transactions';
+
+interface AdvUser {
+  id: string;
+  email: string;
+  created_at: string;
+  provider: string;
+  full_name?: string;
 }
 
-interface RecentTransaction {
+interface CaselineUser {
   id: number;
+  email: string;
+  name: string;
   created_at: string;
-  user_email: string;
-  plan_name: string;
-  amount: number;
+  status?: string;
+  subscription?: {
+    package_label: string;
+    status: string;
+    expires_at: string;
+  } | null;
+}
+
+interface FlaggedUser {
+  id: number;
+  current_email: string;
+  previous_email: string;
+  machine_id: string;
+  flagged_at: string;
   status: string;
+  notes: string;
+}
+
+interface DeletedAccount {
+  id: number;
+  email: string;
+  name: string;
+  machine_ids: string[];
+  license_keys: string[];
+  deleted_at: string;
+  reason: string;
+}
+
+interface Stats {
+  totalRevenue: number;
+  activeLicenses: number;
+  totalAdvUsers: number;
+  totalCaselineUsers: number;
+  activeSubscriptions: number;
+  flaggedCount: number;
+  thisMonthRevenue: number;
 }
 
 export default function AdminDashboard() {
-  const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [recentTransactions, setRecentTransactions] = useState<RecentTransaction[]>([]);
+  const [tab, setTab] = useState<AdminTab>('overview');
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+
+  const [stats, setStats] = useState<Stats | null>(null);
+  const [advUsers, setAdvUsers] = useState<AdvUser[]>([]);
+  const [caselineUsers, setCaselineUsers] = useState<CaselineUser[]>([]);
+  const [flaggedUsers, setFlaggedUsers] = useState<FlaggedUser[]>([]);
+  const [deletedAccounts, setDeletedAccounts] = useState<DeletedAccount[]>([]);
+  const [transactions, setTransactions] = useState<any[]>([]);
+
+  const [userSearch, setUserSearch] = useState('');
   const router = useRouter();
 
-  useEffect(() => {
-    checkAdminAndLoadData();
-  }, []);
+  useEffect(() => { checkAndLoad(); }, []);
 
-  const checkAdminAndLoadData = async () => {
+  const checkAndLoad = async () => {
     const supabase = createClient();
     const { data: { session } } = await supabase.auth.getSession();
+    if (!session) { router.push('/'); return; }
 
-    if (!session) {
-      router.push('/');
-      return;
-    }
-
-    // Check if user is admin
     const { data: adminUser } = await supabase
       .from('admin_users')
       .select('*')
       .eq('email', session.user.email)
       .single();
-
-    if (!adminUser) {
-      alert('Access Denied: Admin privileges required');
-      router.push('/');
-      return;
-    }
-
+    if (!adminUser) { alert('Access Denied'); router.push('/'); return; }
     setIsAdmin(true);
-    await loadDashboardData();
+
+    await loadAll(session.access_token);
+    setLoading(false);
   };
 
-  const loadDashboardData = async () => {
-    const supabase = createClient();
-
-    // Get all orders
-    const { data: orders } = await supabase
-      .from('orders')
-      .select('*')
-      .eq('status', 'paid');
-
-    // Get all licenses
-    const { data: licenses } = await supabase
-      .from('licenses')
-      .select('*');
-
-    // Get all users
-    const { data: profiles } = await supabase
-      .from('profiles')
-      .select('*');
-
-    // Calculate stats
-    const totalRevenue = orders?.reduce((sum, order) => sum + (order.amount / 100), 0) || 0;
-    const activeLicenses = licenses?.filter(l => l.is_active && (!l.expires_at || new Date(l.expires_at) > new Date())).length || 0;
-    const totalUsers = profiles?.length || 0;
-
-    // This month revenue
-    const thisMonth = new Date();
-    thisMonth.setDate(1);
-    const thisMonthRevenue = orders?.filter(o => new Date(o.created_at) >= thisMonth)
-      .reduce((sum, order) => sum + (order.amount / 100), 0) || 0;
-
-    // Expiring soon (within 7 days)
-    const sevenDaysFromNow = new Date();
-    sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
-    const expiringSoon = licenses?.filter(l => 
-      l.is_active && 
-      l.expires_at && 
-      new Date(l.expires_at) <= sevenDaysFromNow &&
-      new Date(l.expires_at) > new Date()
-    ).length || 0;
-
-    setStats({
-      totalRevenue,
-      activeLicenses,
-      totalUsers,
-      thisMonthRevenue,
-      expiringSoon,
+  const loadAll = async (token: string) => {
+    const res = await fetch('/api/admin/data', {
+      headers: { Authorization: `Bearer ${token}` },
     });
-
-    // Get recent transactions with user emails
-    const { data: recentOrders } = await supabase
-      .from('orders')
-      .select(`
-        id,
-        created_at,
-        plan_name,
-        amount,
-        status,
-        profiles!orders_user_id_fkey (
-          id
-        )
-      `)
-      .eq('status', 'paid')
-      .order('created_at', { ascending: false })
-      .limit(10);
-
-    // Get user emails from auth.users
-    if (recentOrders) {
-      const userIds = recentOrders.map((o: any) => o.profiles?.id).filter(Boolean);
-      const { data: users } = await supabase.auth.admin.listUsers();
-      
-      const transactions = recentOrders.map((order: any) => ({
-        id: order.id,
-        created_at: order.created_at,
-        user_email: users?.users.find(u => u.id === order.profiles?.id)?.email || 'Unknown',
-        plan_name: order.plan_name,
-        amount: order.amount,
-        status: order.status,
-      }));
-
-      setRecentTransactions(transactions);
-    }
-
-    setLoading(false);
+    if (!res.ok) return;
+    const d = await res.json();
+    setStats(d.stats);
+    setAdvUsers(d.advUsers || []);
+    setCaselineUsers(d.caselineUsers || []);
+    setFlaggedUsers(d.flaggedUsers || []);
+    setDeletedAccounts(d.deletedAccounts || []);
+    setTransactions(d.transactions || []);
   };
 
   const handleSignOut = async () => {
@@ -149,142 +111,368 @@ export default function AdminDashboard() {
     router.push('/');
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: '#f7f4ef' }}>
-        <div className="text-center">
-          <div className="text-2xl mb-4" style={{ color: '#3b2a22' }}>Loading Admin Dashboard...</div>
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto" style={{ borderColor: '#6b4b3e' }}></div>
-        </div>
-      </div>
-    );
-  }
+  const resolveFlagged = async (id: number) => {
+    const supabase = createClient();
+    const { data: { session } } = await supabase.auth.getSession();
+    await fetch('/api/admin/flagged', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token}` },
+      body: JSON.stringify({ id, status: 'resolved' }),
+    });
+    setFlaggedUsers(f => f.map(x => x.id === id ? { ...x, status: 'resolved' } : x));
+  };
 
-  if (!isAdmin) {
-    return null;
-  }
+  if (loading) return (
+    <div style={{ minHeight: '100vh', background: '#f7f4ef', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ textAlign: 'center', color: '#3b2a22', fontSize: '22px' }}>Loading Admin Dashboard...</div>
+    </div>
+  );
+
+  if (!isAdmin) return null;
+
+  const TABS: { id: AdminTab; label: string; icon: string; badge?: number }[] = [
+    { id: 'overview',     label: 'Overview',       icon: '📊' },
+    { id: 'users',        label: 'All Users',       icon: '👥', badge: (advUsers.length + caselineUsers.length) || undefined },
+    { id: 'flagged',      label: 'Flagged',         icon: '🚩', badge: flaggedUsers.filter(f => f.status === 'pending').length || undefined },
+    { id: 'removals',     label: 'Account Removals',icon: '🗑️', badge: deletedAccounts.length || undefined },
+    { id: 'transactions', label: 'Transactions',    icon: '💳' },
+  ];
+
+  const filteredAdv = advUsers.filter(u =>
+    !userSearch || u.email.toLowerCase().includes(userSearch.toLowerCase()) || (u.full_name || '').toLowerCase().includes(userSearch.toLowerCase())
+  );
+  const filteredCaseline = caselineUsers.filter(u =>
+    !userSearch || u.email.toLowerCase().includes(userSearch.toLowerCase()) || (u.name || '').toLowerCase().includes(userSearch.toLowerCase())
+  );
 
   return (
-    <div className="min-h-screen" style={{ background: '#f7f4ef', fontFamily: 'Inter, sans-serif' }}>
-      {/* Header */}
-      <header style={{ background: '#3b2a22', padding: '20px 0', borderBottom: '2px solid #6b4b3e' }}>
-        <div className="max-w-[1400px] mx-auto px-6">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 style={{ fontFamily: 'Playfair Display, serif', fontSize: '32px', color: '#f59e0b', marginBottom: '4px' }}>
-                ⚖ Advoverse Admin
-              </h1>
-              <p style={{ color: '#d1d5db', fontSize: '14px' }}>License Management Dashboard</p>
-            </div>
-            <div className="flex items-center gap-4">
-              <a href="/" className="px-4 py-2 rounded-lg transition-colors" style={{ background: '#6b4b3e', color: 'white', textDecoration: 'none' }}>
-                View Website
-              </a>
-              <button onClick={handleSignOut} className="px-4 py-2 rounded-lg transition-colors" style={{ background: '#dc2626', color: 'white' }}>
-                Sign Out
-              </button>
-            </div>
+    <div style={{ minHeight: '100vh', background: '#f7f4ef', fontFamily: 'Inter, sans-serif' }}>
+
+      {/* HEADER */}
+      <header style={{ background: '#3b2a22', padding: '18px 0', borderBottom: '2px solid #6b4b3e' }}>
+        <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '0 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <h1 style={{ fontFamily: 'Playfair Display, serif', fontSize: '28px', color: '#f59e0b', margin: 0 }}>⚖ Advoverse Admin</h1>
+            <p style={{ color: '#d1d5db', fontSize: '13px', margin: '2px 0 0' }}>Full System Dashboard</p>
+          </div>
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <a href="/" style={{ padding: '8px 18px', background: '#6b4b3e', color: 'white', borderRadius: '8px', textDecoration: 'none', fontSize: '14px' }}>Website</a>
+            <button onClick={handleSignOut} style={{ padding: '8px 18px', background: '#dc2626', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '14px' }}>Sign Out</button>
           </div>
         </div>
       </header>
 
-      {/* Navigation */}
+      {/* TAB NAV */}
       <nav style={{ background: 'white', borderBottom: '1px solid #e5e7eb' }}>
-        <div className="max-w-[1400px] mx-auto px-6">
-          <div className="flex gap-8 py-4">
-            <a href="/admin" className="font-semibold" style={{ color: '#f59e0b', borderBottom: '2px solid #f59e0b', paddingBottom: '4px' }}>
-              Dashboard
-            </a>
-            <a href="/admin/licenses" className="transition-colors" style={{ color: '#6b7280' }} onMouseEnter={(e) => e.currentTarget.style.color = '#3b2a22'} onMouseLeave={(e) => e.currentTarget.style.color = '#6b7280'}>
-              Licenses
-            </a>
-            <a href="/admin/users" className="transition-colors" style={{ color: '#6b7280' }} onMouseEnter={(e) => e.currentTarget.style.color = '#3b2a22'} onMouseLeave={(e) => e.currentTarget.style.color = '#6b7280'}>
-              Users
-            </a>
-            <a href="/admin/sales" className="transition-colors" style={{ color: '#6b7280' }} onMouseEnter={(e) => e.currentTarget.style.color = '#3b2a22'} onMouseLeave={(e) => e.currentTarget.style.color = '#6b7280'}>
-              Sales
-            </a>
-          </div>
+        <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '0 24px', display: 'flex', gap: '4px' }}>
+          {TABS.map(t => (
+            <button key={t.id} onClick={() => setTab(t.id)}
+              style={{
+                padding: '14px 18px', border: 'none', background: 'none', cursor: 'pointer', fontSize: '14px',
+                color: tab === t.id ? '#f59e0b' : '#6b7280',
+                borderBottom: tab === t.id ? '3px solid #f59e0b' : '3px solid transparent',
+                fontWeight: tab === t.id ? 600 : 400, display: 'flex', alignItems: 'center', gap: '6px',
+              }}
+            >
+              {t.icon} {t.label}
+              {t.badge ? (
+                <span style={{ background: t.id === 'flagged' ? '#dc2626' : '#6b4b3e', color: 'white', fontSize: '11px', padding: '2px 7px', borderRadius: '10px', fontWeight: 700 }}>
+                  {t.badge}
+                </span>
+              ) : null}
+            </button>
+          ))}
         </div>
       </nav>
 
-      {/* Main Content */}
-      <main className="max-w-[1400px] mx-auto px-6 py-8">
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
-          <div className="bg-white rounded-2xl p-6 shadow-sm" style={{ border: '1px solid #e5e7eb' }}>
-            <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '8px' }}>Total Revenue</div>
-            <div style={{ fontSize: '32px', fontWeight: 700, color: '#3b2a22' }}>₹{stats?.totalRevenue.toLocaleString('en-IN')}</div>
-            <div style={{ fontSize: '12px', color: '#16a34a', marginTop: '4px' }}>All time</div>
-          </div>
+      <main style={{ maxWidth: '1400px', margin: '0 auto', padding: '32px 24px' }}>
 
-          <div className="bg-white rounded-2xl p-6 shadow-sm" style={{ border: '1px solid #e5e7eb' }}>
-            <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '8px' }}>Active Licenses</div>
-            <div style={{ fontSize: '32px', fontWeight: 700, color: '#3b2a22' }}>{stats?.activeLicenses}</div>
-            <div style={{ fontSize: '12px', color: '#16a34a', marginTop: '4px' }}>Currently active</div>
-          </div>
+        {/* ── OVERVIEW ── */}
+        {tab === 'overview' && stats && (
+          <div>
+            <h2 style={{ fontFamily: 'Playfair Display, serif', fontSize: '26px', color: '#3b2a22', marginBottom: '24px' }}>System Overview</h2>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '16px', marginBottom: '32px' }}>
+              {[
+                { label: 'Total Revenue', value: `₹${stats.totalRevenue.toLocaleString('en-IN')}`, sub: 'All time', color: '#3b2a22' },
+                { label: 'This Month', value: `₹${stats.thisMonthRevenue.toLocaleString('en-IN')}`, sub: 'Revenue', color: '#3b2a22' },
+                { label: 'Advoverse Users', value: stats.totalAdvUsers, sub: 'Google / Email', color: '#1d4ed8' },
+                { label: 'Caseline Users', value: stats.totalCaselineUsers, sub: 'Desktop app', color: '#7c3aed' },
+                { label: 'Active Licenses', value: stats.activeLicenses, sub: 'Currently active', color: '#16a34a' },
+                { label: 'Active Subscriptions', value: stats.activeSubscriptions, sub: 'Caseline plans', color: '#0891b2' },
+                { label: 'Flagged Users', value: stats.flaggedCount, sub: 'Re-registered', color: '#dc2626' },
+              ].map((s, i) => (
+                <div key={i} style={{ background: 'white', borderRadius: '14px', padding: '20px', boxShadow: '0 2px 12px rgba(0,0,0,0.05)', border: '1px solid #e5e7eb' }}>
+                  <div style={{ fontSize: '13px', color: '#6b7280', marginBottom: '6px' }}>{s.label}</div>
+                  <div style={{ fontSize: '28px', fontWeight: 700, color: s.color }}>{s.value}</div>
+                  <div style={{ fontSize: '11px', color: '#9ca3af', marginTop: '4px' }}>{s.sub}</div>
+                </div>
+              ))}
+            </div>
 
-          <div className="bg-white rounded-2xl p-6 shadow-sm" style={{ border: '1px solid #e5e7eb' }}>
-            <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '8px' }}>Total Users</div>
-            <div style={{ fontSize: '32px', fontWeight: 700, color: '#3b2a22' }}>{stats?.totalUsers}</div>
-            <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>Registered</div>
-          </div>
-
-          <div className="bg-white rounded-2xl p-6 shadow-sm" style={{ border: '1px solid #e5e7eb' }}>
-            <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '8px' }}>This Month</div>
-            <div style={{ fontSize: '32px', fontWeight: 700, color: '#3b2a22' }}>₹{stats?.thisMonthRevenue.toLocaleString('en-IN')}</div>
-            <div style={{ fontSize: '12px', color: '#16a34a', marginTop: '4px' }}>Revenue</div>
-          </div>
-
-          <div className="bg-white rounded-2xl p-6 shadow-sm" style={{ border: '1px solid #e5e7eb' }}>
-            <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '8px' }}>Expiring Soon</div>
-            <div style={{ fontSize: '32px', fontWeight: 700, color: '#dc2626' }}>{stats?.expiringSoon}</div>
-            <div style={{ fontSize: '12px', color: '#dc2626', marginTop: '4px' }}>Within 7 days</div>
-          </div>
-        </div>
-
-        {/* Recent Transactions */}
-        <div className="bg-white rounded-2xl shadow-sm" style={{ border: '1px solid #e5e7eb' }}>
-          <div className="p-6 border-b" style={{ borderColor: '#e5e7eb' }}>
-            <h2 style={{ fontSize: '20px', fontWeight: 600, color: '#3b2a22' }}>Recent Transactions</h2>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead style={{ background: '#f9fafb' }}>
-                <tr>
-                  <th className="text-left p-4" style={{ fontSize: '12px', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase' }}>Date</th>
-                  <th className="text-left p-4" style={{ fontSize: '12px', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase' }}>User</th>
-                  <th className="text-left p-4" style={{ fontSize: '12px', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase' }}>Plan</th>
-                  <th className="text-left p-4" style={{ fontSize: '12px', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase' }}>Amount</th>
-                  <th className="text-left p-4" style={{ fontSize: '12px', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase' }}>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {recentTransactions.map((transaction) => (
-                  <tr key={transaction.id} style={{ borderBottom: '1px solid #e5e7eb' }}>
-                    <td className="p-4" style={{ fontSize: '14px', color: '#3b2a22' }}>
-                      {new Date(transaction.created_at).toLocaleDateString('en-IN', { 
-                        day: '2-digit', 
-                        month: 'short', 
-                        year: 'numeric' 
-                      })}
-                    </td>
-                    <td className="p-4" style={{ fontSize: '14px', color: '#3b2a22' }}>{transaction.user_email}</td>
-                    <td className="p-4" style={{ fontSize: '14px', color: '#3b2a22' }}>{transaction.plan_name}</td>
-                    <td className="p-4" style={{ fontSize: '14px', fontWeight: 600, color: '#16a34a' }}>
-                      ₹{(transaction.amount / 100).toLocaleString('en-IN')}
-                    </td>
-                    <td className="p-4">
-                      <span className="px-3 py-1 rounded-full text-xs font-semibold" style={{ background: '#dcfce7', color: '#166534' }}>
-                        {transaction.status}
-                      </span>
-                    </td>
+            {/* Recent Transactions preview */}
+            <div style={{ background: 'white', borderRadius: '14px', boxShadow: '0 2px 12px rgba(0,0,0,0.05)', border: '1px solid #e5e7eb', overflow: 'hidden' }}>
+              <div style={{ padding: '18px 24px', borderBottom: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <h3 style={{ margin: 0, color: '#3b2a22', fontSize: '17px' }}>Recent Transactions</h3>
+                <button onClick={() => setTab('transactions')} style={{ background: 'none', border: 'none', color: '#6b4b3e', cursor: 'pointer', fontSize: '13px', fontWeight: 600 }}>View All →</button>
+              </div>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead style={{ background: '#f9fafb' }}>
+                  <tr>
+                    {['Date', 'User', 'Plan', 'Amount', 'Status'].map(h => (
+                      <th key={h} style={{ padding: '12px 16px', textAlign: 'left', fontSize: '11px', color: '#6b7280', textTransform: 'uppercase', fontWeight: 600 }}>{h}</th>
+                    ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {transactions.slice(0, 5).map((t: any) => (
+                    <tr key={t.id} style={{ borderBottom: '1px solid #f3f4f6' }}>
+                      <td style={{ padding: '12px 16px', fontSize: '13px', color: '#3b2a22' }}>{new Date(t.created_at).toLocaleDateString('en-IN')}</td>
+                      <td style={{ padding: '12px 16px', fontSize: '13px', color: '#3b2a22' }}>{t.user_email}</td>
+                      <td style={{ padding: '12px 16px', fontSize: '13px', color: '#3b2a22' }}>{t.plan_name}</td>
+                      <td style={{ padding: '12px 16px', fontSize: '13px', fontWeight: 600, color: '#16a34a' }}>₹{(t.amount / 100).toLocaleString('en-IN')}</td>
+                      <td style={{ padding: '12px 16px' }}>
+                        <span style={{ background: '#dcfce7', color: '#166534', padding: '3px 10px', borderRadius: '12px', fontSize: '11px', fontWeight: 600 }}>{t.status}</span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
+        )}
+
+        {/* ── ALL USERS ── */}
+        {tab === 'users' && (
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
+              <h2 style={{ fontFamily: 'Playfair Display, serif', fontSize: '26px', color: '#3b2a22', margin: 0 }}>All Users</h2>
+              <input
+                type="text"
+                placeholder="Search by email or name..."
+                value={userSearch}
+                onChange={e => setUserSearch(e.target.value)}
+                style={{ padding: '10px 16px', border: '2px solid #e5e7eb', borderRadius: '10px', fontSize: '14px', width: '280px', outline: 'none' }}
+              />
+            </div>
+
+            {/* Advoverse Users */}
+            <h3 style={{ color: '#1d4ed8', fontSize: '16px', marginBottom: '12px', fontWeight: 600 }}>
+              🌐 Advoverse.com Users ({filteredAdv.length})
+            </h3>
+            <div style={{ background: 'white', borderRadius: '14px', boxShadow: '0 2px 12px rgba(0,0,0,0.05)', border: '1px solid #e5e7eb', overflow: 'hidden', marginBottom: '28px' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead style={{ background: '#eff6ff' }}>
+                  <tr>
+                    {['Email', 'Name', 'Auth Provider', 'Joined'].map(h => (
+                      <th key={h} style={{ padding: '12px 16px', textAlign: 'left', fontSize: '11px', color: '#1d4ed8', textTransform: 'uppercase', fontWeight: 600 }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredAdv.map(u => (
+                    <tr key={u.id} style={{ borderBottom: '1px solid #f3f4f6' }}>
+                      <td style={{ padding: '12px 16px', fontSize: '14px', color: '#3b2a22' }}>{u.email}</td>
+                      <td style={{ padding: '12px 16px', fontSize: '14px', color: '#555' }}>{u.full_name || '—'}</td>
+                      <td style={{ padding: '12px 16px' }}>
+                        <span style={{ background: '#dbeafe', color: '#1d4ed8', padding: '3px 10px', borderRadius: '10px', fontSize: '11px', fontWeight: 600 }}>{u.provider}</span>
+                      </td>
+                      <td style={{ padding: '12px 16px', fontSize: '13px', color: '#888' }}>{new Date(u.created_at).toLocaleDateString('en-IN')}</td>
+                    </tr>
+                  ))}
+                  {filteredAdv.length === 0 && (
+                    <tr><td colSpan={4} style={{ padding: '24px', textAlign: 'center', color: '#888', fontSize: '14px' }}>No users found</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Caseline Users */}
+            <h3 style={{ color: '#7c3aed', fontSize: '16px', marginBottom: '12px', fontWeight: 600 }}>
+              🖥️ Caseline Desktop Users ({filteredCaseline.length})
+            </h3>
+            <div style={{ background: 'white', borderRadius: '14px', boxShadow: '0 2px 12px rgba(0,0,0,0.05)', border: '1px solid #e5e7eb', overflow: 'hidden' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead style={{ background: '#f5f3ff' }}>
+                  <tr>
+                    {['Email', 'Name', 'Plan', 'Plan Status', 'Plan Expiry', 'Account Status', 'Joined'].map(h => (
+                      <th key={h} style={{ padding: '12px 16px', textAlign: 'left', fontSize: '11px', color: '#7c3aed', textTransform: 'uppercase', fontWeight: 600 }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredCaseline.map(u => (
+                    <tr key={u.id} style={{ borderBottom: '1px solid #f3f4f6' }}>
+                      <td style={{ padding: '12px 16px', fontSize: '14px', color: '#3b2a22' }}>{u.email}</td>
+                      <td style={{ padding: '12px 16px', fontSize: '14px', color: '#555' }}>{u.name || '—'}</td>
+                      <td style={{ padding: '12px 16px', fontSize: '13px', color: '#3b2a22' }}>{u.subscription?.package_label || '—'}</td>
+                      <td style={{ padding: '12px 16px' }}>
+                        {u.subscription ? (
+                          <span style={{
+                            background: u.subscription.status === 'active' ? '#dcfce7' : '#fee2e2',
+                            color: u.subscription.status === 'active' ? '#166534' : '#991b1b',
+                            padding: '3px 10px', borderRadius: '10px', fontSize: '11px', fontWeight: 600
+                          }}>{u.subscription.status}</span>
+                        ) : <span style={{ color: '#888', fontSize: '13px' }}>—</span>}
+                      </td>
+                      <td style={{ padding: '12px 16px', fontSize: '13px', color: '#888' }}>
+                        {u.subscription?.expires_at ? new Date(u.subscription.expires_at).toLocaleDateString('en-IN') : '—'}
+                      </td>
+                      <td style={{ padding: '12px 16px' }}>
+                        <span style={{
+                          background: (!u.status || u.status === 'active') ? '#dcfce7' : '#fee2e2',
+                          color: (!u.status || u.status === 'active') ? '#166534' : '#991b1b',
+                          padding: '3px 10px', borderRadius: '10px', fontSize: '11px', fontWeight: 600
+                        }}>{u.status || 'active'}</span>
+                      </td>
+                      <td style={{ padding: '12px 16px', fontSize: '13px', color: '#888' }}>{new Date(u.created_at).toLocaleDateString('en-IN')}</td>
+                    </tr>
+                  ))}
+                  {filteredCaseline.length === 0 && (
+                    <tr><td colSpan={7} style={{ padding: '24px', textAlign: 'center', color: '#888', fontSize: '14px' }}>No users found</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* ── FLAGGED USERS ── */}
+        {tab === 'flagged' && (
+          <div>
+            <h2 style={{ fontFamily: 'Playfair Display, serif', fontSize: '26px', color: '#3b2a22', marginBottom: '8px' }}>Flagged Users</h2>
+            <p style={{ color: '#888', marginBottom: '24px', fontSize: '15px' }}>
+              Users who removed their account and re-registered using the same machine — potential trial abuse.
+            </p>
+            {flaggedUsers.length === 0 ? (
+              <div style={{ background: 'white', borderRadius: '14px', padding: '60px', textAlign: 'center' }}>
+                <div style={{ fontSize: '48px', marginBottom: '12px' }}>✅</div>
+                <p style={{ color: '#888' }}>No flagged users</p>
+              </div>
+            ) : (
+              <div style={{ background: 'white', borderRadius: '14px', boxShadow: '0 2px 12px rgba(0,0,0,0.05)', border: '1px solid #e5e7eb', overflow: 'hidden' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                  <thead style={{ background: '#fef2f2' }}>
+                    <tr>
+                      {['Current Email', 'Previous Email', 'Machine ID', 'Flagged On', 'Status', 'Action'].map(h => (
+                        <th key={h} style={{ padding: '12px 16px', textAlign: 'left', fontSize: '11px', color: '#dc2626', textTransform: 'uppercase', fontWeight: 600 }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {flaggedUsers.map(f => (
+                      <tr key={f.id} style={{ borderBottom: '1px solid #f3f4f6', background: f.status === 'resolved' ? '#f9fafb' : 'white' }}>
+                        <td style={{ padding: '12px 16px', fontSize: '13px', color: '#3b2a22' }}>{f.current_email}</td>
+                        <td style={{ padding: '12px 16px', fontSize: '13px', color: '#666' }}>{f.previous_email || '—'}</td>
+                        <td style={{ padding: '12px 16px', fontSize: '12px', color: '#888', fontFamily: 'monospace' }}>{f.machine_id}</td>
+                        <td style={{ padding: '12px 16px', fontSize: '13px', color: '#888' }}>{new Date(f.flagged_at).toLocaleDateString('en-IN')}</td>
+                        <td style={{ padding: '12px 16px' }}>
+                          <span style={{
+                            background: f.status === 'pending' ? '#fef3c7' : '#dcfce7',
+                            color: f.status === 'pending' ? '#92400e' : '#166534',
+                            padding: '3px 10px', borderRadius: '10px', fontSize: '11px', fontWeight: 600
+                          }}>{f.status}</span>
+                        </td>
+                        <td style={{ padding: '12px 16px' }}>
+                          {f.status === 'pending' && (
+                            <button onClick={() => resolveFlagged(f.id)}
+                              style={{ padding: '6px 14px', background: '#16a34a', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: 600 }}>
+                              Resolve
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── ACCOUNT REMOVALS ── */}
+        {tab === 'removals' && (
+          <div>
+            <h2 style={{ fontFamily: 'Playfair Display, serif', fontSize: '26px', color: '#3b2a22', marginBottom: '8px' }}>Account Removal Log</h2>
+            <p style={{ color: '#888', marginBottom: '24px', fontSize: '15px' }}>
+              All users who have removed their accounts. Machine IDs are retained to block re-trial.
+            </p>
+            {deletedAccounts.length === 0 ? (
+              <div style={{ background: 'white', borderRadius: '14px', padding: '60px', textAlign: 'center' }}>
+                <div style={{ fontSize: '48px', marginBottom: '12px' }}>📭</div>
+                <p style={{ color: '#888' }}>No account removals yet</p>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {deletedAccounts.map(d => (
+                  <div key={d.id} style={{ background: 'white', borderRadius: '14px', padding: '24px 28px', boxShadow: '0 2px 12px rgba(0,0,0,0.05)', border: '1px solid #e5e7eb' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px', marginBottom: '12px' }}>
+                      <div>
+                        <div style={{ fontWeight: 600, color: '#3b2a22', fontSize: '16px' }}>{d.email}</div>
+                        <div style={{ fontSize: '13px', color: '#888', marginTop: '2px' }}>{d.name}</div>
+                      </div>
+                      <div style={{ textAlign: 'right', fontSize: '13px', color: '#888' }}>
+                        <div>Removed: {new Date(d.deleted_at).toLocaleDateString('en-IN')}</div>
+                        <div>Reason: {d.reason}</div>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap', fontSize: '13px' }}>
+                      <div>
+                        <span style={{ color: '#888' }}>Machine IDs: </span>
+                        {d.machine_ids?.length > 0
+                          ? d.machine_ids.map((m, i) => <code key={i} style={{ background: '#f3f4f6', padding: '2px 8px', borderRadius: '4px', marginRight: '6px', fontFamily: 'monospace', fontSize: '12px' }}>{m}</code>)
+                          : <span style={{ color: '#ccc' }}>none</span>
+                        }
+                      </div>
+                      <div>
+                        <span style={{ color: '#888' }}>License Keys: </span>
+                        {d.license_keys?.length > 0
+                          ? d.license_keys.map((k, i) => <code key={i} style={{ background: '#f3f4f6', padding: '2px 8px', borderRadius: '4px', marginRight: '6px', fontFamily: 'monospace', fontSize: '12px' }}>{k}</code>)
+                          : <span style={{ color: '#ccc' }}>none</span>
+                        }
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── TRANSACTIONS ── */}
+        {tab === 'transactions' && (
+          <div>
+            <h2 style={{ fontFamily: 'Playfair Display, serif', fontSize: '26px', color: '#3b2a22', marginBottom: '24px' }}>All Transactions</h2>
+            <div style={{ background: 'white', borderRadius: '14px', boxShadow: '0 2px 12px rgba(0,0,0,0.05)', border: '1px solid #e5e7eb', overflow: 'hidden' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead style={{ background: '#f9fafb' }}>
+                  <tr>
+                    {['Date', 'User Email', 'Plan', 'Amount', 'Gateway', 'Status'].map(h => (
+                      <th key={h} style={{ padding: '14px 16px', textAlign: 'left', fontSize: '11px', color: '#6b7280', textTransform: 'uppercase', fontWeight: 600 }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {transactions.map((t: any) => (
+                    <tr key={t.id} style={{ borderBottom: '1px solid #f3f4f6' }}>
+                      <td style={{ padding: '12px 16px', fontSize: '13px', color: '#3b2a22' }}>{new Date(t.created_at).toLocaleDateString('en-IN')}</td>
+                      <td style={{ padding: '12px 16px', fontSize: '13px', color: '#3b2a22' }}>{t.user_email}</td>
+                      <td style={{ padding: '12px 16px', fontSize: '13px', color: '#3b2a22' }}>{t.plan_name}</td>
+                      <td style={{ padding: '12px 16px', fontSize: '13px', fontWeight: 600, color: '#16a34a' }}>₹{(t.amount / 100).toLocaleString('en-IN')}</td>
+                      <td style={{ padding: '12px 16px', fontSize: '13px', color: '#888' }}>{t.gateway || 'razorpay'}</td>
+                      <td style={{ padding: '12px 16px' }}>
+                        <span style={{ background: '#dcfce7', color: '#166534', padding: '3px 10px', borderRadius: '12px', fontSize: '11px', fontWeight: 600 }}>{t.status}</span>
+                      </td>
+                    </tr>
+                  ))}
+                  {transactions.length === 0 && (
+                    <tr><td colSpan={6} style={{ padding: '32px', textAlign: 'center', color: '#888' }}>No transactions found</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
       </main>
     </div>
   );

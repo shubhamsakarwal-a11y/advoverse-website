@@ -7,7 +7,7 @@ import {
   getLicenseExpired 
 } from '@/lib/email-templates';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+
 
 /**
  * Cron job to check for expiring licenses and send notifications
@@ -23,6 +23,7 @@ const resend = new Resend(process.env.RESEND_API_KEY);
  */
 export async function GET(req: NextRequest) {
   try {
+    const resend = new Resend(process.env.RESEND_API_KEY);
     // Verify cron secret (optional but recommended)
     const authHeader = req.headers.get('authorization');
     if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {

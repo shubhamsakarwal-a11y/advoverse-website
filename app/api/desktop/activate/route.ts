@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/server';
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+
 
 /**
  * Desktop app API to activate license on a machine
@@ -10,6 +10,7 @@ const resend = new Resend(process.env.RESEND_API_KEY);
  */
 export async function POST(req: NextRequest) {
   try {
+    const resend = new Resend(process.env.RESEND_API_KEY);
     const { licenseKey, machineId, machineName, ipAddress } = await req.json();
 
     if (!licenseKey || !machineId) {
