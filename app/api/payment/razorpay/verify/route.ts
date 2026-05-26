@@ -20,19 +20,6 @@ function getPlanMapping(planName: string): { code: string; label: string; client
 }
 
 
-// Map advoverse plan name to Caseline package code
-function getPlanMapping(planName: string): { code: string; label: string; clients: number; users: number; days: number } {
-  const name = planName.toLowerCase();
-  if (name.includes('exclusive')) return { code: 'EXCLUSIVE', label: 'Exclusive', clients: 999999, users: 999999, days: 30 };
-  if (name.includes('chamber pro')) return { code: 'CHAMBER_PRO', label: 'Chamber Pro', clients: 999999, users: 9, days: 30 };
-  if (name.includes('chamber lite')) return { code: 'CHAMBER_LITE', label: 'Chamber Lite', clients: 200, users: 3, days: 30 };
-  if (name.includes('chamber')) return { code: 'CHAMBER', label: 'Chamber', clients: 500, users: 6, days: 30 };
-  if (name.includes('advocate + clerk') || name.includes('advocate+clerk')) return { code: 'ADVOCATE_CLERK', label: 'Advocate + Clerk', clients: 120, users: 2, days: 30 };
-  if (name.includes('solo')) return { code: 'SOLO_ADVOCATE', label: 'Solo Advocate', clients: 60, users: 1, days: 30 };
-  // quarterly/yearly multipliers
-  const days = name.includes('yearly') ? 365 : name.includes('quarterly') ? 90 : 30;
-  return { code: 'JUNIOR_ADVOCATE', label: 'Junior Advocate', clients: 20, users: 1, days };
-}
 
 export async function POST(req: NextRequest) {
   try {
