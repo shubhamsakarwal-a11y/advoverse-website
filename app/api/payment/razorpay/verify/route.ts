@@ -4,8 +4,6 @@ import crypto from 'crypto';
 import { createAdminClient } from '@/lib/supabase/server';
 import { issueLicense } from '@/lib/issue-license';
 
-
-// Map advoverse plan name to Caseline package code
 function getPlanMapping(planName: string): { code: string; label: string; clients: number; users: number; days: number } {
   const name = planName.toLowerCase();
   if (name.includes('exclusive')) return { code: 'EXCLUSIVE', label: 'Exclusive', clients: 999999, users: 999999, days: 30 };
@@ -14,25 +12,26 @@ function getPlanMapping(planName: string): { code: string; label: string; client
   if (name.includes('chamber')) return { code: 'CHAMBER', label: 'Chamber', clients: 500, users: 6, days: 30 };
   if (name.includes('advocate + clerk') || name.includes('advocate+clerk')) return { code: 'ADVOCATE_CLERK', label: 'Advocate + Clerk', clients: 120, users: 2, days: 30 };
   if (name.includes('solo')) return { code: 'SOLO_ADVOCATE', label: 'Solo Advocate', clients: 60, users: 1, days: 30 };
-  // quarterly/yearly multipliers
   const days = name.includes('yearly') ? 365 : name.includes('quarterly') ? 90 : 30;
   return { code: 'JUNIOR_ADVOCATE', label: 'Junior Advocate', clients: 20, users: 1, days };
 }
 
-
-
 export async function POST(req: NextRequest) {
   try {
+    // Session is optional - payment can complete without active session
+    let sessionUserId: string | null = null;
+    let sessionUserEmail: string | null = null;
+    
     const authHeader = req.headers.get('Authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-    const token = authHeader.slice(7);
-
-    const supabase = createAdminClient();
-    const { data: { user }, error } = await supabase.auth.getUser(token);
-    if (error || !user) {
-      return NextResponse.json({ error: 'Invalid session' }, { status: 401 });
+    if (authHeader?.startsWith('Bearer ')) {
+      try {
+        const supabase = createAdminClient();
+        const { data: { user } } = await supabase.auth.getUser(authHeader.slice(7));
+        if (user) {
+          sessionUserId = user.id;
+          sessionUserEmail = user.email || null;
+        }
+      } catch {}
     }
 
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature, dbOrderId, caselinePassword } =
@@ -48,182 +47,131 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Signature mismatch' }, { status: 400 });
     }
 
-    // Get the order to find planName and amount
-    const { data: order } = await supabase
-      .from('orders')
-      .select('id, plan_name, amount')
-      .eq('id', dbOrderId)
-      .eq('user_id', user.id)
-      .single();
+    const supabase = createAdminClient();
 
-    if (!order) {
-      return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+    // Try to get order from DB (works if session active)
+    let planName = '';
+    let orderAmount = 0;
+    let userEmail = sessionUserEmail || '';
+    let userName = userEmail;
+
+    if (dbOrderId && dbOrderId > 0) {
+      try {
+        // Try with user_id filter first
+        const query = sessionUserId
+          ? supabase.from('orders').select('id, plan_name, amount').eq('id', dbOrderId).eq('user_id', sessionUserId).single()
+          : supabase.from('orders').select('id, plan_name, amount').eq('id', dbOrderId).single();
+        
+        const { data: order } = await query;
+        if (order) {
+          planName = order.plan_name;
+          orderAmount = order.amount;
+        }
+      } catch {}
     }
 
-    // Get user profile for name
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('name')
-      .eq('id', user.id)
-      .single();
+    // If we couldn't get from DB, get from Razorpay order notes
+    if (!planName || !userEmail) {
+      try {
+        const Razorpay = require('razorpay');
+        const rzp = new Razorpay({
+          key_id: process.env.RAZORPAY_KEY_ID!,
+          key_secret: process.env.RAZORPAY_KEY_SECRET!,
+        });
+        const rzpOrder = await rzp.orders.fetch(razorpay_order_id);
+        const notes = rzpOrder.notes || {};
+        
+        if (!planName && notes.planName) planName = notes.planName + (notes.duration ? ' (' + notes.duration + ')' : '');
+        if (!userEmail && notes.email) userEmail = notes.email;
+        if (!userName && notes.customerName) userName = notes.customerName;
+        if (!orderAmount) orderAmount = rzpOrder.amount;
+      } catch (e) {
+        console.error('Could not fetch Razorpay order notes:', e);
+      }
+    }
 
+    if (!userEmail) {
+      return NextResponse.json({ error: 'Could not determine user email from payment' }, { status: 400 });
+    }
+    if (!planName) {
+      return NextResponse.json({ error: 'Could not determine plan from payment' }, { status: 400 });
+    }
+
+    // Get or create profile
+    if (sessionUserId) {
+      const { data: profile } = await supabase.from('profiles').select('name').eq('id', sessionUserId).single();
+      if (profile?.name) userName = profile.name;
+    }
+
+    // Issue license
     const licenseKey = await issueLicense({
-      userId: user.id,
-      userEmail: user.email!,
-      userName: profile?.name || user.email!,
-      orderId: order.id,
-      planName: order.plan_name,
-      amount: order.amount,
+      userId: sessionUserId || userEmail,
+      userEmail,
+      userName: userName || userEmail,
+      orderId: dbOrderId || Date.now(),
+      planName,
+      amount: orderAmount,
       paymentId: razorpay_payment_id,
       gateway: 'razorpay',
     });
 
-    // Save Caseline password to users table (create or update)
-    if (caselinePassword && caselinePassword.length >= 8) {
-      try {
-        const passwordHash = await bcrypt.hash(caselinePassword, 10);
-        const userEmail = user.email!.toLowerCase();
-        const userName = profile?.name || user.email!;
+    // Save Caseline user + subscription
+    try {
+      const caselineSupabase = require('@supabase/supabase-js').createClient(
+        process.env.CASELINE_SUPABASE_URL!,
+        process.env.CASELINE_SUPABASE_SERVICE_KEY!,
+        { auth: { autoRefreshToken: false, persistSession: false } }
+      );
 
-        // Check if user already exists in users table
-        const { data: existingUser } = await supabase
+      const emailLower = userEmail.toLowerCase();
+      const pkg = getPlanMapping(planName);
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + pkg.days);
+
+      // Find or create caseline user
+      let { data: cu } = await caselineSupabase.from('caseline_users').select('id').eq('email', emailLower).single();
+      
+      if (!cu) {
+        const passwordHash = caselinePassword && caselinePassword.length >= 8
+          ? await bcrypt.hash(caselinePassword, 10)
+          : 'SET_VIA_FORGOT_PASSWORD';
+        
+        const { data: newUser } = await caselineSupabase
           .from('caseline_users')
-          .select('id')
-          .eq('email', userEmail)
-          .single();
-
-        if (existingUser) {
-          // Update password
-          await supabase
-            .from('caseline_users')
-            .update({ password_hash: passwordHash, updated_at: new Date().toISOString() })
-            .eq('email', userEmail);
-        } else {
-          // Create new Caseline user
-          await supabase
-            .from('caseline_users')
-            .insert({
-              email: userEmail,
-              password_hash: passwordHash,
-              name: userName,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
-            });
-        }
-        console.log('Caseline user password saved for:', userEmail);
-      } catch (pwdErr) {
-        // Non-fatal - license still issued
-        console.error('Failed to save Caseline password (non-fatal):', pwdErr);
+          .insert({ email: emailLower, password_hash: passwordHash, name: userName, created_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+          .select('id').single();
+        cu = newUser;
+      } else if (caselinePassword && caselinePassword.length >= 8) {
+        const passwordHash = await bcrypt.hash(caselinePassword, 10);
+        await caselineSupabase.from('caseline_users').update({ password_hash: passwordHash, updated_at: new Date().toISOString() }).eq('id', cu.id);
       }
-    }
 
-    // ── Write subscription to Caseline-Auth Supabase ──
-    try {
-      const { createClient } = require('@supabase/supabase-js');
-      const caselineDB = createClient(
-        process.env.CASELINE_SUPABASE_URL!,
-        process.env.CASELINE_SUPABASE_SERVICE_KEY!,
-        { auth: { autoRefreshToken: false, persistSession: false } }
-      );
-
-      const userEmail = user.email!.toLowerCase();
-      const pkg = getPlanMapping(order.plan_name);
-      const expiresAt = new Date();
-      expiresAt.setDate(expiresAt.getDate() + pkg.days);
-
-      // Find user in Caseline by email
-      const { data: caselineUser } = await caselineDB
-        .from('caseline_users')
-        .select('id')
-        .eq('email', userEmail)
-        .single();
-
-      if (caselineUser) {
+      if (cu) {
         // Deactivate old subscriptions
-        await caselineDB
-          .from('caseline_subscriptions')
-          .update({ status: 'expired' })
-          .eq('user_id', caselineUser.id)
-          .eq('status', 'active');
-
-        // Insert new subscription
-        await caselineDB
-          .from('caseline_subscriptions')
-          .insert({
-            user_id: caselineUser.id,
-            package_code: pkg.code,
-            package_label: pkg.label,
-            clients_allowed: pkg.clients,
-            users_allowed: pkg.users,
-            created_at: new Date().toISOString(),
-            expires_at: expiresAt.toISOString(),
-            status: 'active'
-          });
-
-        console.log('Caseline subscription created for:', userEmail, pkg.code);
-      } else {
-        console.log('Caseline user not found for:', userEmail, '- will be created on first login');
+        await caselineSupabase.from('caseline_subscriptions').update({ status: 'expired' }).eq('user_id', cu.id).eq('status', 'active');
+        
+        // Create new subscription
+        await caselineSupabase.from('caseline_subscriptions').insert({
+          user_id: cu.id,
+          package_code: pkg.code,
+          package_label: pkg.label,
+          clients_allowed: pkg.clients,
+          users_allowed: pkg.users,
+          created_at: new Date().toISOString(),
+          expires_at: expiresAt.toISOString(),
+          status: 'active'
+        });
+        
+        console.log('Caseline subscription created for:', emailLower, pkg.code);
       }
     } catch (subErr) {
-      // Non-fatal - license still issued, user can manually refresh
-      console.error('Failed to sync Caseline subscription (non-fatal):', subErr);
-    }
-
-    // ── Write subscription to Caseline-Auth Supabase ──
-    try {
-      const { createClient } = require('@supabase/supabase-js');
-      const caselineDB = createClient(
-        process.env.CASELINE_SUPABASE_URL!,
-        process.env.CASELINE_SUPABASE_SERVICE_KEY!,
-        { auth: { autoRefreshToken: false, persistSession: false } }
-      );
-
-      const userEmail = user.email!.toLowerCase();
-      const pkg = getPlanMapping(order.plan_name);
-      const expiresAt = new Date();
-      expiresAt.setDate(expiresAt.getDate() + pkg.days);
-
-      // Find user in Caseline by email
-      const { data: caselineUser } = await caselineDB
-        .from('caseline_users')
-        .select('id')
-        .eq('email', userEmail)
-        .single();
-
-      if (caselineUser) {
-        // Deactivate old subscriptions
-        await caselineDB
-          .from('caseline_subscriptions')
-          .update({ status: 'expired' })
-          .eq('user_id', caselineUser.id)
-          .eq('status', 'active');
-
-        // Insert new subscription
-        await caselineDB
-          .from('caseline_subscriptions')
-          .insert({
-            user_id: caselineUser.id,
-            package_code: pkg.code,
-            package_label: pkg.label,
-            clients_allowed: pkg.clients,
-            users_allowed: pkg.users,
-            created_at: new Date().toISOString(),
-            expires_at: expiresAt.toISOString(),
-            status: 'active'
-          });
-
-        console.log('Caseline subscription created for:', userEmail, pkg.code);
-      } else {
-        console.log('Caseline user not found for:', userEmail, '- will be created on first login');
-      }
-    } catch (subErr) {
-      // Non-fatal - license still issued, user can manually refresh
-      console.error('Failed to sync Caseline subscription (non-fatal):', subErr);
+      console.error('Caseline subscription sync failed (non-fatal):', subErr);
     }
 
     return NextResponse.json({ success: true, licenseKey });
+
   } catch (err) {
     console.error('Razorpay verify error:', err);
-    return NextResponse.json({ error: 'Verification failed' }, { status: 500 });
+    return NextResponse.json({ error: 'Verification failed: ' + (err instanceof Error ? err.message : String(err)) }, { status: 500 });
   }
 }
