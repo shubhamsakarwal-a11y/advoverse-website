@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
 
     // Step 1: Find the token (no join - separate queries)
     const { data: resetToken, error: tokenLookupError } = await db
-      .from('password_reset_tokens')
+      .from('caseline_password_reset_tokens')
       .select('user_id, expires_at')
       .eq('token', token)
       .single();
@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
 
     // Step 2: Check expiry
     if (new Date(resetToken.expires_at) < new Date()) {
-      await db.from('password_reset_tokens').delete().eq('token', token);
+      await db.from('caseline_password_reset_tokens').delete().eq('token', token);
       return NextResponse.json({
         success: false,
         error: 'This reset link has expired. Please request a new one.'
@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
 
     // Step 3: Verify the user exists and email matches
     const { data: user, error: userError } = await db
-      .from('users')
+      .from('caseline_users')
       .select('id, email')
       .eq('id', resetToken.user_id)
       .single();
@@ -66,7 +66,7 @@ export async function POST(req: NextRequest) {
     // Step 4: Hash and save new password
     const passwordHash = await bcrypt.hash(newPassword, 10);
     const { error: updateError } = await db
-      .from('users')
+      .from('caseline_users')
       .update({ password_hash: passwordHash, updated_at: new Date().toISOString() })
       .eq('id', resetToken.user_id);
 
@@ -75,7 +75,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Step 5: Delete used token
-    await db.from('password_reset_tokens').delete().eq('token', token);
+    await db.from('caseline_password_reset_tokens').delete().eq('token', token);
 
     return NextResponse.json({
       success: true,

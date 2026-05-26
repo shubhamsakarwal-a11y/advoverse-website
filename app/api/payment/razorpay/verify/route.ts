@@ -100,7 +100,7 @@ export async function POST(req: NextRequest) {
 
         // Check if user already exists in users table
         const { data: existingUser } = await supabase
-          .from('users')
+          .from('caseline_users')
           .select('id')
           .eq('email', userEmail)
           .single();
@@ -108,13 +108,13 @@ export async function POST(req: NextRequest) {
         if (existingUser) {
           // Update password
           await supabase
-            .from('users')
+            .from('caseline_users')
             .update({ password_hash: passwordHash, updated_at: new Date().toISOString() })
             .eq('email', userEmail);
         } else {
           // Create new Caseline user
           await supabase
-            .from('users')
+            .from('caseline_users')
             .insert({
               email: userEmail,
               password_hash: passwordHash,
@@ -146,7 +146,7 @@ export async function POST(req: NextRequest) {
 
       // Find user in Caseline by email
       const { data: caselineUser } = await caselineDB
-        .from('users')
+        .from('caseline_users')
         .select('id')
         .eq('email', userEmail)
         .single();
@@ -154,14 +154,14 @@ export async function POST(req: NextRequest) {
       if (caselineUser) {
         // Deactivate old subscriptions
         await caselineDB
-          .from('subscriptions')
+          .from('caseline_subscriptions')
           .update({ status: 'expired' })
           .eq('user_id', caselineUser.id)
           .eq('status', 'active');
 
         // Insert new subscription
         await caselineDB
-          .from('subscriptions')
+          .from('caseline_subscriptions')
           .insert({
             user_id: caselineUser.id,
             package_code: pkg.code,
@@ -198,7 +198,7 @@ export async function POST(req: NextRequest) {
 
       // Find user in Caseline by email
       const { data: caselineUser } = await caselineDB
-        .from('users')
+        .from('caseline_users')
         .select('id')
         .eq('email', userEmail)
         .single();
@@ -206,14 +206,14 @@ export async function POST(req: NextRequest) {
       if (caselineUser) {
         // Deactivate old subscriptions
         await caselineDB
-          .from('subscriptions')
+          .from('caseline_subscriptions')
           .update({ status: 'expired' })
           .eq('user_id', caselineUser.id)
           .eq('status', 'active');
 
         // Insert new subscription
         await caselineDB
-          .from('subscriptions')
+          .from('caseline_subscriptions')
           .insert({
             user_id: caselineUser.id,
             package_code: pkg.code,

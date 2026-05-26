@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
 
     // Look up user in Caseline users table
     const { data: existingUser, error: lookupError } = await db
-      .from('users')
+      .from('caseline_users')
       .select('id, name, email')
       .eq('email', normalizedEmail)
       .maybeSingle();
@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
       // Create a Caseline account for this user
       const displayName = normalizedEmail.split('@')[0];
       const { data: newUser, error: createError } = await db
-        .from('users')
+        .from('caseline_users')
         .insert({
           email: normalizedEmail,
           password_hash: 'NOT_SET_USE_RESET_LINK',
@@ -65,8 +65,8 @@ export async function POST(req: NextRequest) {
     const token = crypto.randomBytes(32).toString('hex');
     const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
 
-    await db.from('password_reset_tokens').delete().eq('user_id', userId);
-    const { error: tokenError } = await db.from('password_reset_tokens').insert({
+    await db.from('caseline_password_reset_tokens').delete().eq('user_id', userId);
+    const { error: tokenError } = await db.from('caseline_password_reset_tokens').insert({
       user_id: userId,
       token,
       expires_at: expiresAt.toISOString(),
