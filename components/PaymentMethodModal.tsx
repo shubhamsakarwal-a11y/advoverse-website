@@ -1,5 +1,4 @@
 'use client';
-import { useState, useEffect } from 'react';
 
 interface PaymentModalProps {
   isOpen: boolean;
@@ -9,14 +8,7 @@ interface PaymentModalProps {
   onSelectRazorpay: (password: string) => void;
   onSelectStripe: () => void;
   isLoading: boolean;
-  userEmail?: string;  // passed from parent if logged in
-}
-
-function generatePassword(): string {
-  const words = ['Advo', 'Case', 'Law', 'Court', 'Legal'];
-  const word = words[Math.floor(Math.random() * words.length)];
-  const num = Math.floor(1000 + Math.random() * 9000);
-  return word + num + '@';
+  userEmail?: string;
 }
 
 export function PaymentMethodModal({
@@ -29,35 +21,7 @@ export function PaymentMethodModal({
   isLoading,
   userEmail,
 }: PaymentModalProps) {
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [showPwd, setShowPwd] = useState(true); // show by default so user can see/copy
-  const [pwdError, setPwdError] = useState('');
-
-  // Auto-generate password on open
-  useEffect(() => {
-    if (isOpen) {
-      const gen = generatePassword();
-      setPassword(gen);
-      setConfirmPassword(gen);
-      setPwdError('');
-    }
-  }, [isOpen]);
-
   if (!isOpen) return null;
-
-  const handleRazorpay = () => {
-    setPwdError('');
-    if (!password || password.length < 8) {
-      setPwdError('Caseline password must be at least 8 characters.');
-      return;
-    }
-    if (password !== confirmPassword) {
-      setPwdError('Passwords do not match.');
-      return;
-    }
-    onSelectRazorpay(password);
-  };
 
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
@@ -68,52 +32,27 @@ export function PaymentMethodModal({
           <p className="text-gray-400 text-sm mt-2">
             {planName} &bull; &#8377;{price.toLocaleString('en-IN')}
           </p>
+          {userEmail && (
+            <p className="text-green-400 text-xs mt-1">Buying as: {userEmail}</p>
+          )}
         </div>
 
-        {/* Caseline Password Section */}
+        {/* Info box */}
         <div className="px-6 pt-5 pb-2">
           <div className="bg-blue-500/10 border border-blue-500/30 rounded-2xl p-4 mb-4">
-            <p className="text-blue-300 text-xs font-semibold mb-1">
-              Your Caseline login password
-            </p>
-            <p className="text-gray-400 text-xs mb-3">
-              Auto-generated below. You can keep it or type your own. It will be emailed to you.
-            </p>
-            <div className="space-y-3">
-              <div className="relative">
-                <input
-                  type={showPwd ? 'text' : 'password'}
-                  placeholder="Caseline password (min 8 chars)"
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 text-sm focus:outline-none focus:border-blue-400 pr-16 font-mono"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPwd(!showPwd)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white text-xs px-1"
-                >
-                  {showPwd ? 'Hide' : 'Show'}
-                </button>
-              </div>
-              <input
-                type={showPwd ? 'text' : 'password'}
-                placeholder="Confirm password"
-                value={confirmPassword}
-                onChange={e => setConfirmPassword(e.target.value)}
-                className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 text-sm focus:outline-none focus:border-blue-400 font-mono"
-              />
-              {pwdError && (
-                <p className="text-red-400 text-xs">{pwdError}</p>
-              )}
-            </div>
+            <p className="text-blue-300 text-xs font-semibold mb-1">After payment:</p>
+            <ul className="text-gray-300 text-xs space-y-1">
+              <li>Your Caseline subscription will activate immediately</li>
+              <li>Login to Caseline with your advoverse.com email + password</li>
+              <li>Click Refresh in Settings to see your subscription</li>
+            </ul>
           </div>
         </div>
 
         {/* Payment Options */}
         <div className="px-6 pb-4 space-y-4">
           <button
-            onClick={handleRazorpay}
+            onClick={() => onSelectRazorpay('')}
             disabled={isLoading}
             className="w-full p-4 rounded-2xl border-2 border-blue-500/50 hover:border-blue-500 bg-blue-500/10 hover:bg-blue-500/20 transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
@@ -136,7 +75,7 @@ export function PaymentMethodModal({
         <div className="px-6 pb-4">
           <div className="p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-xl">
             <p className="text-xs text-yellow-300">
-              After payment: your license key + Caseline password will be emailed to you.
+              Secure payment. Your subscription activates instantly after payment confirmation.
             </p>
           </div>
         </div>
