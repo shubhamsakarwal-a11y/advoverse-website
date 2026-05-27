@@ -1,11 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/server';
 
-/**
- * Normalize email — strips dots from Gmail local part.
- * Gmail treats mamta.sakarwal@gmail.com and mamtasakarwal@gmail.com as identical.
- * We normalize to prevent duplicate accounts.
- */
 function normalizeEmail(email: string): string {
   const lower = email.toLowerCase().trim();
   const [local, domain] = lower.split('@');
@@ -16,12 +11,6 @@ function normalizeEmail(email: string): string {
   return lower;
 }
 
-/**
- * POST /api/dashboard/ensure-caseline-user
- * Called when user visits dashboard.
- * Creates caseline_users row if it doesn't exist (allows trial login to Caseline).
- * Normalizes Gmail dots to prevent duplicate accounts.
- */
 export async function POST(req: NextRequest) {
   try {
     const authHeader = req.headers.get('Authorization');
@@ -39,33 +28,63 @@ export async function POST(req: NextRequest) {
     const normalizedEmail = normalizeEmail(rawEmail);
     const name = user.user_metadata?.full_name || user.user_metadata?.name || normalizedEmail.split('@')[0];
 
-    // Check if caseline_users row already exists (check both raw and normalized)
+    // Check if caseline_users row already exists
     const { data: existing } = await supabase
       .from('caseline_users')
-      .select('id, email')
+      .select('id, email, status')
       .or(`email.eq.${normalizedEmail},email.eq.${rawEmail.toLowerCase()}`)
       .limit(1)
       .single();
 
     if (existing) {
-      // If email is not normalized, fix it
+      const updates: any = { updated_at: new Date().toISOString() };
+
+      // Normalize email if needed
       if (existing.email !== normalizedEmail) {
-        await supabase
-          .from('caseline_users')
-          .update({ email: normalizedEmail, updated_at: new Date().toISOString() })
-          .eq('id', existing.id);
-        console.log(`Normalized email: ${existing.email} → ${normalizedEmail}`);
+        updates.email = normalizedEmail;
       }
-      return NextResponse.json({ success: true, created: false, userId: existing.id });
+
+      // KEY FIX: If user was deleted/blocked but re-registered, restore their account
+      if (existing.status === 'deleted' || existing.status === 'blocked') {
+        updates.status = 'active';
+        updates.name = name; // refresh name from new registration
+
+        // Log re-registration to flagged_users for admin awareness
+        try {
+          await supabase.from('flagged_users').insert({
+            current_email: normalizedEmail,
+            previous_email: normalizedEmail,
+            machine_id: 'RE_REGISTRATION',
+            flagged_at: new Date().toISOString(),
+            status: 'pending',
+            notes: `User re-registered after account ${existing.status}. Auto-restored to active.`,
+          });
+        } catch { /* non-fatal */ }
+
+        console.log(`[ENSURE-USER] Restored ${normalizedEmail} from ${existing.status} → active`);
+      }
+
+      // Apply updates if any
+      if (Object.keys(updates).length > 1) { // more than just updated_at
+        await supabase.from('caseline_users').update(updates).eq('id', existing.id);
+      }
+
+      return NextResponse.json({
+        success: true,
+        created: false,
+        userId: existing.id,
+        restored: existing.status === 'deleted' || existing.status === 'blocked',
+      });
     }
 
-    // Create row WITHOUT a password — user must set it via dashboard
+    // Create new row
     const { data: newUser, error: insertErr } = await supabase
       .from('caseline_users')
       .insert({
-        email: normalizedEmail,  // always store normalized
+        email: normalizedEmail,
         password_hash: 'NOT_SET_USE_DASHBOARD',
         name,
+        status: 'active',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       })
@@ -73,11 +92,9 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (insertErr) {
-      // Duplicate key = already exists (race condition) — not an error
       if (insertErr.code === '23505') {
         return NextResponse.json({ success: true, created: false });
       }
-      console.error('ensure-caseline-user error:', insertErr.message);
       return NextResponse.json({ error: insertErr.message }, { status: 500 });
     }
 

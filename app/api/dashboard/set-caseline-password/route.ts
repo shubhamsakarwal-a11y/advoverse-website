@@ -30,27 +30,32 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Password must be at least 8 characters' }, { status: 400 });
     }
 
-    // Always use normalized email
     const email = normalizeEmail(user.email!);
     const passwordHash = await bcrypt.hash(password, 10);
 
-    // Look up by normalized email OR raw email (handles existing rows)
     const { data: existing } = await supabase
       .from('caseline_users')
-      .select('id')
+      .select('id, status')
       .or(`email.eq.${email},email.eq.${user.email?.toLowerCase()}`)
       .limit(1)
       .single();
 
     if (existing) {
+      // KEY FIX: Always restore status to active when user sets a new password
+      // This handles re-registration after account removal
       await supabase
         .from('caseline_users')
         .update({
           password_hash: passwordHash,
-          email: email, // normalize on update too
-          updated_at: new Date().toISOString()
+          email,
+          status: 'active', // always restore on password set
+          updated_at: new Date().toISOString(),
         })
         .eq('id', existing.id);
+
+      if (existing.status === 'deleted' || existing.status === 'blocked') {
+        console.log(`[SET-PASSWORD] Restored ${email} from ${existing.status} → active`);
+      }
     } else {
       const name = user.user_metadata?.full_name || user.user_metadata?.name || email;
       await supabase
@@ -59,6 +64,7 @@ export async function POST(req: NextRequest) {
           email,
           password_hash: passwordHash,
           name,
+          status: 'active',
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         });
