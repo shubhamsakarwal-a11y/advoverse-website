@@ -508,7 +508,7 @@ export default function AdminDashboard() {
                     const res = await fetch('/api/admin/referral-codes', {
                       method: 'POST',
                       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-                      body: JSON.stringify({ code: newCode, discountType: newDiscountType, discountValue: parseInt(newDiscountValue), maxUses: parseInt(newMaxUses), validUntil: newValidUntil || null, notes: newCodeNotes }),
+                      body: JSON.stringify({ code: newCode, discountType: newDiscountType, discountValue: parseInt(newDiscountValue), maxUses: parseInt(newMaxUses), validUntil: newValidUntil ? newValidUntil + 'T23:59:59' : null, notes: newCodeNotes }),
                     });
                     const d = await res.json();
                     setRefLoading(false);
