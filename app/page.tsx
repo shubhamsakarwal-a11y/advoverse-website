@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { PaymentMethodModal } from '@/components/PaymentMethodModal';
+import { InvoicePreviewModal } from '@/components/InvoicePreviewModal';
 import { AuthModal } from '@/components/AuthModal';
 import { DurationSelectionModal } from '@/components/DurationSelectionModal';
 import { PricingPlan, RazorpayPaymentResponse } from '@/lib/types/payment';
@@ -80,6 +81,8 @@ export default function AdvoverseWebsite() {
   const [selectedDuration, setSelectedDuration] = useState<'monthly' | 'quarterly' | 'yearly'>('monthly');
   const [selectedPrice, setSelectedPrice] = useState<number>(0);
   const [caselinePassword, setCaselinePassword] = useState<string>('');
+  const [isInvoiceOpen, setIsInvoiceOpen] = useState(false);
+  const [invoiceData, setInvoiceData] = useState<{referralCode: string|null; discountAmount: number; finalPrice: number} | null>(null);
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
 
   // Check for logged-in user on mount
@@ -156,13 +159,27 @@ export default function AdvoverseWebsite() {
   const handleRazorpayPayment = async (password: string, referralCode?: string, discountedPrice?: number) => {
     setCaselinePassword(password);
     if (!selectedPlan || !currentUser) return;
-    setIsLoading(true);
+    setInvoiceData({
+      referralCode: referralCode || null,
+      discountAmount: discountedPrice ? (selectedPrice - discountedPrice) : 0,
+      finalPrice: discountedPrice ?? selectedPrice,
+    });
     closePaymentModal();
+    setIsInvoiceOpen(true);
+  };
+
+  const handleInvoicePay = async () => {
+    if (!selectedPlan || !currentUser || !invoiceData) return;
+    setIsLoading(true);
+    setIsInvoiceOpen(false);
+    const subtotal = invoiceData.finalPrice;
+    const gatewayFee = Math.max(1, Math.ceil(subtotal * 2.5 / 100));
+    const totalPayable = subtotal + gatewayFee;
     try {
       await initiateRazorpayPayment(
         selectedPlan.name,
         selectedDuration,
-        selectedPrice,
+        totalPayable,
         currentUser.token,
         currentUser.name,
         currentUser.email,
@@ -174,9 +191,9 @@ export default function AdvoverseWebsite() {
               response.razorpay_signature,
               dbOrderId,
               currentUser.token,
-              password
+              caselinePassword
             );
-            alert(`✅ Payment Successful!\n\nYour license key has been sent to ${currentUser.email}.\nPlease check your inbox (and spam folder).`);
+            alert(`\u2705 Payment Successful!\n\nYour license key has been sent to ${currentUser.email}.\nPlease check your inbox (and spam folder).`);
           } catch (err) {
             alert(err instanceof Error ? err.message : 'Verification failed. Contact support@advoverse.com');
           }
@@ -649,6 +666,20 @@ export default function AdvoverseWebsite() {
         onSelectRazorpay={(pwd, refCode, discPrice) => handleRazorpayPayment(pwd, refCode, discPrice)}
         onSelectStripe={handleStripePayment}
         isLoading={isLoading}
+      />
+      <InvoicePreviewModal
+        isOpen={isInvoiceOpen}
+        onClose={() => setIsInvoiceOpen(false)}
+        onPay={handleInvoicePay}
+        isLoading={isLoading}
+        userName={currentUser?.name || ''}
+        userEmail={currentUser?.email || ''}
+        planName={selectedPlan?.name || ''}
+        duration={selectedDuration}
+        baseAmount={selectedPrice}
+        discountAmount={(invoiceData && invoiceData.discountAmount) || 0}
+        referralCode={(invoiceData && invoiceData.referralCode) || null}
+        gatewayFeePercent={2.5}
       />
     </div>
   );

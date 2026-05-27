@@ -23,7 +23,7 @@ const DURATION_DAYS: Record<string, number> = {
 
 export async function POST(req: NextRequest) {
   try {
-    const { planName, duration, price, email: bodyEmail, name: bodyName } = await req.json();
+    const { planName, duration, price, email: bodyEmail, name: bodyName, referralCode } = await req.json();
 
     // Validate plan
     if (!PLAN_PRICES[planName]) {
@@ -34,7 +34,39 @@ export async function POST(req: NextRequest) {
     }
 
     const expectedPrice = PLAN_PRICES[planName][duration as 'monthly' | 'quarterly' | 'yearly'];
-    if (price !== expectedPrice) {
+
+    // If referral code provided, validate and allow discounted price
+    let finalPrice = price;
+    if (referralCode) {
+      try {
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+        const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+        const rcResp = await fetch(
+          `${supabaseUrl}/rest/v1/referral_codes?code=eq.${encodeURIComponent(referralCode.toUpperCase())}&is_active=eq.true&select=*&limit=1`,
+          { headers: { 'apikey': supabaseKey, 'Authorization': `Bearer ${supabaseKey}` } }
+        );
+        const rcRows = await rcResp.json() as any[];
+        const rc = rcRows?.[0];
+        if (rc && rc.used_count < rc.max_uses) {
+          let discount = 0;
+          if (rc.discount_type === 'percent') discount = Math.floor(expectedPrice * rc.discount_value / 100);
+          else discount = Math.min(rc.discount_value, expectedPrice - 1);
+          const discountedPrice = expectedPrice - discount;
+          // Accept either full price or correctly discounted price
+          if (price !== discountedPrice && price !== expectedPrice) {
+            return NextResponse.json({ error: 'Invalid price for referral code' }, { status: 400 });
+          }
+          finalPrice = price;
+        } else if (price !== expectedPrice) {
+          return NextResponse.json({ error: 'Invalid price' }, { status: 400 });
+        }
+      } catch (rcErr) {
+        console.error('Referral validation error:', rcErr);
+        if (price !== expectedPrice) {
+          return NextResponse.json({ error: 'Invalid price' }, { status: 400 });
+        }
+      }
+    } else if (price !== expectedPrice) {
       return NextResponse.json({ error: 'Invalid price' }, { status: 400 });
     }
 
@@ -76,7 +108,7 @@ export async function POST(req: NextRequest) {
           .insert({
             user_id: userId,
             plan_name: planName + ' (' + duration + ')',
-            amount: price * 100,
+            amount: finalPrice * 100,
             currency: 'INR',
             payment_gateway: 'razorpay',
             status: 'pending',
@@ -91,7 +123,7 @@ export async function POST(req: NextRequest) {
 
     // Create Razorpay order
     const order = await razorpay.orders.create({
-      amount: price * 100,
+      amount: finalPrice * 100,
       currency: 'INR',
       receipt: 'adv_' + Date.now(),
       notes: {
