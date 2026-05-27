@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createAdminClient } from '@/lib/supabase/server';
 
 // GET /api/referral/validate?code=LAUNCH50&amount=100
 export async function GET(req: NextRequest) {
@@ -11,13 +10,33 @@ export async function GET(req: NextRequest) {
     if (!code) return NextResponse.json({ valid: false, error: 'Code required' });
     if (!amount) return NextResponse.json({ valid: false, error: 'Amount required' });
 
-    const supabase = createAdminClient();
-    const { data: rc } = await supabase
-      .from('referral_codes')
-      .select('*')
-      .eq('code', code)
-      .eq('is_active', true)
-      .single();
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+
+    if (!supabaseUrl || !supabaseKey) {
+      console.error('referral validate: missing env vars');
+      return NextResponse.json({ valid: false, error: 'Server configuration error' });
+    }
+
+    // Direct REST fetch — no client library needed
+    const resp = await fetch(
+      `${supabaseUrl}/rest/v1/referral_codes?code=eq.${encodeURIComponent(code)}&is_active=eq.true&select=*&limit=1`,
+      {
+        headers: {
+          'apikey': supabaseKey,
+          'Authorization': `Bearer ${supabaseKey}`,
+        },
+      }
+    );
+
+    if (!resp.ok) {
+      const errText = await resp.text();
+      console.error('referral validate supabase error:', errText);
+      return NextResponse.json({ valid: false, error: 'Internal error' });
+    }
+
+    const rows = await resp.json() as any[];
+    const rc = rows?.[0];
 
     if (!rc) return NextResponse.json({ valid: false, error: 'Invalid or expired referral code' });
 
@@ -40,7 +59,8 @@ export async function GET(req: NextRequest) {
     if (rc.discount_type === 'percent') {
       discountAmount = Math.floor(amount * rc.discount_value / 100);
     } else {
-      discountAmount = Math.min(rc.discount_value, amount - 1); // never make it free
+      // flat discount in rupees
+      discountAmount = Math.min(rc.discount_value, amount - 1);
     }
 
     const discountedAmount = amount - discountAmount;
@@ -55,9 +75,10 @@ export async function GET(req: NextRequest) {
       discountedAmount,
       discountText: rc.discount_type === 'percent'
         ? `${rc.discount_value}% off`
-        : `₹${rc.discount_value} off`,
+        : `\u20B9${rc.discount_value} off`,
       usesRemaining: rc.max_uses - rc.used_count,
     });
+
   } catch (err) {
     console.error('referral validate error:', err);
     return NextResponse.json({ valid: false, error: 'Internal error' });
