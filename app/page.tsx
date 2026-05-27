@@ -82,7 +82,7 @@ export default function AdvoverseWebsite() {
   const [selectedPrice, setSelectedPrice] = useState<number>(0);
   const [caselinePassword, setCaselinePassword] = useState<string>('');
   const [isInvoiceOpen, setIsInvoiceOpen] = useState(false);
-  const [invoiceData, setInvoiceData] = useState<{referralCode: string|null; discountAmount: number; finalPrice: number; userName: string; userEmail: string; userToken: string} | null>(null);
+  const [invoiceData, setInvoiceData] = useState<{referralCode: string|null; discountAmount: number; finalPrice: number; userName: string; userEmail: string; userToken: string; planName: string; duration: string} | null>(null);
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
 
   // Check for logged-in user on mount
@@ -166,26 +166,28 @@ export default function AdvoverseWebsite() {
       userName: currentUser.name,
       userEmail: currentUser.email,
       userToken: currentUser.token,
+      planName: selectedPlan.name,
+      duration: selectedDuration,
     });
     closePaymentModal();
     setIsInvoiceOpen(true);
   };
 
   const handleInvoicePay = async () => {
-    if (!selectedPlan || !invoiceData) {
-      alert('Missing data: plan=' + !!selectedPlan + ' invoice=' + !!invoiceData);
+    if (!invoiceData) {
+      alert('Missing data: invoice=' + !!invoiceData);
       return;
     }
     setIsLoading(true);
     setIsInvoiceOpen(false);
-    console.log('[INVOICE-PAY] Starting payment: plan=' + selectedPlan.name + ' total=' + (invoiceData.finalPrice + Math.max(1, Math.ceil(invoiceData.finalPrice * 2.5 / 100))));
+    console.log('[INVOICE-PAY] Starting payment: plan=' + invoiceData.planName + ' total=' + (invoiceData.finalPrice + Math.max(1, Math.ceil(invoiceData.finalPrice * 2.5 / 100))));
     const subtotal = invoiceData.finalPrice;
     const gatewayFee = Math.max(1, Math.ceil(subtotal * 2.5 / 100));
     const totalPayable = subtotal + gatewayFee;
     try {
       await initiateRazorpayPayment(
-        selectedPlan.name,
-        selectedDuration,
+        invoiceData.planName,
+        invoiceData.duration as 'monthly' | 'quarterly' | 'yearly',
         totalPayable,
         invoiceData.userToken,
         invoiceData.userName,
