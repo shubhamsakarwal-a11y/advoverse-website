@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
       } catch {}
     }
 
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, dbOrderId, caselinePassword } =
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, dbOrderId, caselinePassword, referralCode } =
       await req.json();
 
     // Verify Razorpay signature
@@ -210,6 +210,21 @@ export async function POST(req: NextRequest) {
       }
     } catch (subErr) {
       console.error('Caseline subscription sync (non-fatal):', subErr);
+    }
+
+    // Log referral code usage if a code was applied
+    if (referralCode && userEmail && orderAmount) {
+      try {
+        const { data: rc } = await supabase.from('referral_codes').select('id, used_count, discount_type, discount_value').eq('code', referralCode.toUpperCase()).single();
+        if (rc) {
+          let discountApplied = 0;
+          if (rc.discount_type === 'percent') discountApplied = Math.floor((orderAmount / 100) * rc.discount_value);
+          else discountApplied = Math.min(rc.discount_value * 100, orderAmount - 100);
+          await supabase.from('referral_code_uses').insert({ code: referralCode.toUpperCase(), user_email: userEmail, order_id: resolvedOrderId || null, original_amount: orderAmount, discounted_amount: orderAmount - discountApplied, discount_applied: discountApplied, used_at: new Date().toISOString() });
+          await supabase.from('referral_codes').update({ used_count: rc.used_count + 1 }).eq('id', rc.id);
+          console.log('Referral code logged:', referralCode, 'discount:', discountApplied);
+        }
+      } catch (refErr) { console.error('Referral log error (non-fatal):', refErr); }
     }
 
     return NextResponse.json({ success: true, licenseKey });

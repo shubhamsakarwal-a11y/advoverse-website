@@ -153,7 +153,7 @@ export default function AdvoverseWebsite() {
     setSelectedPlan(null);
   };
 
-  const handleRazorpayPayment = async (password: string) => {
+  const handleRazorpayPayment = async (password: string, referralCode?: string, discountedPrice?: number) => {
     setCaselinePassword(password);
     if (!selectedPlan || !currentUser) return;
     setIsLoading(true);
@@ -646,7 +646,7 @@ export default function AdvoverseWebsite() {
         planName={selectedPlan?.name || ''}
         price={selectedPrice}
         userEmail={currentUser?.email}
-        onSelectRazorpay={(pwd) => handleRazorpayPayment(pwd)}
+        onSelectRazorpay={(pwd, refCode, discPrice) => handleRazorpayPayment(pwd, refCode, discPrice)}
         onSelectStripe={handleStripePayment}
         isLoading={isLoading}
       />

@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 
-type AdminTab = 'overview' | 'users' | 'flagged' | 'removals' | 'transactions';
+type AdminTab = 'overview' | 'users' | 'flagged' | 'removals' | 'transactions' | 'activate' | 'referrals';
 
 interface CaselineUser {
   id: number; email: string; name: string; created_at: string; status?: string;
@@ -30,6 +30,24 @@ export default function AdminDashboard() {
   const [transactions, setTransactions] = useState<any[]>([]);
   const [userSearch, setUserSearch] = useState('');
   const [actionLoading, setActionLoading] = useState<number | null>(null);
+  // Activate Plan state
+  const [activateEmail, setActivateEmail] = useState('');
+  const [activatePlan, setActivatePlan] = useState('JUNIOR_ADVOCATE');
+  const [activateDays, setActivateDays] = useState('30');
+  const [activateNotes, setActivateNotes] = useState('');
+  const [activateLoading, setActivateLoading] = useState(false);
+  const [activateMsg, setActivateMsg] = useState<{type:'ok'|'err';text:string}|null>(null);
+  // Referral Codes state
+  const [referralCodes, setReferralCodes] = useState<any[]>([]);
+  const [refLoading, setRefLoading] = useState(false);
+  const [newCode, setNewCode] = useState('');
+  const [newDiscountType, setNewDiscountType] = useState('percent');
+  const [newDiscountValue, setNewDiscountValue] = useState('');
+  const [newMaxUses, setNewMaxUses] = useState('100');
+  const [newValidUntil, setNewValidUntil] = useState('');
+  const [newCodeNotes, setNewCodeNotes] = useState('');
+  const [refMsg, setRefMsg] = useState<{type:'ok'|'err';text:string}|null>(null);
+  const [selectedCode, setSelectedCode] = useState<any|null>(null);
   const router = useRouter();
 
   useEffect(() => { checkAndLoad(); }, []);
@@ -349,6 +367,241 @@ export default function AdminDashboard() {
             </div>
           </div>
         )}
+
+        {/* ── ACTIVATE PLAN ── */}
+        {tab === 'activate' && (
+          <div>
+            <h2 style={{ fontFamily: 'Playfair Display, serif', fontSize: '26px', color: '#3b2a22', marginBottom: '8px' }}>⚡ Direct Plan Activation</h2>
+            <p style={{ color: '#888', marginBottom: '28px', fontSize: '15px' }}>Activate a plan for any user without payment. All activations are logged.</p>
+            <div style={{ background: 'white', borderRadius: '16px', padding: '36px', boxShadow: '0 4px 20px rgba(0,0,0,0.06)', maxWidth: '560px' }}>
+              <div style={{ marginBottom: '18px' }}>
+                <label style={{ display: 'block', fontWeight: 600, color: '#3b2a22', fontSize: '14px', marginBottom: '6px' }}>User Email *</label>
+                <input type="email" value={activateEmail} onChange={e => setActivateEmail(e.target.value)} placeholder="user@example.com"
+                  style={{ width: '100%', padding: '11px 14px', border: '2px solid #e5e7eb', borderRadius: '10px', fontSize: '14px', outline: 'none', boxSizing: 'border-box' }} />
+              </div>
+              <div style={{ marginBottom: '18px' }}>
+                <label style={{ display: 'block', fontWeight: 600, color: '#3b2a22', fontSize: '14px', marginBottom: '6px' }}>Plan *</label>
+                <select value={activatePlan} onChange={e => setActivatePlan(e.target.value)}
+                  style={{ width: '100%', padding: '11px 14px', border: '2px solid #e5e7eb', borderRadius: '10px', fontSize: '14px', outline: 'none', background: 'white' }}>
+                  <option value="JUNIOR_ADVOCATE">Junior Advocate — 20 clients, 1 user</option>
+                  <option value="SOLO_ADVOCATE">Solo Advocate — 60 clients, 1 user</option>
+                  <option value="ADVOCATE_CLERK">Advocate + Clerk — 120 clients, 2 users</option>
+                  <option value="CHAMBER_LITE">Chamber Lite — 200 clients, 3 users</option>
+                  <option value="CHAMBER">Chamber — 500 clients, 6 users</option>
+                  <option value="CHAMBER_PRO">Chamber Pro — Unlimited clients, 9 users</option>
+                  <option value="EXCLUSIVE">Exclusive — Unlimited everything</option>
+                </select>
+              </div>
+              <div style={{ marginBottom: '18px' }}>
+                <label style={{ display: 'block', fontWeight: 600, color: '#3b2a22', fontSize: '14px', marginBottom: '6px' }}>Duration *</label>
+                <select value={activateDays} onChange={e => setActivateDays(e.target.value)}
+                  style={{ width: '100%', padding: '11px 14px', border: '2px solid #e5e7eb', borderRadius: '10px', fontSize: '14px', outline: 'none', background: 'white' }}>
+                  <option value="30">30 days (1 month)</option>
+                  <option value="90">90 days (3 months)</option>
+                  <option value="180">180 days (6 months)</option>
+                  <option value="365">365 days (1 year)</option>
+                  <option value="730">730 days (2 years)</option>
+                </select>
+              </div>
+              <div style={{ marginBottom: '24px' }}>
+                <label style={{ display: 'block', fontWeight: 600, color: '#3b2a22', fontSize: '14px', marginBottom: '6px' }}>Notes (optional)</label>
+                <input type="text" value={activateNotes} onChange={e => setActivateNotes(e.target.value)} placeholder="e.g. Demo activation, Refund replacement..."
+                  style={{ width: '100%', padding: '11px 14px', border: '2px solid #e5e7eb', borderRadius: '10px', fontSize: '14px', outline: 'none', boxSizing: 'border-box' }} />
+              </div>
+              {activateMsg && (
+                <div style={{ padding: '12px 16px', borderRadius: '10px', marginBottom: '16px', fontSize: '14px', background: activateMsg.type === 'ok' ? '#dcfce7' : '#fee2e2', color: activateMsg.type === 'ok' ? '#166534' : '#991b1b' }}>
+                  {activateMsg.type === 'ok' ? '✅ ' : '❌ '}{activateMsg.text}
+                </div>
+              )}
+              <button
+                disabled={activateLoading || !activateEmail}
+                onClick={async () => {
+                  setActivateLoading(true); setActivateMsg(null);
+                  const token = await getToken();
+                  const res = await fetch('/api/admin/activate-plan', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                    body: JSON.stringify({ userEmail: activateEmail, planCode: activatePlan, durationDays: parseInt(activateDays), notes: activateNotes }),
+                  });
+                  const d = await res.json();
+                  setActivateLoading(false);
+                  if (res.ok) {
+                    setActivateMsg({ type: 'ok', text: d.message });
+                    setActivateEmail(''); setActivateNotes('');
+                  } else {
+                    setActivateMsg({ type: 'err', text: d.error || 'Activation failed' });
+                  }
+                }}
+                style={{ width: '100%', padding: '14px', background: activateLoading || !activateEmail ? '#a8927e' : '#6b4b3e', color: 'white', border: 'none', borderRadius: '10px', fontWeight: 600, fontSize: '16px', cursor: activateLoading || !activateEmail ? 'not-allowed' : 'pointer' }}
+              >
+                {activateLoading ? 'Activating...' : '⚡ Activate Plan'}
+              </button>
+              <div style={{ marginTop: '16px', padding: '12px', background: '#fef9f0', border: '1px solid #fde68a', borderRadius: '8px', fontSize: '12px', color: '#92400e' }}>
+                ⚠️ This activates the plan immediately without payment. The activation is logged with your admin email for audit purposes.
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── REFERRAL CODES ── */}
+        {tab === 'referrals' && (
+          <div>
+            <h2 style={{ fontFamily: 'Playfair Display, serif', fontSize: '26px', color: '#3b2a22', marginBottom: '8px' }}>🎟️ Referral Codes</h2>
+            <p style={{ color: '#888', marginBottom: '28px', fontSize: '15px' }}>Create discount codes for users. Track usage per code.</p>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', alignItems: 'start' }}>
+
+              {/* Create Code Form */}
+              <div style={{ background: 'white', borderRadius: '16px', padding: '28px', boxShadow: '0 4px 20px rgba(0,0,0,0.06)' }}>
+                <h3 style={{ fontSize: '17px', color: '#3b2a22', fontWeight: 600, marginBottom: '20px' }}>Create New Code</h3>
+                <div style={{ marginBottom: '14px' }}>
+                  <label style={{ display: 'block', fontWeight: 600, color: '#3b2a22', fontSize: '13px', marginBottom: '5px' }}>Code Name *</label>
+                  <input type="text" value={newCode} onChange={e => setNewCode(e.target.value.toUpperCase())} placeholder="LAUNCH50"
+                    style={{ width: '100%', padding: '10px 12px', border: '2px solid #e5e7eb', borderRadius: '8px', fontSize: '14px', fontFamily: 'monospace', letterSpacing: '2px', outline: 'none', boxSizing: 'border-box' }} />
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '14px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontWeight: 600, color: '#3b2a22', fontSize: '13px', marginBottom: '5px' }}>Discount Type *</label>
+                    <select value={newDiscountType} onChange={e => setNewDiscountType(e.target.value)}
+                      style={{ width: '100%', padding: '10px 12px', border: '2px solid #e5e7eb', borderRadius: '8px', fontSize: '13px', outline: 'none', background: 'white' }}>
+                      <option value="percent">Percentage (%)</option>
+                      <option value="flat">Flat Amount (₹)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontWeight: 600, color: '#3b2a22', fontSize: '13px', marginBottom: '5px' }}>Value *</label>
+                    <input type="number" value={newDiscountValue} onChange={e => setNewDiscountValue(e.target.value)} placeholder={newDiscountType === 'percent' ? '10' : '50'}
+                      style={{ width: '100%', padding: '10px 12px', border: '2px solid #e5e7eb', borderRadius: '8px', fontSize: '14px', outline: 'none', boxSizing: 'border-box' }} />
+                  </div>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '14px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontWeight: 600, color: '#3b2a22', fontSize: '13px', marginBottom: '5px' }}>Max Uses *</label>
+                    <input type="number" value={newMaxUses} onChange={e => setNewMaxUses(e.target.value)} placeholder="100"
+                      style={{ width: '100%', padding: '10px 12px', border: '2px solid #e5e7eb', borderRadius: '8px', fontSize: '14px', outline: 'none', boxSizing: 'border-box' }} />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontWeight: 600, color: '#3b2a22', fontSize: '13px', marginBottom: '5px' }}>Valid Until</label>
+                    <input type="date" value={newValidUntil} onChange={e => setNewValidUntil(e.target.value)}
+                      style={{ width: '100%', padding: '10px 12px', border: '2px solid #e5e7eb', borderRadius: '8px', fontSize: '13px', outline: 'none', boxSizing: 'border-box' }} />
+                  </div>
+                </div>
+                <div style={{ marginBottom: '18px' }}>
+                  <label style={{ display: 'block', fontWeight: 600, color: '#3b2a22', fontSize: '13px', marginBottom: '5px' }}>Notes</label>
+                  <input type="text" value={newCodeNotes} onChange={e => setNewCodeNotes(e.target.value)} placeholder="e.g. Launch offer for advocates"
+                    style={{ width: '100%', padding: '10px 12px', border: '2px solid #e5e7eb', borderRadius: '8px', fontSize: '13px', outline: 'none', boxSizing: 'border-box' }} />
+                </div>
+                {refMsg && (
+                  <div style={{ padding: '10px 14px', borderRadius: '8px', marginBottom: '14px', fontSize: '13px', background: refMsg.type === 'ok' ? '#dcfce7' : '#fee2e2', color: refMsg.type === 'ok' ? '#166534' : '#991b1b' }}>
+                    {refMsg.type === 'ok' ? '✅ ' : '❌ '}{refMsg.text}
+                  </div>
+                )}
+                <button
+                  disabled={refLoading || !newCode || !newDiscountValue || !newMaxUses}
+                  onClick={async () => {
+                    setRefLoading(true); setRefMsg(null);
+                    const token = await getToken();
+                    const res = await fetch('/api/admin/referral-codes', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                      body: JSON.stringify({ code: newCode, discountType: newDiscountType, discountValue: parseInt(newDiscountValue), maxUses: parseInt(newMaxUses), validUntil: newValidUntil || null, notes: newCodeNotes }),
+                    });
+                    const d = await res.json();
+                    setRefLoading(false);
+                    if (res.ok) {
+                      setRefMsg({ type: 'ok', text: `Code ${d.code?.code} created!` });
+                      setReferralCodes(prev => [d.code, ...prev]);
+                      setNewCode(''); setNewDiscountValue(''); setNewMaxUses('100'); setNewValidUntil(''); setNewCodeNotes('');
+                    } else {
+                      setRefMsg({ type: 'err', text: d.error || 'Failed to create code' });
+                    }
+                  }}
+                  style={{ width: '100%', padding: '12px', background: refLoading || !newCode || !newDiscountValue ? '#a8927e' : '#6b4b3e', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 600, fontSize: '14px', cursor: 'pointer' }}
+                >
+                  {refLoading ? 'Creating...' : '+ Create Code'}
+                </button>
+              </div>
+
+              {/* Codes List */}
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+                  <h3 style={{ fontSize: '17px', color: '#3b2a22', fontWeight: 600, margin: 0 }}>All Codes ({referralCodes.length})</h3>
+                  <button onClick={async () => {
+                    const token = await getToken();
+                    const res = await fetch('/api/admin/referral-codes', { headers: { Authorization: `Bearer ${token}` } });
+                    if (res.ok) { const d = await res.json(); setReferralCodes(d.codes || []); }
+                  }} style={{ padding: '6px 14px', background: '#f3f4f6', border: '1px solid #e5e7eb', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', color: '#6b7280' }}>
+                    🔄 Refresh
+                  </button>
+                </div>
+                {referralCodes.length === 0 ? (
+                  <div style={{ background: 'white', borderRadius: '14px', padding: '40px', textAlign: 'center', color: '#888' }}>
+                    <div style={{ fontSize: '40px', marginBottom: '10px' }}>🎟️</div>
+                    <p>No codes yet. Create one on the left.</p>
+                    <button onClick={async () => {
+                      const token = await getToken();
+                      const res = await fetch('/api/admin/referral-codes', { headers: { Authorization: `Bearer ${token}` } });
+                      if (res.ok) { const d = await res.json(); setReferralCodes(d.codes || []); }
+                    }} style={{ marginTop: '10px', padding: '8px 18px', background: '#6b4b3e', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '13px' }}>Load Codes</button>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    {referralCodes.map((c: any) => (
+                      <div key={c.id} style={{ background: 'white', borderRadius: '12px', padding: '18px 20px', boxShadow: '0 2px 10px rgba(0,0,0,0.05)', border: `2px solid ${c.is_active ? '#e5e7eb' : '#fee2e2'}`, opacity: c.is_active ? 1 : 0.7 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                          <div>
+                            <code style={{ fontSize: '18px', fontWeight: 700, color: '#3b2a22', letterSpacing: '2px' }}>{c.code}</code>
+                            <span style={{ marginLeft: '10px', background: c.discount_type === 'percent' ? '#dbeafe' : '#dcfce7', color: c.discount_type === 'percent' ? '#1d4ed8' : '#166534', padding: '2px 8px', borderRadius: '8px', fontSize: '12px', fontWeight: 600 }}>
+                              {c.discount_type === 'percent' ? `${c.discount_value}% off` : `₹${c.discount_value} off`}
+                            </span>
+                          </div>
+                          <button
+                            onClick={async () => {
+                              const token = await getToken();
+                              await fetch('/api/admin/referral-codes', { method: 'PATCH', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ id: c.id, is_active: !c.is_active }) });
+                              setReferralCodes(prev => prev.map(x => x.id === c.id ? { ...x, is_active: !c.is_active } : x));
+                            }}
+                            style={{ padding: '4px 12px', background: c.is_active ? '#fee2e2' : '#dcfce7', color: c.is_active ? '#991b1b' : '#166534', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '11px', fontWeight: 600 }}
+                          >
+                            {c.is_active ? 'Deactivate' : 'Activate'}
+                          </button>
+                        </div>
+                        <div style={{ display: 'flex', gap: '16px', fontSize: '12px', color: '#888', marginBottom: '6px' }}>
+                          <span>Uses: <strong style={{ color: c.used_count >= c.max_uses ? '#dc2626' : '#3b2a22' }}>{c.used_count}/{c.max_uses}</strong></span>
+                          {c.valid_until && <span>Expires: {new Date(c.valid_until).toLocaleDateString('en-IN')}</span>}
+                          {c.notes && <span>Note: {c.notes}</span>}
+                        </div>
+                        {/* Usage bar */}
+                        <div style={{ background: '#f3f4f6', borderRadius: '4px', height: '6px', overflow: 'hidden' }}>
+                          <div style={{ background: c.used_count >= c.max_uses ? '#dc2626' : '#6b4b3e', height: '100%', width: `${Math.min(100, (c.used_count / c.max_uses) * 100)}%`, transition: 'width 0.3s' }} />
+                        </div>
+                        {/* Usage log toggle */}
+                        {c.uses?.length > 0 && (
+                          <div style={{ marginTop: '10px' }}>
+                            <button onClick={() => setSelectedCode(selectedCode?.id === c.id ? null : c)} style={{ background: 'none', border: 'none', color: '#6b4b3e', cursor: 'pointer', fontSize: '12px', fontWeight: 600, padding: 0 }}>
+                              {selectedCode?.id === c.id ? '▲ Hide' : `▼ Show ${c.uses.length} use(s)`}
+                            </button>
+                            {selectedCode?.id === c.id && (
+                              <div style={{ marginTop: '8px', background: '#f9fafb', borderRadius: '8px', padding: '10px', maxHeight: '150px', overflowY: 'auto' }}>
+                                {c.uses.map((u: any, i: number) => (
+                                  <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#555', padding: '3px 0', borderBottom: '1px solid #e5e7eb' }}>
+                                    <span>{u.user_email}</span>
+                                    <span>₹{u.original_amount/100} → ₹{u.discounted_amount/100}</span>
+                                    <span>{new Date(u.used_at).toLocaleDateString('en-IN')}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
       </main>
     </div>
   );
