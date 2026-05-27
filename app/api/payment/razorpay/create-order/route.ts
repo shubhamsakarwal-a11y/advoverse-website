@@ -52,8 +52,10 @@ export async function POST(req: NextRequest) {
           if (rc.discount_type === 'percent') discount = Math.floor(expectedPrice * rc.discount_value / 100);
           else discount = Math.min(rc.discount_value, expectedPrice - 1);
           const discountedPrice = expectedPrice - discount;
-          // Accept either full price or correctly discounted price
-          if (price !== discountedPrice && price !== expectedPrice) {
+          // Accept discounted price OR discounted + gateway fee (2.5%)
+          const gatewayFee = Math.max(1, Math.ceil(discountedPrice * 2.5 / 100));
+          const withGatewayFee = discountedPrice + gatewayFee;
+          if (price !== discountedPrice && price !== expectedPrice && price !== withGatewayFee) {
             return NextResponse.json({ error: 'Invalid price for referral code' }, { status: 400 });
           }
           finalPrice = price;
@@ -66,8 +68,12 @@ export async function POST(req: NextRequest) {
           return NextResponse.json({ error: 'Invalid price' }, { status: 400 });
         }
       }
-    } else if (price !== expectedPrice) {
-      return NextResponse.json({ error: 'Invalid price' }, { status: 400 });
+    } else {
+      const gatewayFeeNoRef = Math.max(1, Math.ceil(expectedPrice * 2.5 / 100));
+      const withFeeNoRef = expectedPrice + gatewayFeeNoRef;
+      if (price !== expectedPrice && price !== withFeeNoRef) {
+        return NextResponse.json({ error: 'Invalid price' }, { status: 400 });
+      }
     }
 
     // Get user email — from body OR from Supabase session
