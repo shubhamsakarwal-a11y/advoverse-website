@@ -48,6 +48,7 @@ export default function DashboardPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [pwMsg, setPwMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
   const [pwLoading, setPwLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   // Account tab
   const [removeConfirm, setRemoveConfirm] = useState('');
@@ -358,25 +359,37 @@ export default function DashboardPage() {
               <form onSubmit={handleSetPassword}>
                 <div style={{ marginBottom: '20px' }}>
                   <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600, color: '#3b2a22', fontSize: '14px' }}>New Password</label>
-                  <input
-                    type="password"
-                    value={newPassword}
-                    onChange={e => setNewPassword(e.target.value)}
-                    placeholder="Minimum 8 characters"
-                    required minLength={8}
-                    style={{ width: '100%', padding: '12px 16px', border: '2px solid #e5e7eb', borderRadius: '10px', fontSize: '15px', outline: 'none', boxSizing: 'border-box' }}
-                  />
+                  <div style={{ position: 'relative' }}>
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      value={newPassword}
+                      onChange={e => setNewPassword(e.target.value)}
+                      placeholder="Minimum 8 characters"
+                      required minLength={8}
+                      style={{ width: '100%', padding: '12px 48px 12px 16px', border: '2px solid #e5e7eb', borderRadius: '10px', fontSize: '15px', outline: 'none', boxSizing: 'border-box' }}
+                    />
+                    <button type="button" onClick={() => setShowPassword(s => !s)}
+                      style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px', color: '#6b7280', padding: '4px' }}>
+                      {showPassword ? '🙈' : '👁️'}
+                    </button>
+                  </div>
                 </div>
                 <div style={{ marginBottom: '24px' }}>
                   <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600, color: '#3b2a22', fontSize: '14px' }}>Confirm Password</label>
-                  <input
-                    type="password"
-                    value={confirmPassword}
-                    onChange={e => setConfirmPassword(e.target.value)}
-                    placeholder="Repeat your password"
-                    required minLength={8}
-                    style={{ width: '100%', padding: '12px 16px', border: '2px solid #e5e7eb', borderRadius: '10px', fontSize: '15px', outline: 'none', boxSizing: 'border-box' }}
-                  />
+                  <div style={{ position: 'relative' }}>
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      value={confirmPassword}
+                      onChange={e => setConfirmPassword(e.target.value)}
+                      placeholder="Repeat your password"
+                      required minLength={8}
+                      style={{ width: '100%', padding: '12px 48px 12px 16px', border: '2px solid #e5e7eb', borderRadius: '10px', fontSize: '15px', outline: 'none', boxSizing: 'border-box' }}
+                    />
+                    <button type="button" onClick={() => setShowPassword(s => !s)}
+                      style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px', color: '#6b7280', padding: '4px' }}>
+                      {showPassword ? '🙈' : '👁️'}
+                    </button>
+                  </div>
                 </div>
                 {pwMsg && (
                   <div style={{ padding: '12px 16px', borderRadius: '10px', marginBottom: '20px', fontSize: '14px',
