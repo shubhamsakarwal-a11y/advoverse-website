@@ -82,7 +82,7 @@ export default function AdvoverseWebsite() {
   const [selectedPrice, setSelectedPrice] = useState<number>(0);
   const [caselinePassword, setCaselinePassword] = useState<string>('');
   const [isInvoiceOpen, setIsInvoiceOpen] = useState(false);
-  const [invoiceData, setInvoiceData] = useState<{referralCode: string|null; discountAmount: number; finalPrice: number} | null>(null);
+  const [invoiceData, setInvoiceData] = useState<{referralCode: string|null; discountAmount: number; finalPrice: number; userName: string; userEmail: string; userToken: string} | null>(null);
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
 
   // Check for logged-in user on mount
@@ -163,14 +163,17 @@ export default function AdvoverseWebsite() {
       referralCode: referralCode || null,
       discountAmount: discountedPrice ? (selectedPrice - discountedPrice) : 0,
       finalPrice: discountedPrice ?? selectedPrice,
+      userName: currentUser.name,
+      userEmail: currentUser.email,
+      userToken: currentUser.token,
     });
     closePaymentModal();
     setIsInvoiceOpen(true);
   };
 
   const handleInvoicePay = async () => {
-    if (!selectedPlan || !currentUser || !invoiceData) {
-      alert('Missing data: plan=' + !!selectedPlan + ' user=' + !!currentUser + ' invoice=' + !!invoiceData);
+    if (!selectedPlan || !invoiceData) {
+      alert('Missing data: plan=' + !!selectedPlan + ' invoice=' + !!invoiceData);
       return;
     }
     setIsLoading(true);
@@ -184,9 +187,9 @@ export default function AdvoverseWebsite() {
         selectedPlan.name,
         selectedDuration,
         totalPayable,
-        currentUser.token,
-        currentUser.name,
-        currentUser.email,
+        invoiceData.userToken,
+        invoiceData.userName,
+        invoiceData.userEmail,
         async (response: RazorpayPaymentResponse, dbOrderId: number) => {
           try {
             await verifyRazorpayPayment(
@@ -194,10 +197,10 @@ export default function AdvoverseWebsite() {
               response.razorpay_payment_id,
               response.razorpay_signature,
               dbOrderId,
-              currentUser.token,
+              invoiceData.userToken,
               caselinePassword
             );
-            alert(`\u2705 Payment Successful!\n\nYour license key has been sent to ${currentUser.email}.\nPlease check your inbox (and spam folder).`);
+            alert(`\u2705 Payment Successful!\n\nYour license key has been sent to ${invoiceData.userEmail}.\nPlease check your inbox (and spam folder).`);
           } catch (err) {
             alert(err instanceof Error ? err.message : 'Verification failed. Contact support@advoverse.com');
           }
