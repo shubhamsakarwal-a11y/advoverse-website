@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+export const dynamic = 'force-dynamic';
+
 // GET /api/referral/validate?code=LAUNCH50&amount=100
 export async function GET(req: NextRequest) {
   try {
@@ -80,7 +82,7 @@ export async function GET(req: NextRequest) {
     });
 
   } catch (err) {
-    console.error('referral validate error:', err);
+    console.error('referral validate error:', err instanceof Error ? err.message : String(err), err instanceof Error ? err.stack : '');
     return NextResponse.json({ valid: false, error: 'Internal error' });
   }
 }
