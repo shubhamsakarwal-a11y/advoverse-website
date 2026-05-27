@@ -69,6 +69,9 @@ export default function AdminDashboard() {
     const d = await res.json();
     setStats(d.stats); setAdvUsers(d.advUsers || []); setCaselineUsers(d.caselineUsers || []);
     setFlaggedUsers(d.flaggedUsers || []); setDeletedAccounts(d.deletedAccounts || []); setTransactions(d.transactions || []);
+    // Auto-load referral codes so they persist across logins
+    const refRes = await fetch('/api/admin/referral-codes', { headers: { Authorization: `Bearer ${token}` } });
+    if (refRes.ok) { const rd = await refRes.json(); setReferralCodes(rd.codes || []); }
   };
 
   const getToken = async () => {
