@@ -129,6 +129,8 @@ export default function AdminDashboard() {
     { id: 'flagged', label: 'Flagged', icon: '🚩', badge: flaggedUsers.filter(f => f.status === 'pending').length || undefined },
     { id: 'removals', label: 'Account Removals', icon: '🗑️', badge: deletedAccounts.length || undefined },
     { id: 'transactions', label: 'Transactions', icon: '💳' },
+    { id: 'activate', label: 'Activate Plan', icon: '⚡' },
+    { id: 'referrals', label: 'Referral Codes', icon: '🎟️' },
   ];
 
   const filteredCaseline = caselineUsers.filter(u => !userSearch || u.email.toLowerCase().includes(userSearch.toLowerCase()) || (u.name || '').toLowerCase().includes(userSearch.toLowerCase()));
