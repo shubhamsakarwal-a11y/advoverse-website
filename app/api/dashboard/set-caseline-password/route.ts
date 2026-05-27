@@ -2,6 +2,16 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/server';
 import bcrypt from 'bcryptjs';
 
+function normalizeEmail(email: string): string {
+  const lower = email.toLowerCase().trim();
+  const [local, domain] = lower.split('@');
+  if (!domain) return lower;
+  if (domain === 'gmail.com' || domain === 'googlemail.com') {
+    return local.replace(/\./g, '') + '@' + domain;
+  }
+  return lower;
+}
+
 export async function POST(req: NextRequest) {
   try {
     const authHeader = req.headers.get('Authorization');
@@ -20,28 +30,33 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Password must be at least 8 characters' }, { status: 400 });
     }
 
-    const email = user.email?.toLowerCase();
+    // Always use normalized email
+    const email = normalizeEmail(user.email!);
     const passwordHash = await bcrypt.hash(password, 10);
 
-    // Upsert caseline_users row
+    // Look up by normalized email OR raw email (handles existing rows)
     const { data: existing } = await supabase
       .from('caseline_users')
       .select('id')
-      .eq('email', email!)
+      .or(`email.eq.${email},email.eq.${user.email?.toLowerCase()}`)
+      .limit(1)
       .single();
 
     if (existing) {
       await supabase
         .from('caseline_users')
-        .update({ password_hash: passwordHash, updated_at: new Date().toISOString() })
+        .update({
+          password_hash: passwordHash,
+          email: email, // normalize on update too
+          updated_at: new Date().toISOString()
+        })
         .eq('id', existing.id);
     } else {
-      // Create caseline_users row if not exists (user may have paid without one)
-      const name = user.user_metadata?.full_name || email!;
+      const name = user.user_metadata?.full_name || user.user_metadata?.name || email;
       await supabase
         .from('caseline_users')
         .insert({
-          email: email!,
+          email,
           password_hash: passwordHash,
           name,
           created_at: new Date().toISOString(),

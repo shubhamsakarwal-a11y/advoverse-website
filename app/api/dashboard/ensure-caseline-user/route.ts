@@ -2,10 +2,25 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/server';
 
 /**
+ * Normalize email — strips dots from Gmail local part.
+ * Gmail treats mamta.sakarwal@gmail.com and mamtasakarwal@gmail.com as identical.
+ * We normalize to prevent duplicate accounts.
+ */
+function normalizeEmail(email: string): string {
+  const lower = email.toLowerCase().trim();
+  const [local, domain] = lower.split('@');
+  if (!domain) return lower;
+  if (domain === 'gmail.com' || domain === 'googlemail.com') {
+    return local.replace(/\./g, '') + '@' + domain;
+  }
+  return lower;
+}
+
+/**
  * POST /api/dashboard/ensure-caseline-user
  * Called when user visits dashboard.
  * Creates caseline_users row if it doesn't exist (allows trial login to Caseline).
- * Does NOT set a password — user must do that via the Caseline Password tab.
+ * Normalizes Gmail dots to prevent duplicate accounts.
  */
 export async function POST(req: NextRequest) {
   try {
@@ -20,18 +35,27 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
 
-    const email = user.email?.toLowerCase()!;
-    const name = user.user_metadata?.full_name || user.user_metadata?.name || email.split('@')[0];
+    const rawEmail = user.email!;
+    const normalizedEmail = normalizeEmail(rawEmail);
+    const name = user.user_metadata?.full_name || user.user_metadata?.name || normalizedEmail.split('@')[0];
 
-    // Check if caseline_users row already exists
+    // Check if caseline_users row already exists (check both raw and normalized)
     const { data: existing } = await supabase
       .from('caseline_users')
       .select('id, email')
-      .eq('email', email)
+      .or(`email.eq.${normalizedEmail},email.eq.${rawEmail.toLowerCase()}`)
+      .limit(1)
       .single();
 
     if (existing) {
-      // Already exists — nothing to do
+      // If email is not normalized, fix it
+      if (existing.email !== normalizedEmail) {
+        await supabase
+          .from('caseline_users')
+          .update({ email: normalizedEmail, updated_at: new Date().toISOString() })
+          .eq('id', existing.id);
+        console.log(`Normalized email: ${existing.email} → ${normalizedEmail}`);
+      }
       return NextResponse.json({ success: true, created: false, userId: existing.id });
     }
 
@@ -39,7 +63,7 @@ export async function POST(req: NextRequest) {
     const { data: newUser, error: insertErr } = await supabase
       .from('caseline_users')
       .insert({
-        email,
+        email: normalizedEmail,  // always store normalized
         password_hash: 'NOT_SET_USE_DASHBOARD',
         name,
         created_at: new Date().toISOString(),
