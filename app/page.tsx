@@ -169,9 +169,13 @@ export default function AdvoverseWebsite() {
   };
 
   const handleInvoicePay = async () => {
-    if (!selectedPlan || !currentUser || !invoiceData) return;
+    if (!selectedPlan || !currentUser || !invoiceData) {
+      alert('Missing data: plan=' + !!selectedPlan + ' user=' + !!currentUser + ' invoice=' + !!invoiceData);
+      return;
+    }
     setIsLoading(true);
     setIsInvoiceOpen(false);
+    console.log('[INVOICE-PAY] Starting payment: plan=' + selectedPlan.name + ' total=' + (invoiceData.finalPrice + Math.max(1, Math.ceil(invoiceData.finalPrice * 2.5 / 100))));
     const subtotal = invoiceData.finalPrice;
     const gatewayFee = Math.max(1, Math.ceil(subtotal * 2.5 / 100));
     const totalPayable = subtotal + gatewayFee;
