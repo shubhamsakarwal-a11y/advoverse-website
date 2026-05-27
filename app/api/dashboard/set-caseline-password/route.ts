@@ -12,6 +12,12 @@ function normalizeEmail(email: string): string {
   return lower;
 }
 
+function emailVariants(email: string): string[] {
+  const lower = email.toLowerCase().trim();
+  const normalized = normalizeEmail(lower);
+  return Array.from(new Set([lower, normalized]));
+}
+
 export async function POST(req: NextRequest) {
   try {
     const authHeader = req.headers.get('Authorization');
@@ -32,29 +38,31 @@ export async function POST(req: NextRequest) {
 
     const email = normalizeEmail(user.email!);
     const passwordHash = await bcrypt.hash(password, 10);
+    const variants = emailVariants(user.email!);
+    const orFilter = variants.map(v => `email.eq.${v}`).join(',');
 
     const { data: existing } = await supabase
       .from('caseline_users')
-      .select('id, status')
-      .or(`email.eq.${email},email.eq.${user.email?.toLowerCase()}`)
+      .select('id, status, email')
+      .or(orFilter)
       .limit(1)
       .single();
 
     if (existing) {
-      // KEY FIX: Always restore status to active when user sets a new password
-      // This handles re-registration after account removal
+      // Always restore status to active when setting password (handles re-registration)
+      const wasDeleted = existing.status === 'deleted' || existing.status === 'blocked';
       await supabase
         .from('caseline_users')
         .update({
           password_hash: passwordHash,
-          email,
-          status: 'active', // always restore on password set
+          email,           // normalize email
+          status: 'active', // always restore
           updated_at: new Date().toISOString(),
         })
         .eq('id', existing.id);
 
-      if (existing.status === 'deleted' || existing.status === 'blocked') {
-        console.log(`[SET-PASSWORD] Restored ${email} from ${existing.status} → active`);
+      if (wasDeleted) {
+        console.log(`[SET-PASSWORD] Restored ${existing.email} (${existing.status}) → active`);
       }
     } else {
       const name = user.user_metadata?.full_name || user.user_metadata?.name || email;

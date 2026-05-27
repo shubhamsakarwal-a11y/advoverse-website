@@ -11,6 +11,14 @@ function normalizeEmail(email: string): string {
   return lower;
 }
 
+// Generate all possible email variants to search for
+function emailVariants(email: string): string[] {
+  const lower = email.toLowerCase().trim();
+  const normalized = normalizeEmail(lower);
+  const variants = new Set([lower, normalized]);
+  return Array.from(variants);
+}
+
 export async function POST(req: NextRequest) {
   try {
     const authHeader = req.headers.get('Authorization');
@@ -27,12 +35,14 @@ export async function POST(req: NextRequest) {
     const rawEmail = user.email!;
     const normalizedEmail = normalizeEmail(rawEmail);
     const name = user.user_metadata?.full_name || user.user_metadata?.name || normalizedEmail.split('@')[0];
+    const variants = emailVariants(rawEmail);
 
-    // Check if caseline_users row already exists
+    // Search for existing row using ALL email variants
+    const orFilter = variants.map(v => `email.eq.${v}`).join(',');
     const { data: existing } = await supabase
       .from('caseline_users')
       .select('id, email, status')
-      .or(`email.eq.${normalizedEmail},email.eq.${rawEmail.toLowerCase()}`)
+      .or(orFilter)
       .limit(1)
       .single();
 
@@ -44,28 +54,27 @@ export async function POST(req: NextRequest) {
         updates.email = normalizedEmail;
       }
 
-      // KEY FIX: If user was deleted/blocked but re-registered, restore their account
+      // KEY FIX: Restore deleted/blocked accounts on re-registration
       if (existing.status === 'deleted' || existing.status === 'blocked') {
         updates.status = 'active';
-        updates.name = name; // refresh name from new registration
+        updates.name = name;
 
-        // Log re-registration to flagged_users for admin awareness
+        // Flag re-registration for admin awareness
         try {
           await supabase.from('flagged_users').insert({
             current_email: normalizedEmail,
-            previous_email: normalizedEmail,
+            previous_email: existing.email,
             machine_id: 'RE_REGISTRATION',
             flagged_at: new Date().toISOString(),
             status: 'pending',
-            notes: `User re-registered after account ${existing.status}. Auto-restored to active.`,
+            notes: `Re-registered after account was ${existing.status}. Auto-restored.`,
           });
         } catch { /* non-fatal */ }
 
-        console.log(`[ENSURE-USER] Restored ${normalizedEmail} from ${existing.status} → active`);
+        console.log(`[ENSURE-USER] Restored ${existing.email} (${existing.status}) → active`);
       }
 
-      // Apply updates if any
-      if (Object.keys(updates).length > 1) { // more than just updated_at
+      if (Object.keys(updates).length > 1) {
         await supabase.from('caseline_users').update(updates).eq('id', existing.id);
       }
 
