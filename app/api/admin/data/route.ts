@@ -43,7 +43,7 @@ export async function GET(req: NextRequest) {
       // Machines
       const { data: machines } = await supabase
         .from('caseline_machines')
-        .select('machine_id, machine_name, registered_at, last_seen')
+        .select('machine_id, machine_name, registered_at, last_active_at')
         .eq('user_id', cu.id)
         .order('registered_at', { ascending: false });
 
@@ -56,9 +56,9 @@ export async function GET(req: NextRequest) {
 
       // Last seen = most recent machine last_seen
       const lastSeen = machines?.reduce((latest: string | null, m: any) => {
-        if (!m.last_seen) return latest;
-        if (!latest) return m.last_seen;
-        return m.last_seen > latest ? m.last_seen : latest;
+        if (!m.last_active_at) return latest;
+        if (!latest) return m.last_active_at;
+        return m.last_active_at > latest ? m.last_active_at : latest;
       }, null);
 
       return {

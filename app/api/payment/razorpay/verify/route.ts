@@ -263,6 +263,59 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // 9. Create invoice record
+    try {
+      const invDate = new Date();
+      const invoiceNumber = 'ADV-' + invDate.getFullYear() + '-' + String(resolvedOrderId || Date.now()).padStart(6, '0');
+      const pkg = getPlanMapping(planName, planDuration);
+      const serviceStart = invDate.toISOString().split('T')[0];
+      const serviceEndDate = new Date(invDate);
+      serviceEndDate.setDate(serviceEndDate.getDate() + pkg.days);
+      const serviceEnd = serviceEndDate.toISOString().split('T')[0];
+
+      // Calculate amounts (orderAmount is in paise from Razorpay)
+      const totalPaise = orderAmount; // what was actually charged
+      const gatewayFeePaise = Math.max(100, Math.ceil((totalPaise / 1.025) * 0.025)); // reverse-calc fee
+      const subtotalPaise = totalPaise - gatewayFeePaise;
+      // If referral discount was applied, base = subtotal + discount
+      let discountPaise = 0;
+      let basePaise = subtotalPaise;
+      if (referralCode) {
+        try {
+          const { data: rc } = await supabase.from('referral_codes').select('discount_type, discount_value').eq('code', referralCode.toUpperCase()).single();
+          if (rc) {
+            if (rc.discount_type === 'percent') discountPaise = Math.floor(basePaise * rc.discount_value / 100);
+            else discountPaise = rc.discount_value * 100;
+            basePaise = subtotalPaise + discountPaise;
+          }
+        } catch {}
+      }
+
+      await supabase.from('invoices').insert({
+        order_id: resolvedOrderId || null,
+        invoice_number: invoiceNumber,
+        user_id: finalUserId,
+        user_email: userEmail,
+        user_name: userName || userEmail,
+        plan_name: planName,
+        duration: planDuration || 'monthly',
+        base_amount: Math.round(basePaise / 100),
+        discount_amount: Math.round(discountPaise / 100),
+        referral_code: referralCode || null,
+        subtotal: Math.round(subtotalPaise / 100),
+        gateway_fee: Math.round(gatewayFeePaise / 100),
+        total_amount: Math.round(totalPaise / 100),
+        payment_id: razorpay_payment_id,
+        payment_date: invDate.toISOString(),
+        service_start: serviceStart,
+        service_end: serviceEnd,
+        status: 'paid',
+      });
+      console.log('Invoice created:', invoiceNumber);
+    } catch (invErr) {
+      console.error('Invoice creation (non-fatal):', invErr);
+    }
+
     return NextResponse.json({ success: true, licenseKey });
 
   } catch (err) {
