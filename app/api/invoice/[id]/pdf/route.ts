@@ -38,10 +38,10 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     const cw = w - margin * 2; // content width
     let y = 20;
 
-    const navy = [26, 58, 92];
-    const gray = [102, 102, 102];
-    const black = [51, 51, 51];
-    const green = [22, 163, 74];
+    const navy: [number,number,number] = [26, 58, 92];
+    const gray: [number,number,number] = [102, 102, 102];
+    const black: [number,number,number] = [51, 51, 51];
+    const green: [number,number,number] = [22, 163, 74];
 
     // Helper
     const drawBox = (x: number, yy: number, bw: number, bh: number) => {
