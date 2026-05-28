@@ -1,5 +1,15 @@
-import { NextRequest, NextResponse } from 'next/server';
+﻿import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/server';
+
+function normalizeEmail(email: string): string {
+  const lower = email.toLowerCase().trim();
+  const [local, domain] = lower.split('@');
+  if (!domain) return lower;
+  if (domain === 'gmail.com' || domain === 'googlemail.com') {
+    return local.replace(/\./g, '') + '@' + domain;
+  }
+  return lower;
+}
 
 export async function GET(req: NextRequest) {
   try {
@@ -14,14 +24,15 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
 
-    const email = user.email?.toLowerCase();
+    const rawEmail = user.email!.toLowerCase().trim();
+    const normalizedEmail = normalizeEmail(rawEmail);
 
-    // Look up caseline_users by email
-    const caselineDB = createAdminClient();
-    const { data: cu } = await caselineDB
+    // Search both dot and normalized email variants
+    const { data: cu } = await supabase
       .from('caseline_users')
       .select('id')
-      .eq('email', email!)
+      .or(`email.eq.${rawEmail},email.eq.${normalizedEmail}`)
+      .limit(1)
       .single();
 
     if (!cu) {
@@ -29,7 +40,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Get active subscription
-    const { data: sub } = await caselineDB
+    const { data: sub } = await supabase
       .from('caseline_subscriptions')
       .select('*')
       .eq('user_id', cu.id)

@@ -1,27 +1,41 @@
-import { NextRequest, NextResponse } from 'next/server';
+﻿import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import { createAdminClient } from '@/lib/supabase/server';
 import { issueLicense } from '@/lib/issue-license';
 
-function getPlanMapping(planName: string): { code: string; label: string; clients: number; users: number; days: number } {
+function normalizeEmail(email: string): string {
+  const lower = email.toLowerCase().trim();
+  const [local, domain] = lower.split('@');
+  if (!domain) return lower;
+  if (domain === 'gmail.com' || domain === 'googlemail.com') {
+    return local.replace(/\./g, '') + '@' + domain;
+  }
+  return lower;
+}
+
+function getPlanMapping(planName: string, duration?: string): { code: string; label: string; clients: number; users: number; days: number } {
   const name = planName.toLowerCase();
-  if (name.includes('exclusive')) return { code: 'EXCLUSIVE', label: 'Exclusive', clients: 999999, users: 999999, days: 30 };
-  if (name.includes('chamber pro')) return { code: 'CHAMBER_PRO', label: 'Chamber Pro', clients: 999999, users: 9, days: 30 };
-  if (name.includes('chamber lite')) return { code: 'CHAMBER_LITE', label: 'Chamber Lite', clients: 200, users: 3, days: 30 };
-  if (name.includes('chamber')) return { code: 'CHAMBER', label: 'Chamber', clients: 500, users: 6, days: 30 };
-  if (name.includes('advocate + clerk') || name.includes('advocate+clerk')) return { code: 'ADVOCATE_CLERK', label: 'Advocate + Clerk', clients: 120, users: 2, days: 30 };
-  if (name.includes('solo')) return { code: 'SOLO_ADVOCATE', label: 'Solo Advocate', clients: 60, users: 1, days: 30 };
-  const days = name.includes('yearly') ? 365 : name.includes('quarterly') ? 90 : 30;
-  return { code: 'JUNIOR_ADVOCATE', label: 'Junior Advocate', clients: 20, users: 1, days };
+  const dur = (duration || '').toLowerCase();
+  const days = dur.includes('yearly') || name.includes('yearly') ? 365
+             : dur.includes('quarterly') || name.includes('quarterly') ? 90
+             : 30;
+
+  if (name.includes('exclusive'))    return { code: 'EXCLUSIVE',      label: 'Exclusive',        clients: 999999, users: 999999, days };
+  if (name.includes('chamber pro'))  return { code: 'CHAMBER_PRO',    label: 'Chamber Pro',      clients: 999999, users: 9,      days };
+  if (name.includes('chamber lite')) return { code: 'CHAMBER_LITE',   label: 'Chamber Lite',     clients: 200,    users: 3,      days };
+  if (name.includes('chamber'))      return { code: 'CHAMBER',        label: 'Chamber',          clients: 500,    users: 6,      days };
+  if (name.includes('advocate + clerk') || name.includes('advocate+clerk'))
+                                     return { code: 'ADVOCATE_CLERK', label: 'Advocate + Clerk', clients: 120,    users: 2,      days };
+  if (name.includes('solo'))         return { code: 'SOLO_ADVOCATE',  label: 'Solo Advocate',    clients: 60,     users: 1,      days };
+  return                                    { code: 'JUNIOR_ADVOCATE', label: 'Junior Advocate',  clients: 20,     users: 1,      days };
 }
 
 export async function POST(req: NextRequest) {
   try {
-    // Single admin client — uses NEXT_PUBLIC_SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY
     const supabase = createAdminClient();
 
-    // Get session if available
+    // Get session user if available
     let sessionUserId: string | null = null;
     const authHeader = req.headers.get('Authorization');
     if (authHeader?.startsWith('Bearer ')) {
@@ -31,8 +45,7 @@ export async function POST(req: NextRequest) {
       } catch {}
     }
 
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, dbOrderId, caselinePassword, referralCode } =
-      await req.json();
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, dbOrderId, caselinePassword, referralCode } = await req.json();
 
     // Verify Razorpay signature
     const expected = crypto
@@ -45,6 +58,7 @@ export async function POST(req: NextRequest) {
     }
 
     let planName = '';
+    let planDuration = '';
     let orderAmount = 0;
     let userEmail = '';
     let userName = '';
@@ -67,13 +81,14 @@ export async function POST(req: NextRequest) {
       } catch {}
     }
 
-    // 2. Always fetch Razorpay order notes — most reliable source of email + plan
+    // 2. Fetch Razorpay order notes — most reliable source of email + plan
     try {
       const Razorpay = require('razorpay');
       const rzp = new Razorpay({ key_id: process.env.RAZORPAY_KEY_ID!, key_secret: process.env.RAZORPAY_KEY_SECRET! });
       const rzpOrder = await rzp.orders.fetch(razorpay_order_id);
       const notes = rzpOrder.notes || {};
-      if (!planName && notes.planName) planName = notes.planName + (notes.duration ? ' (' + notes.duration + ')' : '');
+      if (notes.planName) planName = notes.planName;
+      if (notes.duration) planDuration = notes.duration;
       if (notes.email) userEmail = notes.email;
       if (notes.customerName) userName = notes.customerName;
       if (!orderAmount) orderAmount = rzpOrder.amount;
@@ -96,12 +111,8 @@ export async function POST(req: NextRequest) {
       console.error('Could not fetch Razorpay order notes:', e);
     }
 
-    if (!userEmail) {
-      return NextResponse.json({ error: 'Could not determine user email' }, { status: 400 });
-    }
-    if (!planName) {
-      return NextResponse.json({ error: 'Could not determine plan' }, { status: 400 });
-    }
+    if (!userEmail) return NextResponse.json({ error: 'Could not determine user email' }, { status: 400 });
+    if (!planName)  return NextResponse.json({ error: 'Could not determine plan' }, { status: 400 });
 
     // 3. Resolve userId from email if still missing
     if (!finalUserId) {
@@ -127,7 +138,7 @@ export async function POST(req: NextRequest) {
       } catch {}
     }
 
-    if (!finalUserId) finalUserId = userEmail; // absolute last resort
+    if (!finalUserId) finalUserId = userEmail;
 
     // 5. Get name from profile if missing
     if (!userName && finalUserId && finalUserId !== userEmail) {
@@ -137,67 +148,79 @@ export async function POST(req: NextRequest) {
       } catch {}
     }
 
-    console.log('Processing payment:', { userEmail, finalUserId, planName, resolvedOrderId });
+    console.log('Processing payment:', { userEmail, finalUserId, planName, planDuration, resolvedOrderId });
 
-    // 6. Issue license (idempotent — won't duplicate if already issued)
+    // 6. Issue license
     const licenseKey = await issueLicense({
       userId: finalUserId,
       userEmail,
       userName: userName || userEmail,
-      orderId: resolvedOrderId || Date.now(), // fallback only if truly no order
+      orderId: resolvedOrderId || Date.now(),
       planName,
       amount: orderAmount,
       paymentId: razorpay_payment_id,
       gateway: 'razorpay',
     });
 
-    // 7. Sync Caseline subscription — use SAME supabase client (same DB)
+    // 7. Sync Caseline subscription — search BOTH email variants
     try {
-      const emailLower = userEmail.toLowerCase();
-      const pkg = getPlanMapping(planName);
+      const emailNormalized = normalizeEmail(userEmail);
+      const emailRaw = userEmail.toLowerCase().trim();
+      const pkg = getPlanMapping(planName, planDuration);
       const expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + pkg.days);
 
-      // Find or create caseline_users row
-      let { data: cu } = await supabase
+      // Find existing caseline_users row by either email variant
+      const { data: cu } = await supabase
         .from('caseline_users')
-        .select('id')
-        .eq('email', emailLower)
+        .select('id, email')
+        .or(`email.eq.${emailRaw},email.eq.${emailNormalized}`)
+        .limit(1)
         .single();
 
-      if (!cu) {
+      let caselineUserId: number | null = null;
+
+      if (cu) {
+        caselineUserId = cu.id;
+        // Update password if provided
+        if (caselinePassword?.length >= 8) {
+          const pwHash = await bcrypt.hash(caselinePassword, 10);
+          await supabase
+            .from('caseline_users')
+            .update({ password_hash: pwHash, updated_at: new Date().toISOString() })
+            .eq('id', cu.id);
+        }
+      } else {
+        // Create new caseline_users row using normalized email
         const pwHash = caselinePassword?.length >= 8
           ? await bcrypt.hash(caselinePassword, 10)
-          : 'SET_VIA_FORGOT_PASSWORD';
+          : 'NOT_SET_USE_DASHBOARD';
         const { data: nu } = await supabase
           .from('caseline_users')
           .insert({
-            email: emailLower,
+            email: emailNormalized,
             password_hash: pwHash,
-            name: userName || emailLower,
+            name: userName || emailNormalized,
+            status: 'active',
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
           })
           .select('id')
           .single();
-        cu = nu;
-      } else if (caselinePassword?.length >= 8) {
-        const pwHash = await bcrypt.hash(caselinePassword, 10);
-        await supabase
-          .from('caseline_users')
-          .update({ password_hash: pwHash, updated_at: new Date().toISOString() })
-          .eq('id', cu.id);
+        if (nu) caselineUserId = nu.id;
       }
 
-      if (cu) {
+      if (caselineUserId) {
+        // Expire any existing active subscriptions
         await supabase
           .from('caseline_subscriptions')
           .update({ status: 'expired' })
-          .eq('user_id', cu.id)
+          .eq('user_id', caselineUserId)
           .eq('status', 'active');
 
+        // Insert new active subscription
         await supabase.from('caseline_subscriptions').insert({
-          user_id: cu.id,
+          user_id: caselineUserId,
           package_code: pkg.code,
           package_label: pkg.label,
           clients_allowed: pkg.clients,
@@ -206,25 +229,38 @@ export async function POST(req: NextRequest) {
           expires_at: expiresAt.toISOString(),
           status: 'active',
         });
-        console.log('Caseline subscription synced:', emailLower, pkg.code);
+        console.log('Caseline subscription synced:', emailNormalized, pkg.code, pkg.days + ' days');
       }
     } catch (subErr) {
       console.error('Caseline subscription sync (non-fatal):', subErr);
     }
 
-    // Log referral code usage if a code was applied
+    // 8. Log referral code usage
     if (referralCode && userEmail && orderAmount) {
       try {
-        const { data: rc } = await supabase.from('referral_codes').select('id, used_count, discount_type, discount_value').eq('code', referralCode.toUpperCase()).single();
+        const { data: rc } = await supabase
+          .from('referral_codes')
+          .select('id, used_count, discount_type, discount_value')
+          .eq('code', referralCode.toUpperCase())
+          .single();
         if (rc) {
           let discountApplied = 0;
           if (rc.discount_type === 'percent') discountApplied = Math.floor((orderAmount / 100) * rc.discount_value);
           else discountApplied = Math.min(rc.discount_value * 100, orderAmount - 100);
-          await supabase.from('referral_code_uses').insert({ code: referralCode.toUpperCase(), user_email: userEmail, order_id: resolvedOrderId || null, original_amount: orderAmount, discounted_amount: orderAmount - discountApplied, discount_applied: discountApplied, used_at: new Date().toISOString() });
+          await supabase.from('referral_code_uses').insert({
+            code: referralCode.toUpperCase(),
+            user_email: userEmail,
+            order_id: resolvedOrderId || null,
+            original_amount: orderAmount,
+            discounted_amount: orderAmount - discountApplied,
+            discount_applied: discountApplied,
+            used_at: new Date().toISOString(),
+          });
           await supabase.from('referral_codes').update({ used_count: rc.used_count + 1 }).eq('id', rc.id);
-          console.log('Referral code logged:', referralCode, 'discount:', discountApplied);
         }
-      } catch (refErr) { console.error('Referral log error (non-fatal):', refErr); }
+      } catch (refErr) {
+        console.error('Referral log error (non-fatal):', refErr);
+      }
     }
 
     return NextResponse.json({ success: true, licenseKey });
