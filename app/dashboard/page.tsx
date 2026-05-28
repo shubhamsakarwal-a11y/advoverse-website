@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 
-type Tab = 'plan' | 'licenses' | 'password' | 'machines' | 'account';
+type Tab = 'plan' | 'licenses' | 'password' | 'account';
 
 interface Subscription {
   package_code: string;
@@ -25,13 +25,7 @@ interface License {
   created_at: string;
 }
 
-interface Machine {
-  id: number;
-  machine_id: string;
-  machine_name: string;
-  registered_at: string;
-  last_active_at: string | null;
-}
+
 
 export default function DashboardPage() {
   const [tab, setTab] = useState<Tab>('plan');
@@ -41,7 +35,7 @@ export default function DashboardPage() {
   // Tab data
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [licenses, setLicenses] = useState<License[]>([]);
-  const [machines, setMachines] = useState<Machine[]>([]);
+
 
   // Password tab
   const [newPassword, setNewPassword] = useState('');
@@ -89,14 +83,7 @@ export default function DashboardPage() {
       .order('created_at', { ascending: false });
     setLicenses(lic || []);
 
-    // Fetch machines
-    const machRes = await fetch('/api/dashboard/machines', {
-      headers: { Authorization: `Bearer ${session.access_token}` },
-    });
-    if (machRes.ok) {
-      const d = await machRes.json();
-      setMachines(d.machines || []);
-    }
+
 
     setLoading(false);
   };
@@ -130,17 +117,7 @@ export default function DashboardPage() {
     }
   };
 
-  const handleDeregisterMachine = async (machineId: string) => {
-    if (!confirm('Remove this machine? It will need to re-activate with your license key.')) return;
-    const supabase = createClient();
-    const { data: { session } } = await supabase.auth.getSession();
-    await fetch('/api/dashboard/machines', {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token}` },
-      body: JSON.stringify({ machineId }),
-    });
-    setMachines(m => m.filter(x => x.machine_id !== machineId));
-  };
+
 
   const handleRemoveAccount = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -188,7 +165,6 @@ export default function DashboardPage() {
     { id: 'plan',     label: 'My Plan',          icon: '📋' },
     { id: 'licenses', label: 'License Keys',      icon: '🔑' },
     { id: 'password', label: 'Caseline Password', icon: '🔒' },
-    { id: 'machines', label: 'My Machines',       icon: '💻' },
     { id: 'account',  label: 'Account',           icon: '👤' },
   ];
 
@@ -420,49 +396,7 @@ export default function DashboardPage() {
         )}
 
         {/* ── TAB: MACHINES ── */}
-        {tab === 'machines' && (
-          <div>
-            <h2 style={{ fontFamily: 'Playfair Display, serif', fontSize: '28px', color: '#3b2a22', marginBottom: '8px' }}>
-              Registered Machines
-            </h2>
-            <p style={{ color: '#777', marginBottom: '28px', fontSize: '15px' }}>
-              Machines where your Caseline subscription is active.
-            </p>
-            {machines.length === 0 ? (
-              <div style={{ background: 'white', borderRadius: '16px', padding: '60px', textAlign: 'center', boxShadow: '0 4px 20px rgba(0,0,0,0.06)' }}>
-                <div style={{ fontSize: '56px', marginBottom: '16px' }}>💻</div>
-                <h3 style={{ fontFamily: 'Playfair Display, serif', fontSize: '22px', color: '#3b2a22', marginBottom: '10px' }}>No Machines Registered</h3>
-                <p style={{ color: '#888' }}>Login to Caseline on your computer to register it.</p>
-              </div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                {machines.map(m => (
-                  <div key={m.id} style={{ background: 'white', borderRadius: '14px', padding: '24px 28px', boxShadow: '0 4px 20px rgba(0,0,0,0.06)', border: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
-                    <div>
-                      <div style={{ fontWeight: 600, color: '#3b2a22', fontSize: '17px', marginBottom: '4px' }}>
-                        💻 {m.machine_name || 'Unknown Machine'}
-                      </div>
-                      <div style={{ fontSize: '13px', color: '#888', fontFamily: 'monospace' }}>{m.machine_id}</div>
-                      <div style={{ fontSize: '13px', color: '#888', marginTop: '4px' }}>
-                        Registered: {new Date(m.registered_at).toLocaleDateString('en-IN')}
-                        {m.last_seen && <> &nbsp;·&nbsp; Last seen: {new Date(m.last_seen).toLocaleDateString('en-IN')}</>}
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => handleDeregisterMachine(m.machine_id)}
-                      style={{ padding: '10px 22px', background: '#fee2e2', color: '#991b1b', border: '1px solid #fca5a5', borderRadius: '8px', fontWeight: 600, cursor: 'pointer', fontSize: '14px' }}
-                    >
-                      Remove
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* ── TAB: ACCOUNT ── */}
-        {tab === 'account' && (
+                {tab === 'account' && (
           <div>
             <h2 style={{ fontFamily: 'Playfair Display, serif', fontSize: '28px', color: '#3b2a22', marginBottom: '28px' }}>
               Account Settings
