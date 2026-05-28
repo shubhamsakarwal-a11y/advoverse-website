@@ -147,10 +147,7 @@ export default function DashboardPage() {
     }
   };
 
-  const copyKey = (key: string) => {
-    navigator.clipboard.writeText(key);
-    alert('License key copied!');
-  };
+
 
   const daysLeft = (iso: string) => {
     const d = Math.ceil((new Date(iso).getTime() - Date.now()) / 86400000);
@@ -270,7 +267,7 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* ── TAB: LICENSES ── */}
+        {/* ── TAB: INVOICES ── */}
         {tab === 'invoices' && (
           <div>
             <h2 style={{ fontFamily: 'Playfair Display, serif', fontSize: '28px', color: '#3b2a22', marginBottom: '20px' }}>
