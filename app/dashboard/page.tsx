@@ -78,7 +78,7 @@ export default function DashboardPage() {
 
     // Fetch invoices
     const invRes = await fetch('/api/invoice/list', {
-      headers: { Authorization: \`Bearer \${session.access_token}\` },
+      headers: { Authorization: `Bearer ${session.access_token}` },
     });
     if (invRes.ok) {
       const d = await invRes.json();
