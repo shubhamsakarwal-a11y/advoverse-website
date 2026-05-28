@@ -59,6 +59,11 @@ export default function DashboardPage() {
 
   useEffect(() => {
     init();
+    // Auto-open tab based on URL hash (e.g. /dashboard#password from Caseline forgot password)
+    const hash = window.location.hash.replace('#', '');
+    if (hash === 'password' || hash === 'caseline-password') {
+      setTab('password');
+    }
   }, []);
 
   const init = async () => {
