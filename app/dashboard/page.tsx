@@ -165,7 +165,7 @@ export default function DashboardPage() {
 
   const TABS: { id: Tab; label: string; icon: string }[] = [
     { id: 'plan',     label: 'My Plan',          icon: '📋' },
-    { id: 'licenses', label: 'License Keys',      icon: '🔑' },
+    { id: 'invoices',  label: 'Invoices',          icon: '🧾' },
     { id: 'password', label: 'Caseline Password', icon: '🔒' },
     { id: 'account',  label: 'Account',           icon: '👤' },
   ];
