@@ -30,7 +30,7 @@ interface Machine {
   machine_id: string;
   machine_name: string;
   registered_at: string;
-  last_seen: string | null;
+  last_active_at: string | null;
 }
 
 export default function DashboardPage() {

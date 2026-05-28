@@ -1,5 +1,15 @@
-import { NextRequest, NextResponse } from 'next/server';
+﻿import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/server';
+
+function normalizeEmail(email: string): string {
+  const lower = email.toLowerCase().trim();
+  const [local, domain] = lower.split('@');
+  if (!domain) return lower;
+  if (domain === 'gmail.com' || domain === 'googlemail.com') {
+    return local.replace(/\./g, '') + '@' + domain;
+  }
+  return lower;
+}
 
 // GET: list machines for the logged-in user
 export async function GET(req: NextRequest) {
@@ -15,13 +25,15 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
 
-    const email = user.email?.toLowerCase();
+    const rawEmail = user.email!.toLowerCase().trim();
+    const normalizedEmail = normalizeEmail(rawEmail);
 
-    // Look up caseline user
+    // Find caseline user by either email variant
     const { data: cu } = await supabase
       .from('caseline_users')
       .select('id')
-      .eq('email', email!)
+      .or(`email.eq.${rawEmail},email.eq.${normalizedEmail}`)
+      .limit(1)
       .single();
 
     if (!cu) {
@@ -30,9 +42,9 @@ export async function GET(req: NextRequest) {
 
     const { data: machines } = await supabase
       .from('caseline_machines')
-      .select('id, machine_id, machine_name, registered_at, last_seen')
+      .select('id, machine_id, machine_name, registered_at, last_active_at')
       .eq('user_id', cu.id)
-      .order('registered_at', { ascending: false });
+      .order('last_active_at', { ascending: false });
 
     return NextResponse.json({ machines: machines || [] });
   } catch (err) {
@@ -60,12 +72,14 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: 'machineId required' }, { status: 400 });
     }
 
-    const email = user.email?.toLowerCase();
+    const rawEmail = user.email!.toLowerCase().trim();
+    const normalizedEmail = normalizeEmail(rawEmail);
 
     const { data: cu } = await supabase
       .from('caseline_users')
       .select('id')
-      .eq('email', email!)
+      .or(`email.eq.${rawEmail},email.eq.${normalizedEmail}`)
+      .limit(1)
       .single();
 
     if (!cu) {
