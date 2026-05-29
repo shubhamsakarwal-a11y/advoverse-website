@@ -26,9 +26,13 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 
     if (!inv) return NextResponse.json({ error: 'Invoice not found' }, { status: 404 });
 
-    // Security: only allow owner or admin
+    // Security: allow owner OR admin
     if (inv.user_id !== user.id && inv.user_email !== user.email) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      // Check if user is admin
+      const { data: adminUser } = await supabase.from('admin_users').select('id').eq('email', user.email).single();
+      if (!adminUser) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      }
     }
 
     // Generate PDF
