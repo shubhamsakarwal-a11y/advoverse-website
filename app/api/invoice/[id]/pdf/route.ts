@@ -151,7 +151,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     doc.text('Advoverse', margin + 5, y + 15);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(...gray);
-    doc.text('28/10 Ashirwad Enclave, Dehradun, Uttarakhand, 248001', margin + 5, y + 20);
+    doc.text('Dehradun', margin + 5, y + 20);
     doc.text('support@advoverse.com  |  www.advoverse.com', margin + 5, y + 25);
 
     y += 34;
@@ -162,7 +162,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     doc.roundedRect(margin, y, cw, 8, 1, 1, 'FD');
     doc.setFontSize(8);
     doc.setTextColor(146, 64, 14);
-    doc.text('GST not charged \u2014 Supplier not registered under GST.', w / 2, y + 5, { align: 'center' });
+    doc.text('GST not charged - Supplier not registered under GST.', w / 2, y + 5, { align: 'center' });
     y += 14;
 
     // ── SERVICE DETAILS ──
@@ -193,7 +193,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
       doc.setTextColor(...gray);
       const sStart = new Date(inv.service_start).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
       const sEnd = new Date(inv.service_end).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
-      doc.text(`${sStart} \u2192 ${sEnd}`, w - margin - 5, y + 19, { align: 'right' });
+      doc.text(`${sStart}  to  ${sEnd}`, w - margin - 5, y + 19, { align: 'right' });
     }
 
     y += 28;
@@ -203,7 +203,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(...navy);
     doc.text('DESCRIPTION', margin, y + 4);
-    doc.text('AMOUNT (\u20B9)', w - margin, y + 4, { align: 'right' });
+    doc.text('AMOUNT (Rs.)', w - margin, y + 4, { align: 'right' });
     y += 6;
     doc.setDrawColor(...navy);
     doc.setLineWidth(0.4);
@@ -216,7 +216,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 
     // Base price
     doc.text(`Base Price (${inv.duration.charAt(0).toUpperCase() + inv.duration.slice(1)} Subscription)`, margin, y + 4);
-    doc.text(`\u20B9${inv.base_amount}`, w - margin, y + 4, { align: 'right' });
+    doc.text(`Rs.${inv.base_amount}`, w - margin, y + 4, { align: 'right' });
     y += 8;
     doc.setDrawColor(238, 238, 238);
     doc.setLineWidth(0.2);
@@ -228,7 +228,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
       doc.setTextColor(...green);
       const discLabel = inv.referral_code ? `Promotional Discount (Code: ${inv.referral_code})` : 'Promotional Discount';
       doc.text(discLabel, margin, y + 4);
-      doc.text(`-\u20B9${inv.discount_amount}`, w - margin, y + 4, { align: 'right' });
+      doc.text(`-Rs.${inv.discount_amount}`, w - margin, y + 4, { align: 'right' });
       y += 8;
       doc.setDrawColor(238, 238, 238);
       doc.line(margin, y, w - margin, y);
@@ -239,7 +239,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     // Gateway fee
     if (inv.gateway_fee > 0) {
       doc.text('Payment Processing Fee (2.5%)', margin, y + 4);
-      doc.text(`\u20B9${inv.gateway_fee}`, w - margin, y + 4, { align: 'right' });
+      doc.text(`Rs.${inv.gateway_fee}`, w - margin, y + 4, { align: 'right' });
       y += 8;
       doc.setDrawColor(238, 238, 238);
       doc.line(margin, y, w - margin, y);
@@ -255,7 +255,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     doc.setFontSize(12);
     doc.setTextColor(...navy);
     doc.text('TOTAL PAID', margin, y + 4);
-    doc.text(`\u20B9${inv.total_amount}`, w - margin, y + 4, { align: 'right' });
+    doc.text(`Rs.${inv.total_amount}`, w - margin, y + 4, { align: 'right' });
     y += 16;
 
     // ── TERMS ──
@@ -277,7 +277,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
       'For any support, contact us at support@advoverse.com',
       'By using our services, you agree to our Terms of Service.',
     ];
-    terms.forEach(t => { doc.text('\u2022 ' + t, margin, y); y += 5; });
+    terms.forEach(t => { doc.text('- ' + t, margin, y); y += 5; });
 
     y += 8;
     // Thank you box
