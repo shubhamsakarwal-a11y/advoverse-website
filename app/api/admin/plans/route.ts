@@ -90,7 +90,7 @@ export async function DELETE(req: NextRequest) {
     const { id } = await req.json();
     if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 });
     const supabase = createAdminClient();
-    const { error } = await supabase.from('plans').update({ is_active: false, updated_at: new Date().toISOString() }).eq('id', id);
+    const { error } = await supabase.from('plans').delete().eq('id', id);
     if (error) return NextResponse.json({ error: error.message }, { status: 400 });
     return NextResponse.json({ success: true });
   } catch (err: any) {
