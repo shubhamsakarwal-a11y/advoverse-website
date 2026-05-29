@@ -383,39 +383,7 @@ export default function AdvoverseWebsite() {
         </div>
       </section>
 
-      {/* PROBLEMS */}
-      <section className="py-24">
-        <div className="max-w-[1300px] mx-auto w-[90%]">
-          <h2 className="text-center mb-5" style={{ fontFamily: 'Playfair Display, serif', fontSize: '46px', color: '#3b2a22' }}>
-            Most Chambers Operate in Chaos.
-          </h2>
-          <p className="max-w-[800px] mx-auto mb-16 text-center" style={{ color: '#666', fontSize: '18px' }}>
-            Caseline transforms scattered litigation practice into an organised, strategic and streamlined legal workflow.
-          </p>
-          <div className="grid gap-10" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))' }}>
-            <div className="bg-white rounded-2xl" style={{ padding: '40px', borderLeft: '5px solid #6b4b3e', boxShadow: '0 10px 40px rgba(0,0,0,0.06)' }}>
-              <h3 className="mb-6" style={{ fontSize: '28px', color: '#3b2a22', fontFamily: 'Playfair Display, serif' }}>
-                Operational Problems
-              </h3>
-              <ul>
-                {['Scattered case files', 'Missed hearing dates', 'Unstructured client records', 'Document confusion', 'Dependency on memory', 'Clerk coordination issues', 'No centralised chamber workflow'].map((item, i) => (
-                  <li key={i} className="py-2.5" style={{ color: '#555', borderBottom: '1px solid #eee' }}>{item}</li>
-                ))}
-              </ul>
-            </div>
-            <div className="bg-white rounded-2xl" style={{ padding: '40px', borderLeft: '5px solid #6b4b3e', boxShadow: '0 10px 40px rgba(0,0,0,0.06)' }}>
-              <h3 className="mb-6" style={{ fontSize: '28px', color: '#3b2a22', fontFamily: 'Playfair Display, serif' }}>
-                Caseline Solutions
-              </h3>
-              <ul>
-                {['Organised litigation dashboard', 'Structured client management', 'Case-wise document organisation', 'Hearing and deadline tracking', 'Strategic litigation notes', 'Searchable legal records', 'Efficient chamber coordination'].map((item, i) => (
-                  <li key={i} className="py-2.5" style={{ color: '#555', borderBottom: '1px solid #eee' }}>{item}</li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        </div>
-      </section>
+      
 
       {/* FEATURES */}
       <section id="features" className="py-24" style={{ background: '#f1ebe4' }}>
