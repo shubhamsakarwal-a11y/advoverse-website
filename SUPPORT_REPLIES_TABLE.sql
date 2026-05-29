@@ -1,0 +1,9 @@
+CREATE TABLE IF NOT EXISTS support_replies (
+  id SERIAL PRIMARY KEY,
+  to_email VARCHAR(255) NOT NULL,
+  subject VARCHAR(500),
+  body TEXT,
+  sent_by VARCHAR(255),
+  sent_at TIMESTAMP DEFAULT NOW()
+);
+ALTER TABLE support_replies DISABLE ROW LEVEL SECURITY;

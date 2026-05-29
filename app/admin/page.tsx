@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 
-type AdminTab = 'overview' | 'users' | 'flagged' | 'removals' | 'transactions' | 'activate' | 'referrals' | 'invoices';
+type AdminTab = 'overview' | 'users' | 'flagged' | 'removals' | 'transactions' | 'activate' | 'referrals' | 'invoices' | 'support';
 
 interface CaselineUser {
   id: number; email: string; name: string; created_at: string; status?: string;
@@ -29,6 +29,11 @@ export default function AdminDashboard() {
   const [deletedAccounts, setDeletedAccounts] = useState<DeletedAccount[]>([]);
   const [transactions, setTransactions] = useState<any[]>([]);
   const [adminInvoices, setAdminInvoices] = useState<any[]>([]);
+  const [supportEmails, setSupportEmails] = useState<any[]>([]);
+  const [selectedEmail, setSelectedEmail] = useState<any>(null);
+  const [replyText, setReplyText] = useState('');
+  const [replySending, setReplySending] = useState(false);
+  const [supportLoading, setSupportLoading] = useState(false);
   const [userSearch, setUserSearch] = useState('');
   const [actionLoading, setActionLoading] = useState<number | null>(null);
   // Activate Plan state
@@ -136,6 +141,7 @@ export default function AdminDashboard() {
     { id: 'activate', label: 'Activate Plan', icon: '⚡' },
     { id: 'referrals', label: 'Referral Codes', icon: '🎟️' },
       { id: 'invoices', label: 'Invoices', icon: '📄' },
+      { id: 'support', label: 'Support', icon: '📧' },
   ];
 
   const filteredCaseline = caselineUsers.filter(u => !userSearch || u.email.toLowerCase().includes(userSearch.toLowerCase()) || (u.name || '').toLowerCase().includes(userSearch.toLowerCase()));
@@ -664,6 +670,103 @@ export default function AdminDashboard() {
                     ))}
                   </tbody>
                 </table>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* SUPPORT TAB */}
+        {tab === 'support' && (
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h2 style={{ fontFamily: 'Playfair Display, serif', fontSize: '26px', color: '#3b2a22' }}>Support Requests</h2>
+              <button
+                onClick={async () => {
+                  setSupportLoading(true);
+                  const supabase = (await import('@/lib/supabase/client')).createClient();
+                  const { data: { session: s } } = await supabase.auth.getSession();
+                  if (!s) return;
+                  const res = await fetch('/api/admin/support-emails', { headers: { Authorization: 'Bearer ' + s.access_token } });
+                  if (res.ok) { const d = await res.json(); setSupportEmails(d.emails || []); }
+                  setSupportLoading(false);
+                }}
+                style={{ padding: '8px 20px', background: '#6b4b3e', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '13px' }}
+              >
+                {supportLoading ? 'Loading...' : 'Refresh Inbox'}
+              </button>
+            </div>
+
+            {selectedEmail ? (
+              <div style={{ background: 'white', borderRadius: '16px', padding: '32px', boxShadow: '0 4px 20px rgba(0,0,0,0.06)' }}>
+                <button onClick={() => { setSelectedEmail(null); setReplyText(''); }} style={{ marginBottom: '16px', padding: '6px 16px', background: '#f3f4f6', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '13px' }}>Back to list</button>
+                <div style={{ marginBottom: '12px' }}>
+                  <div style={{ fontSize: '12px', color: '#888' }}>From: <strong>{selectedEmail.from}</strong></div>
+                  <div style={{ fontSize: '12px', color: '#888' }}>Date: {new Date(selectedEmail.date).toLocaleString('en-IN')}</div>
+                  <div style={{ fontSize: '18px', fontWeight: 600, color: '#3b2a22', marginTop: '8px' }}>{selectedEmail.subject}</div>
+                </div>
+                <div style={{ padding: '20px', background: '#f9fafb', borderRadius: '10px', fontSize: '14px', whiteSpace: 'pre-wrap', lineHeight: '1.6', marginBottom: '20px', maxHeight: '400px', overflow: 'auto' }}>
+                  {selectedEmail.body || 'Loading...'}
+                </div>
+                <div style={{ borderTop: '1px solid #e5e7eb', paddingTop: '16px' }}>
+                  <div style={{ fontSize: '13px', fontWeight: 600, color: '#3b2a22', marginBottom: '8px' }}>Reply:</div>
+                  <textarea
+                    value={replyText}
+                    onChange={(e) => setReplyText(e.target.value)}
+                    placeholder="Type your reply..."
+                    style={{ width: '100%', minHeight: '120px', padding: '12px', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '14px', resize: 'vertical', fontFamily: 'inherit' }}
+                  />
+                  <button
+                    disabled={replySending || !replyText.trim()}
+                    onClick={async () => {
+                      setReplySending(true);
+                      const supabase = (await import('@/lib/supabase/client')).createClient();
+                      const { data: { session: s } } = await supabase.auth.getSession();
+                      if (!s) return;
+                      const res = await fetch('/api/admin/support-emails', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + s.access_token },
+                        body: JSON.stringify({ to: selectedEmail.from, subject: selectedEmail.subject, body: replyText }),
+                      });
+                      if (res.ok) { alert('Reply sent!'); setReplyText(''); }
+                      else { const d = await res.json(); alert('Failed: ' + (d.error || 'Unknown error')); }
+                      setReplySending(false);
+                    }}
+                    style={{ marginTop: '10px', padding: '10px 24px', background: replySending ? '#a8927e' : '#6b4b3e', color: 'white', border: 'none', borderRadius: '8px', cursor: replySending ? 'not-allowed' : 'pointer', fontSize: '14px', fontWeight: 600 }}
+                  >
+                    {replySending ? 'Sending...' : 'Send Reply'}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div>
+                {supportEmails.length === 0 ? (
+                  <div style={{ background: 'white', borderRadius: '16px', padding: '40px', textAlign: 'center', boxShadow: '0 4px 20px rgba(0,0,0,0.06)' }}>
+                    <p style={{ color: '#888' }}>Click "Refresh Inbox" to load emails from support@advoverse.com</p>
+                  </div>
+                ) : (
+                  <div style={{ background: 'white', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 4px 20px rgba(0,0,0,0.06)' }}>
+                    {supportEmails.map((email: any) => (
+                      <div
+                        key={email.uid}
+                        onClick={async () => {
+                          setSelectedEmail({ ...email, body: 'Loading...' });
+                          const supabase = (await import('@/lib/supabase/client')).createClient();
+                          const { data: { session: s } } = await supabase.auth.getSession();
+                          if (!s) return;
+                          const res = await fetch('/api/admin/support-emails?uid=' + email.uid, { headers: { Authorization: 'Bearer ' + s.access_token } });
+                          if (res.ok) { const d = await res.json(); setSelectedEmail(d); }
+                        }}
+                        style={{ padding: '14px 20px', borderBottom: '1px solid #f0ebe4', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: email.seen ? 'white' : '#fefce8' }}
+                      >
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontSize: '13px', fontWeight: email.seen ? 400 : 700, color: '#3b2a22' }}>{email.fromName || email.from}</div>
+                          <div style={{ fontSize: '13px', color: '#666', marginTop: '2px' }}>{email.subject}</div>
+                        </div>
+                        <div style={{ fontSize: '11px', color: '#999', whiteSpace: 'nowrap' }}>{new Date(email.date).toLocaleDateString('en-IN')}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </div>
