@@ -241,6 +241,7 @@ export default function AdvoverseWebsite() {
               <div className="flex-1 text-center" style={{ fontFamily: 'Playfair Display, serif', fontSize: '72px', fontStyle: 'italic', fontWeight: 500, color: '#2f1d16', lineHeight: 1, letterSpacing: '1px' }}>
                 Advoverse ⚖
               </div>
+              <div style={{ fontSize: '13px', color: '#6b5a4d', marginTop: '-4px' }}>Professional litigation management infrastructure for advocates and chambers.</div>
               <div className="flex-1 flex justify-end items-center gap-4">
                 {currentUser ? (
                   <div className="flex items-center gap-4">
@@ -290,7 +291,7 @@ export default function AdvoverseWebsite() {
             <div className="flex justify-center w-full gap-10 py-4" style={{ fontSize: '15px', color: '#f4e7d3', background: 'linear-gradient(to right, #07111d, #0f1d2e)', borderTop: '1px solid #3d2b21', borderBottom: '1px solid #3d2b21' }}>
               <a href="#features" className="transition-opacity hover:opacity-80">Features</a>
               <a href="#pricing" className="transition-opacity hover:opacity-80">Plans</a>
-              <a href="#payment" className="transition-opacity hover:opacity-80">Payments</a>
+              <a href="#download" className="transition-opacity hover:opacity-80">Download</a>
               <a href="#contact" className="transition-opacity hover:opacity-80">Contact</a>
             </div>
           </nav>
@@ -338,7 +339,7 @@ export default function AdvoverseWebsite() {
       </section>
 
       {/* DOWNLOAD APPLICATION */}
-      <section className="py-14" style={{ background: '#f1ebe4' }}>
+      <section id="download" className="py-14" style={{ background: '#f1ebe4' }}>
         <div className="max-w-[1100px] mx-auto w-[90%]">
           <h2 className="text-center mb-2" style={{ fontFamily: 'Playfair Display, serif', fontSize: '32px', color: '#3b2a22' }}>
             Download Advoverse Application
@@ -421,17 +422,7 @@ export default function AdvoverseWebsite() {
         </div>
       </section>
 
-      {/* QUOTES STRIP */}
-      <section className="py-9" style={{ background: '#2d1d15', color: '#f0e6da', borderTop: '1px solid #4f392d', borderBottom: '1px solid #4f392d' }}>
-        <div className="max-w-[1300px] mx-auto w-[90%]">
-          <div className="grid gap-6 text-center" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', fontSize: '15px' }}>
-            <div>"An organised chamber is an advocate's greatest procedural advantage."</div>
-            <div>"Discipline in preparation creates confidence in litigation."</div>
-            <div>"The strength of advocacy lies in organised thought."</div>
-            <div>"Professional growth begins with operational structure."</div>
-          </div>
-        </div>
-      </section>
+      
 
       {/* QUOTE SECTION */}
       <section 
@@ -544,7 +535,7 @@ export default function AdvoverseWebsite() {
       <footer className="py-12 text-center text-white" style={{ background: '#3b2a22' }}>
         <div className="max-w-[1300px] mx-auto w-[90%]">
           <h2 className="mb-4" style={{ fontFamily: 'Playfair Display, serif' }}>⚖ Advoverse | Caseline ⚖</h2>
-          <p style={{ color: '#c9c1b8' }}>
+          <p style={{ color: '#c9c1b8', fontSize: '14px' }}>
             Professional litigation management infrastructure for advocates and chambers.
           </p>
         </div>
