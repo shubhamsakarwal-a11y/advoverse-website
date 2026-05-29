@@ -253,13 +253,13 @@ export default function AdvoverseWebsite() {
                       </div>
                     </div>
                     <a
-                      href="/my-licenses"
+                      href="/dashboard"
                       className="px-5 py-2 rounded-lg text-white transition-colors"
                       style={{ background: '#f59e0b', fontSize: '14px', textDecoration: 'none' }}
                       onMouseEnter={(e) => e.currentTarget.style.background = '#d97706'}
                       onMouseLeave={(e) => e.currentTarget.style.background = '#f59e0b'}
                     >
-                      My Licenses
+                      My Dashboard
                     </a>
                     <button
                       onClick={handleSignOut}
