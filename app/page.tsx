@@ -528,62 +528,17 @@ export default function AdvoverseWebsite() {
         </div>
       </section>
 
-      {/* PAYMENT */}
-      <section id="payment" className="text-center py-24" style={{ background: '#dce8f2' }}>
-        <div className="max-w-[1300px] mx-auto w-[90%]">
-          <div className="max-w-[900px] mx-auto bg-white rounded-3xl" style={{ padding: '50px', boxShadow: '0 10px 30px rgba(0,0,0,0.05)' }}>
-            <h3 className="mb-5" style={{ fontSize: '38px', color: '#3b2a22', fontFamily: 'Playfair Display, serif' }}>
-              Secure Subscription Payments
-            </h3>
-            <p className="mb-6" style={{ color: '#666', fontSize: '18px' }}>
-              Subscribe securely through integrated online payment systems. Simple onboarding. Monthly access. Professional support.
-            </p>
-            <div className="flex justify-center flex-wrap gap-5">
-              <span className="px-6 py-3 rounded-xl" style={{ background: '#f1ebe4', color: '#3b2a22' }}>Razorpay</span>
-              <span className="px-6 py-3 rounded-xl" style={{ background: '#f1ebe4', color: '#3b2a22' }}>Cashfree</span>
-              <span className="px-6 py-3 rounded-xl" style={{ background: '#f1ebe4', color: '#3b2a22' }}>PayU</span>
-            </div>
-          </div>
-        </div>
-      </section>
+      
 
       {/* CONTACT */}
-      <section id="contact" className="py-24">
-        <div className="max-w-[1300px] mx-auto w-[90%]">
-          <h2 className="text-center mb-5" style={{ fontFamily: 'Playfair Display, serif', fontSize: '46px', color: '#3b2a22' }}>
-            Contact Advoverse
-          </h2>
-          <p className="max-w-[800px] mx-auto mb-16 text-center" style={{ color: '#666', fontSize: '18px' }}>
-            For subscriptions, onboarding support and chamber integration assistance.
-          </p>
-          <div className="grid gap-8" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))' }}>
-            <div className="bg-white rounded-2xl" style={{ padding: '35px', boxShadow: '0 10px 25px rgba(0,0,0,0.04)' }}>
-              <h3 className="mb-4" style={{ fontSize: '28px', color: '#3b2a22', fontFamily: 'Playfair Display, serif' }}>Email</h3>
-              <p style={{ color: '#666' }}>support@advoverse.com</p>
-            </div>
-            <div className="bg-white rounded-2xl" style={{ padding: '35px', boxShadow: '0 10px 25px rgba(0,0,0,0.04)' }}>
-              <h3 className="mb-4" style={{ fontSize: '28px', color: '#3b2a22', fontFamily: 'Playfair Display, serif' }}>Phone</h3>
-              <p style={{ color: '#666' }}>+91 XXXXX XXXXX</p>
-            </div>
-            <div className="bg-white rounded-2xl" style={{ padding: '35px', boxShadow: '0 10px 25px rgba(0,0,0,0.04)' }}>
-              <h3 className="mb-4" style={{ fontSize: '28px', color: '#3b2a22', fontFamily: 'Playfair Display, serif' }}>Support Hours</h3>
-              <p style={{ color: '#666' }}>Monday to Saturday<br />10:00 AM — 7:00 PM</p>
-            </div>
-          </div>
+      <section id="contact" className="py-10" style={{ borderTop: '1px solid #e0d6cc' }}>
+        <div className="max-w-[800px] mx-auto w-[90%] text-center">
+          <h3 style={{ fontFamily: 'Playfair Display, serif', fontSize: '22px', color: '#3b2a22', marginBottom: '8px' }}>Contact</h3>
+          <p style={{ color: '#666', fontSize: '14px' }}>support@advoverse.com</p>
         </div>
       </section>
 
-      {/* FOOTER BRAND */}
-      <section className="py-20 text-center" style={{ background: '#efe7dd', borderTop: '1px solid #d8cabc', borderBottom: '1px solid #d8cabc' }}>
-        <div className="max-w-[1300px] mx-auto w-[90%]">
-          <div className="mb-5" style={{ fontSize: '72px', fontStyle: 'italic', color: '#3b2a22', fontFamily: 'Playfair Display, serif' }}>
-            ⚖ Advoverse
-          </div>
-          <p className="max-w-[850px] mx-auto" style={{ color: '#6b5a4d', fontSize: '18px' }}>
-            Traditional Legal Style branding inspired by premium litigation chambers, law libraries, judicial discipline and organised professional advocacy.
-          </p>
-        </div>
-      </section>
+      
 
       {/* FOOTER */}
       <footer className="py-12 text-center text-white" style={{ background: '#3b2a22' }}>
