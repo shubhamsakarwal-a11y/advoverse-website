@@ -241,7 +241,6 @@ export default function AdvoverseWebsite() {
               <div className="flex-1 text-center" style={{ fontFamily: 'Playfair Display, serif', fontSize: '72px', fontStyle: 'italic', fontWeight: 500, color: '#2f1d16', lineHeight: 1, letterSpacing: '1px' }}>
                 ⚖ Advoverse
               </div>
-              <div style={{ fontSize: '14px', color: '#6b5a4d', marginTop: '4px', fontStyle: 'normal' }}>Professional litigation management infrastructure for advocates and chambers.</div>
               <div className="flex-1 flex justify-end items-center gap-4">
                 {currentUser ? (
                   <div className="flex items-center gap-4">
@@ -288,7 +287,8 @@ export default function AdvoverseWebsite() {
                 )}
               </div>
             </div>
-            <div className="flex justify-center w-full gap-10 py-4" style={{ fontSize: '15px', color: '#f4e7d3', background: 'linear-gradient(to right, #07111d, #0f1d2e)', borderTop: '1px solid #3d2b21', borderBottom: '1px solid #3d2b21' }}>
+                 <div className="text-center" style={{ fontSize: '14px', color: '#6b5a4d', marginTop: '2px' }}>Professional litigation management infrastructure for advocates and chambers.</div>
+                   <div className="flex justify-center w-full gap-10 py-4" style={{ fontSize: '15px', color: '#f4e7d3', background: 'linear-gradient(to right, #07111d, #0f1d2e)', borderTop: '1px solid #3d2b21', borderBottom: '1px solid #3d2b21' }}>
               <a href="#features" className="transition-opacity hover:opacity-80">Features</a>
               <a href="#pricing" className="transition-opacity hover:opacity-80">Plans</a>
               <a href="#download" className="transition-opacity hover:opacity-80">Download</a>
