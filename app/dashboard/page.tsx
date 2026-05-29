@@ -69,23 +69,7 @@ export default function DashboardPage() {
       setInvoices(d.invoices || []);
     }
 
-    // Fetch invoices
-    try {
-      const invRes = await fetch('/api/invoice/list', {
-        headers: { Authorization: `Bearer ${session.access_token}` },
-      });
-      console.log('[DASHBOARD] Invoice list response:', invRes.status);
-      if (invRes.ok) {
-        const d = await invRes.json();
-        console.log('[DASHBOARD] Invoices received:', d);
-        setInvoices(d.invoices || []);
-      } else {
-        const errText = await invRes.text();
-        console.error('[DASHBOARD] Invoice list error:', invRes.status, errText);
-      }
-    } catch (invErr) {
-      console.error('[DASHBOARD] Invoice fetch failed:', invErr);
-    }
+
 
 
 

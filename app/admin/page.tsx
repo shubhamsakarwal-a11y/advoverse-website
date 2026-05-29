@@ -620,7 +620,7 @@ export default function AdminDashboard() {
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
                   <thead style={{ background: '#f8f5f0' }}>
                     <tr>
-                      {['Invoice No.', 'User', 'Plan', 'Duration', 'Amount', 'Referral', 'Date', 'Status'].map(h => (
+                      {['Invoice No.', 'User', 'Plan', 'Duration', 'Amount', 'Referral', 'Date', 'Status', 'PDF'].map(h => (
                         <th key={h} style={{ padding: '12px 14px', textAlign: 'left', fontSize: '11px', color: '#6b4b3e', textTransform: 'uppercase', fontWeight: 600 }}>{h}</th>
                       ))}
                     </tr>
@@ -637,6 +637,28 @@ export default function AdminDashboard() {
                         <td style={{ padding: '10px 14px', color: '#888' }}>{new Date(inv.payment_date).toLocaleDateString('en-IN')}</td>
                         <td style={{ padding: '10px 14px' }}>
                           <span style={{ background: '#dcfce7', color: '#166534', padding: '3px 10px', borderRadius: '12px', fontSize: '11px', fontWeight: 600 }}>{inv.status}</span>
+                        </td>
+                        <td style={{ padding: '10px 14px' }}>
+                          <button
+                            onClick={async () => {
+                              const supabase = (await import('@/lib/supabase/client')).createClient();
+                              const { data: { session: s } } = await supabase.auth.getSession();
+                              if (!s) return;
+                              const res = await fetch('/api/invoice/' + inv.id + '/pdf', {
+                                headers: { Authorization: 'Bearer ' + s.access_token },
+                              });
+                              if (res.ok) {
+                                const blob = await res.blob();
+                                const url = URL.createObjectURL(blob);
+                                const a = document.createElement('a');
+                                a.href = url; a.download = inv.invoice_number + '.pdf'; a.click();
+                                URL.revokeObjectURL(url);
+                              } else { alert('PDF download failed'); }
+                            }}
+                            style={{ padding: '4px 12px', background: '#6b4b3e', color: 'white', border: 'none', borderRadius: '6px', fontSize: '11px', cursor: 'pointer' }}
+                          >
+                            \u2b07
+                          </button>
                         </td>
                       </tr>
                     ))}
