@@ -49,12 +49,12 @@ export default function AdvoverseWebsite() {
     };
     
     // Fetch plans from database
-    fetch('/api/plans').then(r => r.json()).then(d => {
+    fetch('/api/plans').then(r => r.json()).then(d => { console.log('[PLANS] fetched:', d.plans?.length, 'plans');
       if (d.plans && d.plans.length > 0) {
         setPricingPlans(d.plans.map((p: any) => ({
           name: p.name,
           price: p.monthly_price,
-          displayPrice: '\u20b9' + p.monthly_price,
+          displayPrice: '₹' + p.monthly_price,
           quarterlyPrice: p.quarterly_price,
           yearlyPrice: p.yearly_price,
           desc: p.description || '',
