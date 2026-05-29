@@ -113,7 +113,14 @@ export async function GET(req: NextRequest) {
       flaggedCount: (flaggedUsers || []).filter((f: any) => f.status === 'pending').length,
     };
 
-    return NextResponse.json({ stats, advUsers, caselineUsers, flaggedUsers: flaggedUsers || [], deletedAccounts: deletedAccounts || [], transactions });
+    // Invoices (all, latest first)
+    const { data: allInvoices } = await supabase
+      .from('invoices')
+      .select('id, invoice_number, user_email, user_name, plan_name, duration, total_amount, payment_date, referral_code, status')
+      .order('payment_date', { ascending: false })
+      .limit(200);
+
+    return NextResponse.json({ stats, advUsers, caselineUsers, flaggedUsers: flaggedUsers || [], deletedAccounts: deletedAccounts || [], transactions, invoices: allInvoices || [] });
   } catch (err) {
     console.error('Admin data error:', err);
     return NextResponse.json({ error: 'Internal error' }, { status: 500 });

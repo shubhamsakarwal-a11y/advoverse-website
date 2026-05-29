@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 
-type Tab = 'plan' | 'invoices' | 'password' | 'account';
+type Tab = 'plan' | 'password' | 'account';
 
 interface Subscription {
   package_code: string;
@@ -16,15 +16,7 @@ interface Subscription {
   users_allowed: number;
 }
 
-interface Invoice {
-  id: number;
-  invoice_number: string;
-  plan_name: string;
-  duration: string;
-  total_amount: number;
-  payment_date: string;
-  status: string;
-}
+
 
 
 
@@ -35,7 +27,7 @@ export default function DashboardPage() {
 
   // Tab data
   const [subscription, setSubscription] = useState<Subscription | null>(null);
-  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [invoices, setInvoices] = useState<any[]>([]);
 
 
   // Password tab
@@ -67,22 +59,32 @@ export default function DashboardPage() {
     if (!session) { router.push('/'); return; }
     setUser(session.user);
 
-    // Fetch subscription
+    // Fetch subscription + invoices
     const subRes = await fetch('/api/dashboard/subscription', {
       headers: { Authorization: `Bearer ${session.access_token}` },
     });
     if (subRes.ok) {
       const d = await subRes.json();
       setSubscription(d.subscription || null);
+      setInvoices(d.invoices || []);
     }
 
     // Fetch invoices
-    const invRes = await fetch('/api/invoice/list', {
-      headers: { Authorization: `Bearer ${session.access_token}` },
-    });
-    if (invRes.ok) {
-      const d = await invRes.json();
-      setInvoices(d.invoices || []);
+    try {
+      const invRes = await fetch('/api/invoice/list', {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      console.log('[DASHBOARD] Invoice list response:', invRes.status);
+      if (invRes.ok) {
+        const d = await invRes.json();
+        console.log('[DASHBOARD] Invoices received:', d);
+        setInvoices(d.invoices || []);
+      } else {
+        const errText = await invRes.text();
+        console.error('[DASHBOARD] Invoice list error:', invRes.status, errText);
+      }
+    } catch (invErr) {
+      console.error('[DASHBOARD] Invoice fetch failed:', invErr);
     }
 
 
@@ -162,7 +164,6 @@ export default function DashboardPage() {
 
   const TABS: { id: Tab; label: string; icon: string }[] = [
     { id: 'plan',     label: 'My Plan',          icon: '📋' },
-    { id: 'invoices',  label: 'Invoices',          icon: '🧾' },
     { id: 'password', label: 'Caseline Password', icon: '🔒' },
     { id: 'account',  label: 'Account',           icon: '👤' },
   ];
@@ -264,70 +265,62 @@ export default function DashboardPage() {
                 </a>
               </div>
             )}
+          
+            {/* Invoice History */}
+            <div style={{ marginTop: '32px' }}>
+              <h3 style={{ fontFamily: 'Playfair Display, serif', fontSize: '22px', color: '#3b2a22', marginBottom: '16px' }}>
+                Purchase History & Invoices
+              </h3>
+              {invoices.length === 0 ? (
+                <div style={{ background: 'white', borderRadius: '12px', padding: '32px', textAlign: 'center', boxShadow: '0 2px 12px rgba(0,0,0,0.04)' }}>
+                  <p style={{ color: '#888', fontSize: '14px' }}>No invoices yet. Purchase a plan to see your invoices here.</p>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  {invoices.map((inv: any) => (
+                    <div key={inv.id} style={{ background: 'white', borderRadius: '12px', padding: '20px 24px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', border: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+                      <div>
+                        <div style={{ fontWeight: 600, color: '#3b2a22', fontSize: '15px' }}>{inv.plan_name}</div>
+                        <div style={{ fontSize: '12px', color: '#888', marginTop: '4px' }}>
+                          {inv.invoice_number} &middot; {new Date(inv.payment_date).toLocaleDateString('en-IN')} &middot; {inv.duration}
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                        <div style={{ fontSize: '18px', fontWeight: 700, color: '#3b2a22' }}>
+                          \u20b9{inv.total_amount}
+                        </div>
+                        <button
+                          onClick={async () => {
+                            const supabase = (await import('@/lib/supabase/client')).createClient();
+                            const { data: { session: s } } = await supabase.auth.getSession();
+                            if (!s) { alert('Please login again'); return; }
+                            const res = await fetch('/api/invoice/' + inv.id + '/pdf', {
+                              headers: { Authorization: 'Bearer ' + s.access_token },
+                            });
+                            if (res.ok) {
+                              const blob = await res.blob();
+                              const url = URL.createObjectURL(blob);
+                              const a = document.createElement('a');
+                              a.href = url; a.download = inv.invoice_number + '.pdf'; a.click();
+                              URL.revokeObjectURL(url);
+                            } else { alert('Failed to download invoice'); }
+                          }}
+                          style={{ padding: '8px 18px', background: '#6b4b3e', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 600, cursor: 'pointer', fontSize: '13px' }}
+                        >
+                          \u2b07 PDF
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
           </div>
         )}
 
         {/* ── TAB: INVOICES ── */}
-        {tab === 'invoices' && (
-          <div>
-            <h2 style={{ fontFamily: 'Playfair Display, serif', fontSize: '28px', color: '#3b2a22', marginBottom: '20px' }}>
-              Invoices
-            </h2>
-            {invoices.length === 0 ? (
-              <div style={{ background: 'white', borderRadius: '16px', padding: '60px', textAlign: 'center', boxShadow: '0 4px 20px rgba(0,0,0,0.06)' }}>
-                <div style={{ fontSize: '56px', marginBottom: '16px' }}>🧾</div>
-                <h3 style={{ fontFamily: 'Playfair Display, serif', fontSize: '24px', color: '#3b2a22', marginBottom: '10px' }}>No Invoices Yet</h3>
-                <p style={{ color: '#888', marginBottom: '24px' }}>Purchase a plan to receive your invoice.</p>
-                <a href="/#pricing" style={{ display: 'inline-block', padding: '12px 32px', background: '#6b4b3e', color: 'white', borderRadius: '10px', textDecoration: 'none', fontWeight: 600 }}>
-                  View Plans
-                </a>
-              </div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                {invoices.map(inv => (
-                  <div key={inv.id} style={{ background: 'white', borderRadius: '14px', padding: '24px 28px', boxShadow: '0 4px 20px rgba(0,0,0,0.06)', border: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
-                    <div>
-                      <div style={{ fontWeight: 600, color: '#3b2a22', fontSize: '17px', marginBottom: '4px' }}>
-                        {inv.plan_name}
-                      </div>
-                      <div style={{ fontSize: '13px', color: '#888' }}>
-                        {inv.invoice_number} &nbsp;·&nbsp; {new Date(inv.payment_date).toLocaleDateString('en-IN')} &nbsp;·&nbsp; {inv.duration}
-                      </div>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                      <div style={{ fontSize: '20px', fontWeight: 700, color: '#3b2a22' }}>
-                        ₹{inv.total_amount}
-                      </div>
-                      <button
-                        onClick={async () => {
-                          const supabase = (await import('@/lib/supabase/client')).createClient();
-                          const { data: { session } } = await supabase.auth.getSession();
-                          const res = await fetch(`/api/invoice/${inv.id}/pdf`, {
-                            headers: { Authorization: `Bearer ${session?.access_token}` },
-                          });
-                          if (res.ok) {
-                            const blob = await res.blob();
-                            const url = URL.createObjectURL(blob);
-                            const a = document.createElement('a');
-                            a.href = url; a.download = inv.invoice_number + '.pdf'; a.click();
-                            URL.revokeObjectURL(url);
-                          } else {
-                            alert('Failed to download invoice');
-                          }
-                        }}
-                        style={{ padding: '10px 22px', background: '#6b4b3e', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 600, cursor: 'pointer', fontSize: '14px' }}
-                      >
-                        ⬇ Download PDF
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {tab === 'password' && (
+                {tab === 'password' && (
           <div>
             <h2 style={{ fontFamily: 'Playfair Display, serif', fontSize: '28px', color: '#3b2a22', marginBottom: '8px' }}>
               Caseline Password

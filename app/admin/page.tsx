@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 
-type AdminTab = 'overview' | 'users' | 'flagged' | 'removals' | 'transactions' | 'activate' | 'referrals';
+type AdminTab = 'overview' | 'users' | 'flagged' | 'removals' | 'transactions' | 'activate' | 'referrals' | 'invoices';
 
 interface CaselineUser {
   id: number; email: string; name: string; created_at: string; status?: string;
@@ -28,6 +28,7 @@ export default function AdminDashboard() {
   const [flaggedUsers, setFlaggedUsers] = useState<FlaggedUser[]>([]);
   const [deletedAccounts, setDeletedAccounts] = useState<DeletedAccount[]>([]);
   const [transactions, setTransactions] = useState<any[]>([]);
+  const [adminInvoices, setAdminInvoices] = useState<any[]>([]);
   const [userSearch, setUserSearch] = useState('');
   const [actionLoading, setActionLoading] = useState<number | null>(null);
   // Activate Plan state
@@ -68,7 +69,7 @@ export default function AdminDashboard() {
     if (!res.ok) return;
     const d = await res.json();
     setStats(d.stats); setAdvUsers(d.advUsers || []); setCaselineUsers(d.caselineUsers || []);
-    setFlaggedUsers(d.flaggedUsers || []); setDeletedAccounts(d.deletedAccounts || []); setTransactions(d.transactions || []);
+    setFlaggedUsers(d.flaggedUsers || []); setDeletedAccounts(d.deletedAccounts || []); setTransactions(d.transactions || []); setAdminInvoices(d.invoices || []);
     // Auto-load referral codes so they persist across logins
     const refRes = await fetch('/api/admin/referral-codes', { headers: { Authorization: `Bearer ${token}` } });
     if (refRes.ok) { const rd = await refRes.json(); setReferralCodes(rd.codes || []); }
@@ -134,6 +135,7 @@ export default function AdminDashboard() {
     { id: 'transactions', label: 'Transactions', icon: '💳' },
     { id: 'activate', label: 'Activate Plan', icon: '⚡' },
     { id: 'referrals', label: 'Referral Codes', icon: '🎟️' },
+      { id: 'invoices', label: 'Invoices', icon: '📄' },
   ];
 
   const filteredCaseline = caselineUsers.filter(u => !userSearch || u.email.toLowerCase().includes(userSearch.toLowerCase()) || (u.name || '').toLowerCase().includes(userSearch.toLowerCase()));
@@ -604,6 +606,44 @@ export default function AdminDashboard() {
                 )}
               </div>
             </div>
+          </div>
+        )}
+
+        {/* INVOICES TAB */}
+        {tab === 'invoices' && (
+          <div>
+            <h2 style={{ fontFamily: 'Playfair Display, serif', fontSize: '26px', color: '#3b2a22', marginBottom: '20px' }}>All Invoices</h2>
+            {adminInvoices.length === 0 ? (
+              <p style={{ color: '#888' }}>No invoices yet.</p>
+            ) : (
+              <div style={{ background: 'white', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 4px 20px rgba(0,0,0,0.06)' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                  <thead style={{ background: '#f8f5f0' }}>
+                    <tr>
+                      {['Invoice No.', 'User', 'Plan', 'Duration', 'Amount', 'Referral', 'Date', 'Status'].map(h => (
+                        <th key={h} style={{ padding: '12px 14px', textAlign: 'left', fontSize: '11px', color: '#6b4b3e', textTransform: 'uppercase', fontWeight: 600 }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {adminInvoices.map((inv: any) => (
+                      <tr key={inv.id} style={{ borderBottom: '1px solid #f0ebe4' }}>
+                        <td style={{ padding: '10px 14px', fontFamily: 'monospace', fontSize: '12px' }}>{inv.invoice_number}</td>
+                        <td style={{ padding: '10px 14px' }}>{inv.user_email}</td>
+                        <td style={{ padding: '10px 14px' }}>{inv.plan_name}</td>
+                        <td style={{ padding: '10px 14px' }}>{inv.duration}</td>
+                        <td style={{ padding: '10px 14px', fontWeight: 600 }}>\u20b9{inv.total_amount}</td>
+                        <td style={{ padding: '10px 14px', color: inv.referral_code ? '#16a34a' : '#ccc' }}>{inv.referral_code || '\u2014'}</td>
+                        <td style={{ padding: '10px 14px', color: '#888' }}>{new Date(inv.payment_date).toLocaleDateString('en-IN')}</td>
+                        <td style={{ padding: '10px 14px' }}>
+                          <span style={{ background: '#dcfce7', color: '#166534', padding: '3px 10px', borderRadius: '12px', fontSize: '11px', fontWeight: 600 }}>{inv.status}</span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         )}
 

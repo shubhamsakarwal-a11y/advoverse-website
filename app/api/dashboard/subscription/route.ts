@@ -1,4 +1,4 @@
-﻿import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/server';
 
 function normalizeEmail(email: string): string {
@@ -36,7 +36,7 @@ export async function GET(req: NextRequest) {
       .single();
 
     if (!cu) {
-      return NextResponse.json({ subscription: null });
+      return NextResponse.json({ subscription: null, invoices: [] });
     }
 
     // Get active subscription
@@ -49,9 +49,23 @@ export async function GET(req: NextRequest) {
       .limit(1)
       .single();
 
-    return NextResponse.json({ subscription: sub || null });
+    // Get all invoices for this user (by email or auth UUID)
+    let invoices: any[] = [];
+    try {
+      const { data: invData } = await supabase
+        .from('invoices')
+        .select('id, invoice_number, plan_name, duration, total_amount, payment_date, status')
+        .or(`user_email.eq.${rawEmail},user_email.eq.${normalizedEmail},user_id.eq.${user.id}`)
+        .order('payment_date', { ascending: false });
+      invoices = invData || [];
+    } catch (invErr) {
+      // Non-fatal: subscription still works even if invoices fail
+      console.error('Invoice fetch error (non-fatal):', invErr);
+    }
+
+    return NextResponse.json({ subscription: sub || null, invoices });
   } catch (err) {
     console.error('Dashboard subscription error:', err);
-    return NextResponse.json({ error: 'Internal error' }, { status: 500 });
+    return NextResponse.json({ error: 'Internal error', subscription: null, invoices: [] }, { status: 500 });
   }
 }
