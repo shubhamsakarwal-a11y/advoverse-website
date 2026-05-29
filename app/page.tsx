@@ -411,7 +411,7 @@ export default function AdvoverseWebsite() {
               { title: 'Calendar & Hearings', desc: 'Monitor hearings, limitation periods, filing deadlines and procedural timelines without depending on manual memory.' },,
               { title: 'Detach & Widgets', desc: 'Pin any panel as a floating widget on screen. Ideal for multi-monitor setups and keeping key lists always visible.' },
               { title: 'Todo Lists', desc: '10 customisable task lists with time allocation, duration tracking and daily repeat mode for structured work habits.' },
-              { title: 'Advo Tools', desc: 'Curated set of daily-use tools built specifically for advocates\' routine practice needs.' },
+              { title: 'Advo Tools', desc: 'Curated set of daily-use tools built specifically for advocates' routine practice needs.' },
               use client';
 
 import { useState, useEffect } from 'react';
@@ -825,7 +825,7 @@ export default function AdvoverseWebsite() {
               { title: 'Calendar & Hearings', desc: 'Monitor hearings, limitation periods, filing deadlines and procedural timelines without depending on manual memory.' },,
               { title: 'Detach & Widgets', desc: 'Pin any panel as a floating widget on screen. Ideal for multi-monitor setups and keeping key lists always visible.' },
               { title: 'Todo Lists', desc: '10 customisable task lists with time allocation, duration tracking and daily repeat mode for structured work habits.' },
-              { title: 'Advo Tools', desc: 'Curated set of daily-use tools built specifically for advocates\' routine practice needs.' },
+              { title: 'Advo Tools', desc: 'Curated set of daily-use tools built specifically for advocates' routine practice needs.' },
               { title: 'Appointments Diary', desc: 'Schedule and manage all your appointments, conferences and consultations from one unified dashboard.' }
             ].map((feature, i) => (
               <div key={i} className="bg-white rounded-2xl transition-transform hover:-translate-y-1.5" style={{ padding: '35px', boxShadow: '0 10px 30px rgba(0,0,0,0.05)' }}>
