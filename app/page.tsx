@@ -166,7 +166,7 @@ export default function AdvoverseWebsite() {
               invoiceData.userToken,
               caselinePassword
             );
-            alert(`\u2705 Payment Successful!\n\nYour license key has been sent to ${invoiceData.userEmail}.\nPlease check your inbox (and spam folder).`);
+            alert(`\u2705 Payment Successful!\n\nYour subscription is now active. Visit your dashboard to download the invoice and manage your plan.`);
           } catch (err) {
             alert(err instanceof Error ? err.message : 'Verification failed. Contact support@advoverse.com');
           }
