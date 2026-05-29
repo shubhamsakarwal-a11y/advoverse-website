@@ -237,12 +237,20 @@ export async function POST(req: NextRequest) {
           .eq('status', 'active');
 
         // Insert new active subscription
+        // Get features from plans table
+        let planFeatures: string[] | null = null;
+        try {
+          const { data: planRow } = await supabase.from('plans').select('features').ilike('name', planName).limit(1).single();
+          if (planRow && planRow.features) planFeatures = planRow.features;
+        } catch {}
+
         await supabase.from('caseline_subscriptions').insert({
           user_id: caselineUserId,
           package_code: pkg.code,
           package_label: pkg.label,
           clients_allowed: pkg.clients,
           users_allowed: pkg.users,
+          features: planFeatures,
           created_at: new Date().toISOString(),
           expires_at: expiresAt.toISOString(),
           status: 'active',
