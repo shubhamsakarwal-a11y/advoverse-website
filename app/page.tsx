@@ -239,9 +239,9 @@ export default function AdvoverseWebsite() {
             <div className="w-full flex justify-between items-center">
               <div className="flex-1"></div>
               <div className="flex-1 text-center" style={{ fontFamily: 'Playfair Display, serif', fontSize: '72px', fontStyle: 'italic', fontWeight: 500, color: '#2f1d16', lineHeight: 1, letterSpacing: '1px' }}>
-                Advoverse ⚖
+                ⚖ Advoverse
               </div>
-              <div style={{ fontSize: '13px', color: '#6b5a4d', marginTop: '-4px' }}>Professional litigation management infrastructure for advocates and chambers.</div>
+              <div style={{ fontSize: '14px', color: '#6b5a4d', marginTop: '4px', fontStyle: 'normal' }}>Professional litigation management infrastructure for advocates and chambers.</div>
               <div className="flex-1 flex justify-end items-center gap-4">
                 {currentUser ? (
                   <div className="flex items-center gap-4">
