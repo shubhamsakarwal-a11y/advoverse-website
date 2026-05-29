@@ -9,69 +9,16 @@ import { PricingPlan, RazorpayPaymentResponse } from '@/lib/types/payment';
 import { initiateRazorpayPayment, verifyRazorpayPayment, createStripeSession } from '@/lib/payment';
 import { createClient } from '@/lib/supabase/client';
 
-const PRICING_PLANS: PricingPlan[] = [
-  { 
-    name: 'Junior Advocate', 
-    price: 100, 
-    displayPrice: '₹100', 
-    quarterlyPrice: 270,  // 10% discount
-    yearlyPrice: 960,     // 20% discount
-    desc: '20 Cases\nIdeal for beginners' 
-  },
-  { 
-    name: 'Solo Advocate', 
-    price: 200, 
-    displayPrice: '₹200', 
-    quarterlyPrice: 540,
-    yearlyPrice: 1920, 
-    desc: '60 Cases\nIndependent practice setup' 
-  },
-  { 
-    name: 'Advocate + Clerk', 
-    price: 300, 
-    displayPrice: '₹300', 
-    quarterlyPrice: 810,
-    yearlyPrice: 2880, 
-    desc: '1 Additional User\n120 Cases\nClerk coordination workflow', 
-    popular: true 
-  },
-  { 
-    name: 'Chamber Lite', 
-    price: 800, 
-    displayPrice: '₹800', 
-    quarterlyPrice: 2160,
-    yearlyPrice: 7680, 
-    desc: '3 Users\n200 Cases\nSmall chamber management' 
-  },
-  { 
-    name: 'Chamber', 
-    price: 1500, 
-    displayPrice: '₹1500', 
-    quarterlyPrice: 4050,
-    yearlyPrice: 14400, 
-    desc: '6 Users\n500 Cases\nProfessional chamber workflow' 
-  },
-  { 
-    name: 'Chamber Pro', 
-    price: 3000, 
-    displayPrice: '₹3000', 
-    quarterlyPrice: 8100,
-    yearlyPrice: 28800, 
-    desc: '9 Users\nUnlimited Cases\nAdvanced litigation management' 
-  },
-  { 
-    name: 'Exclusive', 
-    price: 5000, 
-    displayPrice: '₹5000', 
-    quarterlyPrice: 13500,
-    yearlyPrice: 48000, 
-    desc: 'Unlimited Users\nUnlimited Cases\nEnterprise legal operations' 
-  },
+const PRICING_PLANS_FALLBACK: PricingPlan[] = [
+  { name: 'Junior Advocate', price: 100, displayPrice: '\u20b9100', quarterlyPrice: 270, yearlyPrice: 960, desc: '20 Cases\nIdeal for beginners' },
+  { name: 'Solo Advocate', price: 200, displayPrice: '\u20b9200', quarterlyPrice: 540, yearlyPrice: 1920, desc: '60 Cases\nIndependent practice setup' },
+  { name: 'Chamber', price: 1500, displayPrice: '\u20b91500', quarterlyPrice: 4050, yearlyPrice: 14400, desc: '6 Users\n500 Cases\nProfessional chamber workflow' },
 ];
 
 type CurrentUser = { name: string; email: string; token: string };
 
 export default function AdvoverseWebsite() {
+  const [pricingPlans, setPricingPlans] = useState<PricingPlan[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -101,6 +48,23 @@ export default function AdvoverseWebsite() {
       }
     };
     
+    // Fetch plans from database
+    fetch('/api/plans').then(r => r.json()).then(d => {
+      if (d.plans && d.plans.length > 0) {
+        setPricingPlans(d.plans.map((p: any) => ({
+          name: p.name,
+          price: p.monthly_price,
+          displayPrice: '\u20b9' + p.monthly_price,
+          quarterlyPrice: p.quarterly_price,
+          yearlyPrice: p.yearly_price,
+          desc: p.description || '',
+          popular: p.is_popular,
+        })));
+      } else {
+        setPricingPlans(PRICING_PLANS_FALLBACK);
+      }
+    }).catch(() => setPricingPlans(PRICING_PLANS_FALLBACK));
+
     checkUser();
 
     // Listen for auth changes
@@ -455,7 +419,7 @@ export default function AdvoverseWebsite() {
             Monthly and yearly subscription structures for advocates and chambers.
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-7">
-            {PRICING_PLANS.map((plan, i) => (
+            {pricingPlans.map((plan, i) => (
               <div key={i} className="bg-white rounded-2xl transition-transform hover:-translate-y-1.5" style={{ padding: '38px', border: '1px solid #ddd', boxShadow: '0 8px 25px rgba(0,0,0,0.04)' }}>
                 <h3 className="mb-2.5" style={{ fontSize: '28px', color: '#3b2a22', fontFamily: 'Playfair Display, serif' }}>
                   {plan.name}
