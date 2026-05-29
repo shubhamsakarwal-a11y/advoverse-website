@@ -49,18 +49,30 @@ export async function GET(req: NextRequest) {
       .limit(1)
       .single();
 
-    // Get all invoices for this user (by email or auth UUID)
+    // Get all invoices for this user - simple email filter (same approach as admin)
     let invoices: any[] = [];
     try {
-      const { data: invData } = await supabase
+      const { data: invData, error: invErr } = await supabase
         .from('invoices')
         .select('id, invoice_number, plan_name, duration, total_amount, payment_date, status')
-        .or(`user_email.eq.${rawEmail},user_email.eq.${normalizedEmail},user_id.eq.${user.id}`)
+        .in('user_email', [rawEmail, normalizedEmail])
         .order('payment_date', { ascending: false });
-      invoices = invData || [];
-    } catch (invErr) {
-      // Non-fatal: subscription still works even if invoices fail
-      console.error('Invoice fetch error (non-fatal):', invErr);
+      if (invErr) {
+        console.error('Invoice query error:', invErr.message);
+      } else {
+        invoices = invData || [];
+      }
+      // Fallback: also check by user_id if email didn't match
+      if (invoices.length === 0) {
+        const { data: invById } = await supabase
+          .from('invoices')
+          .select('id, invoice_number, plan_name, duration, total_amount, payment_date, status')
+          .eq('user_id', user.id)
+          .order('payment_date', { ascending: false });
+        if (invById && invById.length > 0) invoices = invById;
+      }
+    } catch (err) {
+      console.error('Invoice fetch exception (non-fatal):', err);
     }
 
     return NextResponse.json({ subscription: sub || null, invoices });
