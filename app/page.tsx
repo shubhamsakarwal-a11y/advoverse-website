@@ -348,13 +348,13 @@ export default function AdvoverseWebsite() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {/* App Card */}
             <div className="bg-white rounded-xl" style={{ padding: '24px', boxShadow: '0 4px 16px rgba(0,0,0,0.04)' }}>
-              <div className="text-center mb-3" style={{ fontSize: '36px' }}>\ud83d\udcbb</div>
+              <div className="text-center mb-3" style={{ fontSize: '36px' }}>💻</div>
               <h4 className="text-center mb-3" style={{ fontSize: '16px', color: '#3b2a22', fontFamily: 'Playfair Display, serif' }}>Windows Desktop App</h4>
               <ul style={{ fontSize: '12px', color: '#666', lineHeight: '1.8' }}>
-                <li>\u2714 Windows 10 or later</li>
-                <li>\u2714 Size: ~150 MB</li>
-                <li>\u2714 21-Day Free Trial</li>
-                <li>\u2714 Offline-First</li>
+                <li>✔ Windows 10 or later</li>
+                <li>✔ Size: ~150 MB</li>
+                <li>✔ 21-Day Free Trial</li>
+                <li>✔ Offline-First</li>
               </ul>
               <button disabled className="w-full mt-3 py-2 rounded-lg text-white text-sm font-semibold" style={{ background: '#3b2a22', opacity: 0.5, cursor: 'not-allowed' }}>
                 Download for Windows
@@ -363,19 +363,19 @@ export default function AdvoverseWebsite() {
             </div>
             {/* Step 1 */}
             <div className="bg-white rounded-xl text-center" style={{ padding: '24px', boxShadow: '0 4px 16px rgba(0,0,0,0.04)' }}>
-              <div className="mb-3" style={{ fontSize: '36px' }}>\ud83d\udce5</div>
+              <div className="mb-3" style={{ fontSize: '36px' }}>📥</div>
               <h4 className="mb-2" style={{ fontSize: '16px', color: '#3b2a22', fontFamily: 'Playfair Display, serif' }}>1. Download</h4>
               <p style={{ color: '#666', fontSize: '12px' }}>Download the installer from our secure server</p>
             </div>
             {/* Step 2 */}
             <div className="bg-white rounded-xl text-center" style={{ padding: '24px', boxShadow: '0 4px 16px rgba(0,0,0,0.04)' }}>
-              <div className="mb-3" style={{ fontSize: '36px' }}>\u2699\ufe0f</div>
+              <div className="mb-3" style={{ fontSize: '36px' }}>⚙️</div>
               <h4 className="mb-2" style={{ fontSize: '16px', color: '#3b2a22', fontFamily: 'Playfair Display, serif' }}>2. Install</h4>
               <p style={{ color: '#666', fontSize: '12px' }}>Run the installer and follow simple setup steps</p>
             </div>
             {/* Step 3 */}
             <div className="bg-white rounded-xl text-center" style={{ padding: '24px', boxShadow: '0 4px 16px rgba(0,0,0,0.04)' }}>
-              <div className="mb-3" style={{ fontSize: '36px' }}>\ud83d\ude80</div>
+              <div className="mb-3" style={{ fontSize: '36px' }}>🚀</div>
               <h4 className="mb-2" style={{ fontSize: '16px', color: '#3b2a22', fontFamily: 'Playfair Display, serif' }}>3. Start Trial</h4>
               <p style={{ color: '#666', fontSize: '12px' }}>Launch app and start your 21-day free trial</p>
             </div>
