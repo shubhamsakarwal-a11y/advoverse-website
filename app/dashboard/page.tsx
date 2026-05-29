@@ -271,7 +271,7 @@ export default function DashboardPage() {
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
                         <div style={{ fontSize: '18px', fontWeight: 700, color: '#3b2a22' }}>
-                          \u20b9{inv.total_amount}
+                          ₹{inv.total_amount}
                         </div>
                         <button
                           onClick={async () => {
@@ -291,7 +291,7 @@ export default function DashboardPage() {
                           }}
                           style={{ padding: '8px 18px', background: '#6b4b3e', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 600, cursor: 'pointer', fontSize: '13px' }}
                         >
-                          \u2b07 PDF
+                          ⬇ PDF
                         </button>
                       </div>
                     </div>

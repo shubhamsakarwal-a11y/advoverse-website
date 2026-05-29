@@ -166,7 +166,25 @@ export async function POST(req: NextRequest) {
     try {
       const emailNormalized = normalizeEmail(userEmail);
       const emailRaw = userEmail.toLowerCase().trim();
-      const pkg = getPlanMapping(planName, planDuration);
+      // Try dynamic lookup from plans table first
+      let pkg = { code: 'CUSTOM', label: planName, clients: 20, users: 1, days: 30 };
+      try {
+        const { data: dbPlan } = await supabase
+          .from('plans')
+          .select('name, max_cases, max_users, features')
+          .ilike('name', planName)
+          .limit(1)
+          .single();
+        if (dbPlan) {
+          pkg.label = dbPlan.name;
+          pkg.code = dbPlan.name.toUpperCase().replace(/[^A-Z]/g, '_');
+          pkg.clients = dbPlan.max_cases || 20;
+          pkg.users = dbPlan.max_users || 1;
+        }
+      } catch {}
+      // Duration determines days
+      const dur = (planDuration || '').toLowerCase();
+      pkg.days = dur.includes('yearly') ? 365 : dur.includes('quarterly') ? 90 : 30;
       const expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + pkg.days);
 
@@ -267,7 +285,25 @@ export async function POST(req: NextRequest) {
     try {
       const invDate = new Date();
       const invoiceNumber = 'ADV-' + invDate.getFullYear() + '-' + String(resolvedOrderId || Date.now()).padStart(6, '0');
-      const pkg = getPlanMapping(planName, planDuration);
+      // Try dynamic lookup from plans table first
+      let pkg = { code: 'CUSTOM', label: planName, clients: 20, users: 1, days: 30 };
+      try {
+        const { data: dbPlan } = await supabase
+          .from('plans')
+          .select('name, max_cases, max_users, features')
+          .ilike('name', planName)
+          .limit(1)
+          .single();
+        if (dbPlan) {
+          pkg.label = dbPlan.name;
+          pkg.code = dbPlan.name.toUpperCase().replace(/[^A-Z]/g, '_');
+          pkg.clients = dbPlan.max_cases || 20;
+          pkg.users = dbPlan.max_users || 1;
+        }
+      } catch {}
+      // Duration determines days
+      const dur = (planDuration || '').toLowerCase();
+      pkg.days = dur.includes('yearly') ? 365 : dur.includes('quarterly') ? 90 : 30;
       const serviceStart = invDate.toISOString().split('T')[0];
       const serviceEndDate = new Date(invDate);
       serviceEndDate.setDate(serviceEndDate.getDate() + pkg.days);
