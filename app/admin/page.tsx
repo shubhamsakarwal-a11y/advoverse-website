@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 
-type AdminTab = 'overview' | 'users' | 'flagged' | 'removals' | 'transactions' | 'activate' | 'referrals' | 'invoices' | 'support';
+type AdminTab = 'overview' | 'users' | 'flagged' | 'removals' | 'transactions' | 'activate' | 'referrals' | 'invoices' | 'support' | 'backup';
 
 interface CaselineUser {
   id: number; email: string; name: string; created_at: string; status?: string;
@@ -142,6 +142,7 @@ export default function AdminDashboard() {
     { id: 'referrals', label: 'Referral Codes', icon: '🎟️' },
       { id: 'invoices', label: 'Invoices', icon: '📄' },
       { id: 'support', label: 'Support', icon: '📧' },
+      { id: 'backup', label: 'Backup', icon: '💾' },
   ];
 
   const filteredCaseline = caselineUsers.filter(u => !userSearch || u.email.toLowerCase().includes(userSearch.toLowerCase()) || (u.name || '').toLowerCase().includes(userSearch.toLowerCase()));
@@ -769,6 +770,87 @@ export default function AdminDashboard() {
                 )}
               </div>
             )}
+          </div>
+        )}
+
+        {/* BACKUP TAB */}
+        {tab === 'backup' && (
+          <div>
+            <h2 style={{ fontFamily: 'Playfair Display, serif', fontSize: '26px', color: '#3b2a22', marginBottom: '20px' }}>Data Backup</h2>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px' }}>
+              {/* PDF Download */}
+              <div style={{ background: 'white', borderRadius: '16px', padding: '32px', textAlign: 'center', boxShadow: '0 4px 20px rgba(0,0,0,0.06)' }}>
+                <div style={{ fontSize: '40px', marginBottom: '12px' }}>\ud83d\udcc4</div>
+                <h3 style={{ fontSize: '18px', color: '#3b2a22', marginBottom: '8px' }}>Download PDF</h3>
+                <p style={{ fontSize: '13px', color: '#888', marginBottom: '20px' }}>Human-readable report with all tables formatted for review.</p>
+                <button
+                  onClick={async () => {
+                    const supabase = (await import('@/lib/supabase/client')).createClient();
+                    const { data: { session: s } } = await supabase.auth.getSession();
+                    if (!s) return;
+                    const res = await fetch('/api/admin/backup?format=pdf', { headers: { Authorization: 'Bearer ' + s.access_token } });
+                    if (res.ok) {
+                      const blob = await res.blob();
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement('a'); a.href = url; a.download = 'advoverse_backup.pdf'; a.click();
+                      URL.revokeObjectURL(url);
+                    } else { alert('PDF backup failed'); }
+                  }}
+                  style={{ padding: '10px 28px', background: '#6b4b3e', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: 600 }}
+                >Download PDF</button>
+              </div>
+              {/* JSON Download */}
+              <div style={{ background: 'white', borderRadius: '16px', padding: '32px', textAlign: 'center', boxShadow: '0 4px 20px rgba(0,0,0,0.06)' }}>
+                <div style={{ fontSize: '40px', marginBottom: '12px' }}>\ud83d\udce6</div>
+                <h3 style={{ fontSize: '18px', color: '#3b2a22', marginBottom: '8px' }}>Download JSON</h3>
+                <p style={{ fontSize: '13px', color: '#888', marginBottom: '20px' }}>Full data export for backup and restoration purposes.</p>
+                <button
+                  onClick={async () => {
+                    const supabase = (await import('@/lib/supabase/client')).createClient();
+                    const { data: { session: s } } = await supabase.auth.getSession();
+                    if (!s) return;
+                    const res = await fetch('/api/admin/backup?format=json', { headers: { Authorization: 'Bearer ' + s.access_token } });
+                    if (res.ok) {
+                      const blob = await res.blob();
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement('a'); a.href = url; a.download = 'advoverse_backup.json'; a.click();
+                      URL.revokeObjectURL(url);
+                    } else { alert('JSON backup failed'); }
+                  }}
+                  style={{ padding: '10px 28px', background: '#6b4b3e', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: 600 }}
+                >Download JSON</button>
+              </div>
+              {/* Restore */}
+              <div style={{ background: 'white', borderRadius: '16px', padding: '32px', textAlign: 'center', boxShadow: '0 4px 20px rgba(0,0,0,0.06)' }}>
+                <div style={{ fontSize: '40px', marginBottom: '12px' }}>\u2b06\ufe0f</div>
+                <h3 style={{ fontSize: '18px', color: '#3b2a22', marginBottom: '8px' }}>Restore from JSON</h3>
+                <p style={{ fontSize: '13px', color: '#888', marginBottom: '20px' }}>Upload a backup JSON file to merge missing records.</p>
+                <input
+                  type="file"
+                  accept=".json"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    if (!confirm('This will merge backup data into the database. Existing records will not be deleted. Continue?')) return;
+                    const text = await file.text();
+                    let json;
+                    try { json = JSON.parse(text); } catch { alert('Invalid JSON file'); return; }
+                    const supabase = (await import('@/lib/supabase/client')).createClient();
+                    const { data: { session: s } } = await supabase.auth.getSession();
+                    if (!s) return;
+                    const res = await fetch('/api/admin/backup', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + s.access_token },
+                      body: JSON.stringify(json),
+                    });
+                    const d = await res.json();
+                    if (res.ok) { alert('Restore complete: ' + JSON.stringify(d.restored)); }
+                    else { alert('Restore failed: ' + (d.error || 'Unknown error')); }
+                  }}
+                  style={{ marginTop: '8px' }}
+                />
+              </div>
+            </div>
           </div>
         )}
 

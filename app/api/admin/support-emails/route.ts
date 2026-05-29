@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
     const msgId = searchParams.get('uid');
 
     const client = new ImapFlow({
-      host: process.env.SUPPORT_EMAIL_HOST || 'imap.titan.email',
+      host: process.env.SUPPORT_EMAIL_HOST || 'imap.secureserver.net',
       port: parseInt(process.env.SUPPORT_EMAIL_PORT || '993'),
       secure: true,
       auth: {
@@ -96,7 +96,7 @@ export async function POST(req: NextRequest) {
 
     const nodemailer = require('nodemailer');
     const transporter = nodemailer.createTransport({
-      host: process.env.SUPPORT_SMTP_HOST || 'smtp.titan.email',
+      host: process.env.SUPPORT_SMTP_HOST || 'smtpout.secureserver.net',
       port: parseInt(process.env.SUPPORT_SMTP_PORT || '465'),
       secure: true,
       auth: {
