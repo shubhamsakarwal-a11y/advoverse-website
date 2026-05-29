@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 
-type AdminTab = 'overview' | 'users' | 'flagged' | 'removals' | 'transactions' | 'activate' | 'referrals' | 'invoices' | 'support' | 'backup';
+type AdminTab = 'overview' | 'users' | 'flagged' | 'removals' | 'transactions' | 'activate' | 'referrals' | 'invoices' | 'support' | 'backup' | 'managePlans';
 
 interface CaselineUser {
   id: number; email: string; name: string; created_at: string; status?: string;
@@ -29,6 +29,8 @@ export default function AdminDashboard() {
   const [deletedAccounts, setDeletedAccounts] = useState<DeletedAccount[]>([]);
   const [transactions, setTransactions] = useState<any[]>([]);
   const [adminInvoices, setAdminInvoices] = useState<any[]>([]);
+  const [adminPlans, setAdminPlans] = useState<any[]>([]);
+  const [editingPlan, setEditingPlan] = useState<any>(null);
   const [supportEmails, setSupportEmails] = useState<any[]>([]);
   const [selectedEmail, setSelectedEmail] = useState<any>(null);
   const [replyText, setReplyText] = useState('');
@@ -143,6 +145,7 @@ export default function AdminDashboard() {
       { id: 'invoices', label: 'Invoices', icon: '📄' },
       { id: 'support', label: 'Support', icon: '📧' },
       { id: 'backup', label: 'Backup', icon: '💾' },
+      { id: 'managePlans', label: 'Manage Plans', icon: '📋' },
   ];
 
   const filteredCaseline = caselineUsers.filter(u => !userSearch || u.email.toLowerCase().includes(userSearch.toLowerCase()) || (u.name || '').toLowerCase().includes(userSearch.toLowerCase()));
