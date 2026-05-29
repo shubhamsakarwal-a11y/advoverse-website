@@ -780,7 +780,7 @@ export default function AdminDashboard() {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px' }}>
               {/* PDF Download */}
               <div style={{ background: 'white', borderRadius: '16px', padding: '32px', textAlign: 'center', boxShadow: '0 4px 20px rgba(0,0,0,0.06)' }}>
-                <div style={{ fontSize: '40px', marginBottom: '12px' }}>\ud83d\udcc4</div>
+                <div style={{ fontSize: '40px', marginBottom: '12px' }}>📄</div>
                 <h3 style={{ fontSize: '18px', color: '#3b2a22', marginBottom: '8px' }}>Download PDF</h3>
                 <p style={{ fontSize: '13px', color: '#888', marginBottom: '20px' }}>Human-readable report with all tables formatted for review.</p>
                 <button
@@ -801,7 +801,7 @@ export default function AdminDashboard() {
               </div>
               {/* JSON Download */}
               <div style={{ background: 'white', borderRadius: '16px', padding: '32px', textAlign: 'center', boxShadow: '0 4px 20px rgba(0,0,0,0.06)' }}>
-                <div style={{ fontSize: '40px', marginBottom: '12px' }}>\ud83d\udce6</div>
+                <div style={{ fontSize: '40px', marginBottom: '12px' }}>📦</div>
                 <h3 style={{ fontSize: '18px', color: '#3b2a22', marginBottom: '8px' }}>Download JSON</h3>
                 <p style={{ fontSize: '13px', color: '#888', marginBottom: '20px' }}>Full data export for backup and restoration purposes.</p>
                 <button
@@ -822,7 +822,7 @@ export default function AdminDashboard() {
               </div>
               {/* Restore */}
               <div style={{ background: 'white', borderRadius: '16px', padding: '32px', textAlign: 'center', boxShadow: '0 4px 20px rgba(0,0,0,0.06)' }}>
-                <div style={{ fontSize: '40px', marginBottom: '12px' }}>\u2b06\ufe0f</div>
+                <div style={{ fontSize: '40px', marginBottom: '12px' }}>⬆️</div>
                 <h3 style={{ fontSize: '18px', color: '#3b2a22', marginBottom: '8px' }}>Restore from JSON</h3>
                 <p style={{ fontSize: '13px', color: '#888', marginBottom: '20px' }}>Upload a backup JSON file to merge missing records.</p>
                 <input
