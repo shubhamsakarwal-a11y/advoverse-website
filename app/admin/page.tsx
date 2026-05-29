@@ -857,6 +857,219 @@ export default function AdminDashboard() {
           </div>
         )}
 
+        {/* MANAGE PLANS TAB */}
+        {tab === 'managePlans' && (
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h2 style={{ fontFamily: 'Playfair Display, serif', fontSize: '26px', color: '#3b2a22' }}>Manage Plans</h2>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button
+                  onClick={async () => {
+                    const supabase = (await import('@/lib/supabase/client')).createClient();
+                    const { data: { session: s } } = await supabase.auth.getSession();
+                    if (!s) return;
+                    const res = await fetch('/api/admin/plans', { headers: { Authorization: 'Bearer ' + s.access_token } });
+                    if (res.ok) { const d = await res.json(); setAdminPlans(d.plans || []); }
+                  }}
+                  style={{ padding: '8px 18px', background: '#6b4b3e', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '13px' }}
+                >Load Plans</button>
+                <button
+                  onClick={() => setEditingPlan({ name: '', description: '', monthly_price: 0, quarterly_price: 0, yearly_price: 0, max_cases: 20, max_users: 1, features: [], is_popular: false, is_active: true, display_order: 0 })}
+                  style={{ padding: '8px 18px', background: '#22c55e', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '13px' }}
+                >+ Add New Plan</button>
+              </div>
+            </div>
+
+            {/* Plans Table */}
+            {adminPlans.length > 0 && (
+              <div style={{ background: 'white', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 4px 20px rgba(0,0,0,0.06)', marginBottom: '24px' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                  <thead style={{ background: '#f8f5f0' }}>
+                    <tr>
+                      {['Name', 'Monthly', 'Quarterly', 'Yearly', 'Cases', 'Users', 'Features', 'Status', 'Actions'].map(h => (
+                        <th key={h} style={{ padding: '12px 14px', textAlign: 'left', fontSize: '11px', color: '#6b4b3e', textTransform: 'uppercase', fontWeight: 600 }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {adminPlans.map((plan: any) => (
+                      <tr key={plan.id} style={{ borderBottom: '1px solid #f0ebe4', opacity: plan.is_active ? 1 : 0.5 }}>
+                        <td style={{ padding: '10px 14px', fontWeight: 600 }}>{plan.name}</td>
+                        <td style={{ padding: '10px 14px' }}>Rs.{plan.monthly_price}</td>
+                        <td style={{ padding: '10px 14px' }}>Rs.{plan.quarterly_price}</td>
+                        <td style={{ padding: '10px 14px' }}>Rs.{plan.yearly_price}</td>
+                        <td style={{ padding: '10px 14px' }}>{plan.max_cases >= 999999 ? 'Unlim' : plan.max_cases}</td>
+                        <td style={{ padding: '10px 14px' }}>{plan.max_users >= 999999 ? 'Unlim' : plan.max_users}</td>
+                        <td style={{ padding: '10px 14px', fontSize: '11px' }}>{(plan.features || []).length} enabled</td>
+                        <td style={{ padding: '10px 14px' }}>
+                          <span style={{ padding: '3px 10px', borderRadius: '12px', fontSize: '11px', fontWeight: 600, background: plan.is_active ? '#dcfce7' : '#fee2e2', color: plan.is_active ? '#166534' : '#991b1b' }}>
+                            {plan.is_active ? 'Active' : 'Inactive'}
+                          </span>
+                        </td>
+                        <td style={{ padding: '10px 14px' }}>
+                          <button onClick={() => setEditingPlan({...plan})} style={{ padding: '4px 10px', background: '#6b4b3e', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '11px', marginRight: '6px' }}>Edit</button>
+                          <button onClick={async () => {
+                            if (!confirm('Deactivate ' + plan.name + '?')) return;
+                            const supabase = (await import('@/lib/supabase/client')).createClient();
+                            const { data: { session: s } } = await supabase.auth.getSession();
+                            if (!s) return;
+                            await fetch('/api/admin/plans', { method: 'DELETE', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + s.access_token }, body: JSON.stringify({ id: plan.id }) });
+                            setAdminPlans(adminPlans.map((p: any) => p.id === plan.id ? {...p, is_active: false} : p));
+                          }} style={{ padding: '4px 10px', background: '#dc2626', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '11px' }}>Del</button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {/* Edit/Add Modal */}
+            {editingPlan && (
+              <div style={{ background: 'white', borderRadius: '16px', padding: '32px', boxShadow: '0 4px 20px rgba(0,0,0,0.06)' }}>
+                <h3 style={{ fontSize: '18px', color: '#3b2a22', marginBottom: '20px' }}>{editingPlan.id ? 'Edit Plan' : 'Add New Plan'}</h3>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px' }}>
+                  <div>
+                    <label style={{ fontSize: '12px', fontWeight: 600, color: '#3b2a22' }}>Plan Name</label>
+                    <input value={editingPlan.name || ''} onChange={(e) => setEditingPlan({...editingPlan, name: e.target.value})} style={{ width: '100%', padding: '8px 12px', border: '1px solid #e5e7eb', borderRadius: '6px', marginTop: '4px' }} />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '12px', fontWeight: 600, color: '#3b2a22' }}>Description</label>
+                    <input value={editingPlan.description || ''} onChange={(e) => setEditingPlan({...editingPlan, description: e.target.value})} style={{ width: '100%', padding: '8px 12px', border: '1px solid #e5e7eb', borderRadius: '6px', marginTop: '4px' }} />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '12px', fontWeight: 600, color: '#3b2a22' }}>Monthly Price (Rs.)</label>
+                    <input type="number" value={editingPlan.monthly_price || 0} onChange={(e) => setEditingPlan({...editingPlan, monthly_price: parseInt(e.target.value) || 0})} style={{ width: '100%', padding: '8px 12px', border: '1px solid #e5e7eb', borderRadius: '6px', marginTop: '4px' }} />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '12px', fontWeight: 600, color: '#3b2a22' }}>Quarterly Price (Rs.)</label>
+                    <input type="number" value={editingPlan.quarterly_price || 0} onChange={(e) => setEditingPlan({...editingPlan, quarterly_price: parseInt(e.target.value) || 0})} style={{ width: '100%', padding: '8px 12px', border: '1px solid #e5e7eb', borderRadius: '6px', marginTop: '4px' }} />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '12px', fontWeight: 600, color: '#3b2a22' }}>Yearly Price (Rs.)</label>
+                    <input type="number" value={editingPlan.yearly_price || 0} onChange={(e) => setEditingPlan({...editingPlan, yearly_price: parseInt(e.target.value) || 0})} style={{ width: '100%', padding: '8px 12px', border: '1px solid #e5e7eb', borderRadius: '6px', marginTop: '4px' }} />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '12px', fontWeight: 600, color: '#3b2a22' }}>Max Cases (0 = Unlimited)</label>
+                    <input type="number" value={editingPlan.max_cases || 0} onChange={(e) => setEditingPlan({...editingPlan, max_cases: parseInt(e.target.value) || 0})} style={{ width: '100%', padding: '8px 12px', border: '1px solid #e5e7eb', borderRadius: '6px', marginTop: '4px' }} />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '12px', fontWeight: 600, color: '#3b2a22' }}>Max Users (0 = Unlimited)</label>
+                    <input type="number" value={editingPlan.max_users || 0} onChange={(e) => setEditingPlan({...editingPlan, max_users: parseInt(e.target.value) || 0})} style={{ width: '100%', padding: '8px 12px', border: '1px solid #e5e7eb', borderRadius: '6px', marginTop: '4px' }} />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '12px', fontWeight: 600, color: '#3b2a22' }}>Display Order</label>
+                    <input type="number" value={editingPlan.display_order || 0} onChange={(e) => setEditingPlan({...editingPlan, display_order: parseInt(e.target.value) || 0})} style={{ width: '100%', padding: '8px 12px', border: '1px solid #e5e7eb', borderRadius: '6px', marginTop: '4px' }} />
+                  </div>
+                </div>
+                <div style={{ marginBottom: '16px' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px' }}>
+                    <input type="checkbox" checked={editingPlan.is_popular || false} onChange={(e) => setEditingPlan({...editingPlan, is_popular: e.target.checked})} /> Show "Popular" badge
+                  </label>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', marginTop: '8px' }}>
+                    <input type="checkbox" checked={editingPlan.is_active !== false} onChange={(e) => setEditingPlan({...editingPlan, is_active: e.target.checked})} /> Active (show on pricing page)
+                  </label>
+                </div>
+                <div style={{ marginBottom: '20px' }}>
+                  <h4 style={{ fontSize: '14px', color: '#3b2a22', marginBottom: '12px' }}>Feature Permissions</h4>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer' }}>
+                          <input type="checkbox" checked={editingPlan?.features?.includes('forms_drafting')} onChange={(e) => {
+                            const f = editingPlan?.features || [];
+                            setEditingPlan({...editingPlan, features: e.target.checked ? [...f, 'forms_drafting'] : f.filter((x: string) => x !== 'forms_drafting')});
+                          }} />
+                          Forms & Drafting
+                        </label>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer' }}>
+                          <input type="checkbox" checked={editingPlan?.features?.includes('compendium')} onChange={(e) => {
+                            const f = editingPlan?.features || [];
+                            setEditingPlan({...editingPlan, features: e.target.checked ? [...f, 'compendium'] : f.filter((x: string) => x !== 'compendium')});
+                          }} />
+                          Case Compendium
+                        </label>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer' }}>
+                          <input type="checkbox" checked={editingPlan?.features?.includes('study_material')} onChange={(e) => {
+                            const f = editingPlan?.features || [];
+                            setEditingPlan({...editingPlan, features: e.target.checked ? [...f, 'study_material'] : f.filter((x: string) => x !== 'study_material')});
+                          }} />
+                          Study Material
+                        </label>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer' }}>
+                          <input type="checkbox" checked={editingPlan?.features?.includes('appointments')} onChange={(e) => {
+                            const f = editingPlan?.features || [];
+                            setEditingPlan({...editingPlan, features: e.target.checked ? [...f, 'appointments'] : f.filter((x: string) => x !== 'appointments')});
+                          }} />
+                          Appointments Diary
+                        </label>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer' }}>
+                          <input type="checkbox" checked={editingPlan?.features?.includes('todo_lists')} onChange={(e) => {
+                            const f = editingPlan?.features || [];
+                            setEditingPlan({...editingPlan, features: e.target.checked ? [...f, 'todo_lists'] : f.filter((x: string) => x !== 'todo_lists')});
+                          }} />
+                          Todo Lists
+                        </label>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer' }}>
+                          <input type="checkbox" checked={editingPlan?.features?.includes('import_export')} onChange={(e) => {
+                            const f = editingPlan?.features || [];
+                            setEditingPlan({...editingPlan, features: e.target.checked ? [...f, 'import_export'] : f.filter((x: string) => x !== 'import_export')});
+                          }} />
+                          Import/Export
+                        </label>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer' }}>
+                          <input type="checkbox" checked={editingPlan?.features?.includes('multi_user')} onChange={(e) => {
+                            const f = editingPlan?.features || [];
+                            setEditingPlan({...editingPlan, features: e.target.checked ? [...f, 'multi_user'] : f.filter((x: string) => x !== 'multi_user')});
+                          }} />
+                          Multi-user Access
+                        </label>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer' }}>
+                          <input type="checkbox" checked={editingPlan?.features?.includes('detach_widgets')} onChange={(e) => {
+                            const f = editingPlan?.features || [];
+                            setEditingPlan({...editingPlan, features: e.target.checked ? [...f, 'detach_widgets'] : f.filter((x: string) => x !== 'detach_widgets')});
+                          }} />
+                          Detach & Widgets
+                        </label>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer' }}>
+                          <input type="checkbox" checked={editingPlan?.features?.includes('chatroom')} onChange={(e) => {
+                            const f = editingPlan?.features || [];
+                            setEditingPlan({...editingPlan, features: e.target.checked ? [...f, 'chatroom'] : f.filter((x: string) => x !== 'chatroom')});
+                          }} />
+                          Internal Chatroom
+                        </label>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <button onClick={() => setEditingPlan(null)} style={{ padding: '10px 24px', background: '#f3f4f6', color: '#333', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '14px' }}>Cancel</button>
+                  <button
+                    onClick={async () => {
+                      const supabase = (await import('@/lib/supabase/client')).createClient();
+                      const { data: { session: s } } = await supabase.auth.getSession();
+                      if (!s) return;
+                      const method = editingPlan.id ? 'PATCH' : 'POST';
+                      const res = await fetch('/api/admin/plans', {
+                        method,
+                        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + s.access_token },
+                        body: JSON.stringify(editingPlan),
+                      });
+                      if (res.ok) {
+                        alert(editingPlan.id ? 'Plan updated!' : 'Plan created!');
+                        setEditingPlan(null);
+                        // Reload plans
+                        const r2 = await fetch('/api/admin/plans', { headers: { Authorization: 'Bearer ' + s.access_token } });
+                        if (r2.ok) { const d = await r2.json(); setAdminPlans(d.plans || []); }
+                      } else {
+                        const d = await res.json();
+                        alert('Failed: ' + (d.error || 'Unknown error'));
+                      }
+                    }}
+                    style={{ padding: '10px 24px', background: '#6b4b3e', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: 600 }}
+                  >{editingPlan.id ? 'Save Changes' : 'Create Plan'}</button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
       </main>
     </div>
   );
