@@ -20,6 +20,10 @@ interface Stats { totalRevenue: number; activeLicenses: number; totalAdvUsers: n
 
 export default function AdminDashboard() {
   const [tab, setTab] = useState<AdminTab>('overview');
+  const [pinVerified, setPinVerified] = useState(false);
+  const [pinInput, setPinInput] = useState('');
+  const [pinError, setPinError] = useState('');
+  const [pinLoading, setPinLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [stats, setStats] = useState<Stats | null>(null);
@@ -130,6 +134,56 @@ export default function AdminDashboard() {
     await fetch('/api/admin/flagged', { method: 'PATCH', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ id, status: 'resolved' }) });
     setFlaggedUsers(f => f.map(x => x.id === id ? { ...x, status: 'resolved' } : x));
   };
+
+  // PIN Gate
+  if (!pinVerified) {
+    const handlePinSubmit = async (e: React.FormEvent) => {
+      e.preventDefault();
+      setPinLoading(true);
+      setPinError('');
+      const supabase = (await import('@/lib/supabase/client')).createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) { setPinError('Please login first'); setPinLoading(false); return; }
+      const res = await fetch('/api/admin/verify-pin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + session.access_token },
+        body: JSON.stringify({ pin: pinInput }),
+      });
+      if (res.ok) {
+        setPinVerified(true);
+        sessionStorage.setItem('admin_pin_verified', '1');
+      } else {
+        const d = await res.json();
+        setPinError(d.error || 'Invalid PIN');
+      }
+      setPinLoading(false);
+    };
+    return (
+      <div style={{ minHeight: '100vh', background: '#1a1a2e', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter, sans-serif' }}>
+        <div style={{ background: 'white', borderRadius: '16px', padding: '48px', maxWidth: '380px', width: '90%', textAlign: 'center', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }}>
+          <div style={{ fontSize: '40px', marginBottom: '16px' }}>\ud83d\udd12</div>
+          <h2 style={{ fontSize: '22px', color: '#1a1a2e', marginBottom: '8px' }}>Admin Access</h2>
+          <p style={{ color: '#888', fontSize: '14px', marginBottom: '24px' }}>Enter security PIN to continue</p>
+          <form onSubmit={handlePinSubmit}>
+            <input
+              type="password"
+              value={pinInput}
+              onChange={(e) => setPinInput(e.target.value)}
+              placeholder="Enter PIN"
+              autoFocus
+              style={{ width: '100%', padding: '14px', border: '2px solid #e5e7eb', borderRadius: '10px', fontSize: '18px', textAlign: 'center', letterSpacing: '4px', marginBottom: '16px', boxSizing: 'border-box' }}
+            />
+            {pinError && <div style={{ color: '#dc2626', fontSize: '13px', marginBottom: '12px' }}>{pinError}</div>}
+            <button
+              type="submit"
+              disabled={pinLoading || !pinInput}
+              style={{ width: '100%', padding: '14px', background: pinLoading ? '#888' : '#1a1a2e', color: 'white', border: 'none', borderRadius: '10px', fontSize: '16px', fontWeight: 600, cursor: pinLoading ? 'not-allowed' : 'pointer' }}
+            >{pinLoading ? 'Verifying...' : 'Unlock'}</button>
+          </form>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) return <div style={{ minHeight: '100vh', background: '#f7f4ef', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><div style={{ color: '#3b2a22', fontSize: '22px' }}>Loading Admin Dashboard...</div></div>;
   if (!isAdmin) return null;
