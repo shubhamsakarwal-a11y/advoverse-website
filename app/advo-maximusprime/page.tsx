@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 
-type AdminTab = 'overview' | 'users' | 'flagged' | 'removals' | 'transactions' | 'activate' | 'referrals' | 'invoices' | 'support' | 'backup' | 'managePlans' | 'auditLog';
+type AdminTab = 'overview' | 'users' | 'flagged' | 'removals' | 'transactions' | 'activate' | 'referrals' | 'invoices' | 'support' | 'backup' | 'managePlans' | 'auditLog' | 'broadcast';
 
 interface CaselineUser {
   id: number; email: string; name: string; created_at: string; status?: string;
@@ -36,6 +36,12 @@ export default function AdminDashboard() {
   const [adminPlans, setAdminPlans] = useState<any[]>([]);
   const [editingPlan, setEditingPlan] = useState<any>(null);
   const [auditLogs, setAuditLogs] = useState<any[]>([]);
+  const [broadcasts, setBroadcasts] = useState<any[]>([]);
+  const [bcMsg, setBcMsg] = useState('');
+  const [bcStyle, setBcStyle] = useState('info');
+  const [bcTarget, setBcTarget] = useState('all');
+  const [bcTargetList, setBcTargetList] = useState('');
+  const [bcExpiry, setBcExpiry] = useState(7);
   const [supportEmails, setSupportEmails] = useState<any[]>([]);
   const [selectedEmail, setSelectedEmail] = useState<any>(null);
   const [replyText, setReplyText] = useState('');
@@ -202,6 +208,7 @@ export default function AdminDashboard() {
       { id: 'backup', label: 'Backup', icon: '💾' },
       { id: 'managePlans', label: 'Manage Plans', icon: '📋' },
       { id: 'auditLog', label: 'Audit Log', icon: '📜' },
+      { id: 'broadcast', label: 'Broadcast', icon: '📢' },
   ];
 
   const filteredCaseline = caselineUsers.filter(u => !userSearch || u.email.toLowerCase().includes(userSearch.toLowerCase()) || (u.name || '').toLowerCase().includes(userSearch.toLowerCase()));
@@ -1168,6 +1175,103 @@ export default function AdminDashboard() {
                 </table>
               </div>
             )}
+          </div>
+        )}
+
+        {/* BROADCAST TAB */}
+        {tab === 'broadcast' && (
+          <div>
+            <h2 style={{ fontFamily: 'Playfair Display, serif', fontSize: '26px', color: '#3b2a22', marginBottom: '20px' }}>Broadcast Message</h2>
+            
+            <div style={{ background: 'white', borderRadius: '16px', padding: '32px', boxShadow: '0 4px 20px rgba(0,0,0,0.06)', marginBottom: '24px' }}>
+              <h3 style={{ fontSize: '16px', color: '#3b2a22', marginBottom: '16px' }}>Send New Message</h3>
+              <div style={{ marginBottom: '12px' }}>
+                <label style={{ fontSize: '12px', fontWeight: 600, color: '#3b2a22' }}>Message (max 200 chars)</label>
+                <input value={bcMsg} onChange={(e) => setBcMsg(e.target.value.slice(0, 200))} placeholder="Type your broadcast message..." style={{ width: '100%', padding: '10px 14px', border: '1px solid #e5e7eb', borderRadius: '8px', marginTop: '4px', fontSize: '14px', boxSizing: 'border-box' }} />
+                <div style={{ fontSize: '11px', color: '#888', marginTop: '4px' }}>{bcMsg.length}/200</div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '12px', marginBottom: '16px' }}>
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 600 }}>Style</label>
+                  <select value={bcStyle} onChange={(e) => setBcStyle(e.target.value)} style={{ width: '100%', padding: '8px', border: '1px solid #e5e7eb', borderRadius: '6px', marginTop: '4px' }}>
+                    <option value="info">Info (Blue)</option>
+                    <option value="sale">Sale (Green)</option>
+                    <option value="alert">Alert (Red)</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 600 }}>Target</label>
+                  <select value={bcTarget} onChange={(e) => setBcTarget(e.target.value)} style={{ width: '100%', padding: '8px', border: '1px solid #e5e7eb', borderRadius: '6px', marginTop: '4px' }}>
+                    <option value="all">All Users</option>
+                    <option value="specific">Specific Users</option>
+                    <option value="plan">By Plan</option>
+                    <option value="status">By Status</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 600 }}>Expires in</label>
+                  <select value={bcExpiry} onChange={(e) => setBcExpiry(parseInt(e.target.value))} style={{ width: '100%', padding: '8px', border: '1px solid #e5e7eb', borderRadius: '6px', marginTop: '4px' }}>
+                    <option value={1}>1 day</option>
+                    <option value={3}>3 days</option>
+                    <option value={7}>7 days</option>
+                    <option value={30}>30 days</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 600 }}>Target List</label>
+                  <input value={bcTargetList} onChange={(e) => setBcTargetList(e.target.value)} placeholder={bcTarget === 'specific' ? 'email1, email2' : bcTarget === 'plan' ? 'Plan Name' : bcTarget === 'status' ? 'active/trial/expired' : 'N/A for All'} disabled={bcTarget === 'all'} style={{ width: '100%', padding: '8px', border: '1px solid #e5e7eb', borderRadius: '6px', marginTop: '4px', boxSizing: 'border-box' }} />
+                </div>
+              </div>
+              <button
+                disabled={!bcMsg.trim()}
+                onClick={async () => {
+                  const supabase = (await import('@/lib/supabase/client')).createClient();
+                  const { data: { session: s } } = await supabase.auth.getSession();
+                  if (!s) return;
+                  const targetList = bcTarget === 'all' ? [] : bcTargetList.split(',').map(s => s.trim()).filter(Boolean);
+                  const res = await fetch('/api/admin/broadcast', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + s.access_token },
+                    body: JSON.stringify({ message: bcMsg, style: bcStyle, target_type: bcTarget, target_list: targetList, expires_in_days: bcExpiry }),
+                  });
+                  if (res.ok) { alert('Broadcast sent!'); setBcMsg(''); }
+                  else { const d = await res.json(); alert('Failed: ' + d.error); }
+                }}
+                style={{ padding: '10px 28px', background: '#6b4b3e', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: 600 }}
+              >Send Broadcast</button>
+            </div>
+
+            <div style={{ background: 'white', borderRadius: '16px', padding: '24px', boxShadow: '0 4px 20px rgba(0,0,0,0.06)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                <h3 style={{ fontSize: '16px', color: '#3b2a22' }}>Message History</h3>
+                <button onClick={async () => {
+                  const supabase = (await import('@/lib/supabase/client')).createClient();
+                  const { data: { session: s } } = await supabase.auth.getSession();
+                  if (!s) return;
+                  const res = await fetch('/api/admin/broadcast', { headers: { Authorization: 'Bearer ' + s.access_token } });
+                  if (res.ok) { const d = await res.json(); setBroadcasts(d.messages || []); }
+                }} style={{ padding: '6px 14px', background: '#f3f4f6', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '12px' }}>Refresh</button>
+              </div>
+              {broadcasts.map((b: any) => (
+                <div key={b.id} style={{ padding: '12px 16px', borderBottom: '1px solid #f0ebe4', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <div style={{ fontSize: '14px', color: '#333' }}>{b.message}</div>
+                    <div style={{ fontSize: '11px', color: '#888', marginTop: '4px' }}>
+                      {b.target_type} | {b.style} | {new Date(b.created_at).toLocaleDateString('en-IN')} | {b.is_active ? 'Active' : 'Expired'}
+                    </div>
+                  </div>
+                  {b.is_active && (
+                    <button onClick={async () => {
+                      const supabase = (await import('@/lib/supabase/client')).createClient();
+                      const { data: { session: s } } = await supabase.auth.getSession();
+                      if (!s) return;
+                      await fetch('/api/admin/broadcast', { method: 'PATCH', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + s.access_token }, body: JSON.stringify({ id: b.id }) });
+                      setBroadcasts(broadcasts.map((x: any) => x.id === b.id ? {...x, is_active: false} : x));
+                    }} style={{ padding: '4px 12px', background: '#dc2626', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '11px' }}>Deactivate</button>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
