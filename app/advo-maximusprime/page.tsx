@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 
-type AdminTab = 'overview' | 'users' | 'flagged' | 'removals' | 'transactions' | 'activate' | 'referrals' | 'invoices' | 'support' | 'backup' | 'managePlans';
+type AdminTab = 'overview' | 'users' | 'flagged' | 'removals' | 'transactions' | 'activate' | 'referrals' | 'invoices' | 'support' | 'backup' | 'managePlans' | 'auditLog';
 
 interface CaselineUser {
   id: number; email: string; name: string; created_at: string; status?: string;
@@ -35,6 +35,7 @@ export default function AdminDashboard() {
   const [adminInvoices, setAdminInvoices] = useState<any[]>([]);
   const [adminPlans, setAdminPlans] = useState<any[]>([]);
   const [editingPlan, setEditingPlan] = useState<any>(null);
+  const [auditLogs, setAuditLogs] = useState<any[]>([]);
   const [supportEmails, setSupportEmails] = useState<any[]>([]);
   const [selectedEmail, setSelectedEmail] = useState<any>(null);
   const [replyText, setReplyText] = useState('');
@@ -80,7 +81,7 @@ export default function AdminDashboard() {
     if (!res.ok) return;
     const d = await res.json();
     setStats(d.stats); setAdvUsers(d.advUsers || []); setCaselineUsers(d.caselineUsers || []);
-    setFlaggedUsers(d.flaggedUsers || []); setDeletedAccounts(d.deletedAccounts || []); setTransactions(d.transactions || []); setAdminInvoices(d.invoices || []);
+    setFlaggedUsers(d.flaggedUsers || []); setDeletedAccounts(d.deletedAccounts || []); setTransactions(d.transactions || []); setAdminInvoices(d.invoices || []); setAuditLogs(d.auditLogs || []);
     // Auto-load referral codes so they persist across logins
     const refRes = await fetch('/api/admin/referral-codes', { headers: { Authorization: `Bearer ${token}` } });
     if (refRes.ok) { const rd = await refRes.json(); setReferralCodes(rd.codes || []); }
@@ -200,6 +201,7 @@ export default function AdminDashboard() {
       { id: 'support', label: 'Support', icon: '📧' },
       { id: 'backup', label: 'Backup', icon: '💾' },
       { id: 'managePlans', label: 'Manage Plans', icon: '📋' },
+      { id: 'auditLog', label: 'Audit Log', icon: '📜' },
   ];
 
   const filteredCaseline = caselineUsers.filter(u => !userSearch || u.email.toLowerCase().includes(userSearch.toLowerCase()) || (u.name || '').toLowerCase().includes(userSearch.toLowerCase()));
@@ -1119,6 +1121,51 @@ export default function AdminDashboard() {
                     style={{ padding: '10px 24px', background: '#6b4b3e', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: 600 }}
                   >{editingPlan.id ? 'Save Changes' : 'Create Plan'}</button>
                 </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* AUDIT LOG TAB */}
+        {tab === 'auditLog' && (
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h2 style={{ fontFamily: 'Playfair Display, serif', fontSize: '26px', color: '#3b2a22' }}>Audit Log</h2>
+              <button
+                onClick={async () => {
+                  const supabase = (await import('@/lib/supabase/client')).createClient();
+                  const { data: { session: s } } = await supabase.auth.getSession();
+                  if (!s) return;
+                  const res = await fetch('/api/admin/data', { headers: { Authorization: 'Bearer ' + s.access_token } });
+                  if (res.ok) { const d = await res.json(); setAuditLogs(d.auditLogs || []); }
+                }}
+                style={{ padding: '8px 18px', background: '#6b4b3e', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '13px' }}
+              >Load Logs</button>
+            </div>
+            {auditLogs.length === 0 ? (
+              <p style={{ color: '#888' }}>Click "Load Logs" to view admin activity.</p>
+            ) : (
+              <div style={{ background: 'white', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 4px 20px rgba(0,0,0,0.06)' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                  <thead style={{ background: '#f8f5f0' }}>
+                    <tr>
+                      {['Action', 'Admin', 'IP', 'Details', 'Time'].map(h => (
+                        <th key={h} style={{ padding: '12px 14px', textAlign: 'left', fontSize: '11px', color: '#6b4b3e', textTransform: 'uppercase', fontWeight: 600 }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {auditLogs.map((log: any) => (
+                      <tr key={log.id} style={{ borderBottom: '1px solid #f0ebe4' }}>
+                        <td style={{ padding: '10px 14px', fontWeight: 600, color: log.action.includes('FAILED') ? '#dc2626' : '#166534' }}>{log.action}</td>
+                        <td style={{ padding: '10px 14px' }}>{log.admin_email}</td>
+                        <td style={{ padding: '10px 14px', fontFamily: 'monospace', fontSize: '11px' }}>{log.ip_address}</td>
+                        <td style={{ padding: '10px 14px', color: '#666' }}>{log.details}</td>
+                        <td style={{ padding: '10px 14px', color: '#888', fontSize: '12px' }}>{new Date(log.created_at).toLocaleString('en-IN')}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             )}
           </div>

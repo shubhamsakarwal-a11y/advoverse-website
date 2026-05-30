@@ -120,7 +120,14 @@ export async function GET(req: NextRequest) {
       .order('payment_date', { ascending: false })
       .limit(200);
 
-    return NextResponse.json({ stats, advUsers, caselineUsers, flaggedUsers: flaggedUsers || [], deletedAccounts: deletedAccounts || [], transactions, invoices: allInvoices || [] });
+        // Audit logs (latest 100)
+    const { data: auditLogs } = await supabase
+      .from('admin_audit_log')
+      .select('id, action, admin_email, ip_address, details, created_at')
+      .order('created_at', { ascending: false })
+      .limit(100);
+
+    return NextResponse.json({ stats, advUsers, caselineUsers, flaggedUsers: flaggedUsers || [], deletedAccounts: deletedAccounts || [], transactions, invoices: allInvoices || [], auditLogs: auditLogs || [] });
   } catch (err) {
     console.error('Admin data error:', err);
     return NextResponse.json({ error: 'Internal error' }, { status: 500 });
