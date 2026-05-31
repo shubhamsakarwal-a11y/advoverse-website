@@ -33,6 +33,32 @@ export async function GET(req: NextRequest) {
 
     const { supabase } = admin;
 
+
+    // Check if requesting replies for a specific report
+    const { searchParams } = new URL(req.url);
+    const reportId = searchParams.get('reportId');
+
+    if (reportId) {
+      const { data: replies, error: repliesErr } = await supabase
+        .from('caseline_report_replies')
+        .select('*')
+        .eq('report_id', reportId)
+        .order('created_at', { ascending: true })
+        .limit(50);
+
+      if (repliesErr) {
+        return NextResponse.json({ error: 'Failed to fetch replies' }, { status: 500 });
+      }
+
+      // Mark user replies as read (admin is viewing)
+      const unread = (replies || []).filter((r: any) => r.sender_type === 'user' && !r.read_at).map((r: any) => r.id);
+      if (unread.length > 0) {
+        await supabase.from('caseline_report_replies').update({ read_at: new Date().toISOString() }).in('id', unread);
+      }
+
+      return NextResponse.json({ success: true, data: replies || [] });
+    }
+
     // Fetch all reports
     const { data: reports, error: reportsErr } = await supabase
       .from('caseline_reports')

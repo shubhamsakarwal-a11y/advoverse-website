@@ -232,7 +232,7 @@ export default function AdminDashboard() {
 
   const loadReportReplies = async (reportId: string) => {
     const token = await getToken();
-    const res = await fetch(`/api/admin/reports/replies?reportId=${reportId}`, { headers: { Authorization: `Bearer ${token}` } });
+    const res = await fetch(`/api/admin/reports?reportId=${reportId}`, { headers: { Authorization: `Bearer ${token}` } });
     if (res.ok) { const d = await res.json(); setReportReplies(d.data || []); }
   };
 
@@ -1419,17 +1419,14 @@ export default function AdminDashboard() {
                     <div style={{ fontSize: '11px', color: '#888', fontWeight: 600, marginBottom: '10px' }}>CONVERSATION ({reportReplies.length}):</div>
                     <div style={{ maxHeight: '300px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                       {reportReplies.map((r: any) => (
-                        <div key={r.id} style={{ display: 'flex', justifyContent: r.sender_type === 'admin' ? 'flex-start' : 'flex-end' }}>
-                          <div style={{
-                            maxWidth: '80%', padding: '10px 14px',
-                            borderRadius: r.sender_type === 'admin' ? '12px 12px 12px 2px' : '12px 12px 2px 12px',
-                            background: r.sender_type === 'admin' ? '#6b4b3e' : '#e8eef8',
-                            color: r.sender_type === 'admin' ? 'white' : '#1a1a2e',
-                          }}>
-                            <div style={{ fontSize: '13px', whiteSpace: 'pre-wrap' }}>{r.body}</div>
-                            <div style={{ fontSize: '10px', opacity: 0.7, marginTop: '4px' }}>
-                              {r.sender_type === 'admin' ? '🔵 You' : '👤 User'} · {new Date(r.created_at).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                        <div key={r.id} style={{ display: 'flex', justifyContent: r.sender_type === 'admin' ? 'flex-start' : 'flex-end', marginBottom: '4px' }}>
+                          <div style={{ maxWidth: '80%', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.1)' }}>
+                            <div style={{ padding: '5px 12px', fontSize: '10px', fontWeight: 700, letterSpacing: '0.5px', background: r.sender_type === 'admin' ? '#6b4b3e' : '#1565c0', color: 'white' }}>
+                              {r.sender_type === 'admin' ? '🔵 YOU (ADMIN)' : '👤 USER'} · {new Date(r.created_at).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
                               {r.read_at && r.sender_type === 'admin' ? ' ✓ Read' : ''}
+                            </div>
+                            <div style={{ padding: '10px 14px', fontSize: '13px', whiteSpace: 'pre-wrap', background: r.sender_type === 'admin' ? '#faf5f2' : '#e3f2fd', color: '#1a1a2e', borderLeft: r.sender_type === 'admin' ? '3px solid #6b4b3e' : '3px solid #1565c0' }}>
+                              {r.body}
                             </div>
                           </div>
                         </div>
