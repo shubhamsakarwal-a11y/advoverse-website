@@ -1364,29 +1364,29 @@ export default function AdminDashboard() {
 
             {/* Detail Panel */}
             {selectedReport && (
-              <div style={{ background: 'white', borderRadius: '16px', padding: '28px', boxShadow: '0 4px 20px rgba(0,0,0,0.08)', marginBottom: '24px', border: '2px solid #6b4b3e' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
-                  <div>
-                    <h3 style={{ fontSize: '18px', color: '#3b2a22', margin: '0 0 6px 0' }}>
-                      {selectedReport.type === 'Bug Report' ? '🐛' : '💡'} {selectedReport.subject}
-                    </h3>
-                    <div style={{ fontSize: '13px', color: '#888', display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
-                      <span>From: <strong>{selectedReport.user_email}</strong> ({selectedReport.user_name})</span>
-                      <span>{new Date(selectedReport.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
-                      {selectedReport.app_version && <span>v{selectedReport.app_version}</span>}
-                      {selectedReport.machine_id && <span>Machine: {selectedReport.machine_id.substring(0, 12)}...</span>}
+              <div style={{ background: 'white', borderRadius: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.08)', marginBottom: '24px', border: '2px solid #6b4b3e', display: 'flex', flexDirection: 'column', height: '600px', overflow: 'hidden' }}>
+                
+                {/* Header */}
+                <div style={{ padding: '16px 24px', borderBottom: '2px solid #f3f4f6', flexShrink: 0 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div>
+                      <h3 style={{ fontSize: '16px', color: '#3b2a22', margin: '0 0 4px 0' }}>
+                        {selectedReport.type === 'Bug Report' ? '🐛' : '💡'} {selectedReport.subject}
+                      </h3>
+                      <div style={{ fontSize: '12px', color: '#888', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                        <span><strong>{selectedReport.user_email}</strong></span>
+                        <span>{new Date(selectedReport.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                        {selectedReport.app_version && <span>v{selectedReport.app_version}</span>}
+                      </div>
                     </div>
+                    <button onClick={() => { setSelectedReport(null); setReportReplies([]); }}
+                      style={{ background: '#f3f4f6', border: 'none', fontSize: '16px', cursor: 'pointer', color: '#888', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✖</button>
                   </div>
-                  <button onClick={() => { setSelectedReport(null); setReportReplies([]); }}
-                    style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', color: '#888' }}>✖</button>
-                </div>
-
-                {/* Status & Priority Controls */}
-                <div style={{ display: 'flex', gap: '16px', marginBottom: '16px', alignItems: 'center' }}>
-                  <div>
-                    <label style={{ fontSize: '11px', fontWeight: 600, color: '#888', display: 'block', marginBottom: '4px' }}>STATUS</label>
+                  
+                  {/* Status & Priority row */}
+                  <div style={{ display: 'flex', gap: '12px', marginTop: '10px', alignItems: 'center' }}>
                     <select value={selectedReport.status} onChange={e => updateReportStatus(selectedReport.id, e.target.value)}
-                      style={{ padding: '6px 12px', borderRadius: '6px', border: '2px solid #e5e7eb', fontSize: '13px', fontWeight: 600 }}>
+                      style={{ padding: '5px 10px', borderRadius: '6px', border: '2px solid #e5e7eb', fontSize: '12px', fontWeight: 600 }}>
                       <option value="New">🔴 New</option>
                       <option value="Working">🟡 Working</option>
                       <option value="Query">🟠 Query</option>
@@ -1394,77 +1394,84 @@ export default function AdminDashboard() {
                       <option value="Closed">⚫ Closed</option>
                       <option value="Dismissed">⚪ Dismissed</option>
                     </select>
-                  </div>
-                  <div>
-                    <label style={{ fontSize: '11px', fontWeight: 600, color: '#888', display: 'block', marginBottom: '4px' }}>PRIORITY</label>
                     <select value={selectedReport.priority || 'normal'} onChange={e => updateReportPriority(selectedReport.id, e.target.value)}
-                      style={{ padding: '6px 12px', borderRadius: '6px', border: '2px solid #e5e7eb', fontSize: '13px', fontWeight: 600 }}>
-                      <option value="low">Low</option>
-                      <option value="normal">Normal</option>
+                      style={{ padding: '5px 10px', borderRadius: '6px', border: '2px solid #e5e7eb', fontSize: '12px', fontWeight: 600 }}>
+                      <option value="low">⬇️ Low</option>
+                      <option value="normal">➖ Normal</option>
                       <option value="high">🔺 High</option>
                       <option value="critical">🔴 Critical</option>
                     </select>
+                    <button onClick={() => updateReportStatus(selectedReport.id, 'Resolved')}
+                      style={{ marginLeft: 'auto', padding: '5px 14px', background: '#16a34a', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: 600 }}>
+                      🟢 Mark Resolved
+                    </button>
                   </div>
                 </div>
 
-                {/* Original Report */}
-                <div style={{ background: '#f8fafc', borderRadius: '8px', padding: '14px', marginBottom: '16px', borderLeft: '3px solid #6b4b3e' }}>
-                  <div style={{ fontSize: '11px', color: '#888', fontWeight: 600, marginBottom: '6px' }}>ORIGINAL REPORT:</div>
-                  <div style={{ fontSize: '14px', color: '#333', whiteSpace: 'pre-wrap' }}>{selectedReport.details}</div>
-                </div>
-
-                {/* Conversation Thread */}
-                {reportReplies.length > 0 && (
-                  <div style={{ marginBottom: '16px' }}>
-                    <div style={{ fontSize: '11px', color: '#888', fontWeight: 600, marginBottom: '10px' }}>CONVERSATION ({reportReplies.length}):</div>
-                    <div style={{ maxHeight: '300px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                      {reportReplies.map((r: any) => (
-                        <div key={r.id} style={{ display: 'flex', justifyContent: r.sender_type === 'admin' ? 'flex-start' : 'flex-end', marginBottom: '4px' }}>
-                          <div style={{ maxWidth: '80%', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.1)' }}>
-                            <div style={{ padding: '5px 12px', fontSize: '10px', fontWeight: 700, letterSpacing: '0.5px', background: r.sender_type === 'admin' ? '#6b4b3e' : '#1565c0', color: 'white' }}>
-                              {r.sender_type === 'admin' ? '🔵 YOU (ADMIN)' : '👤 USER'} · {new Date(r.created_at).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
-                              {r.read_at && r.sender_type === 'admin' ? ' ✓ Read' : ''}
-                            </div>
-                            <div style={{ padding: '10px 14px', fontSize: '13px', whiteSpace: 'pre-wrap', background: r.sender_type === 'admin' ? '#faf5f2' : '#e3f2fd', color: '#1a1a2e', borderLeft: r.sender_type === 'admin' ? '3px solid #6b4b3e' : '3px solid #1565c0' }}>
-                              {r.body}
-                            </div>
-                          </div>
-                        </div>
-                      ))}
+                {/* Chat Area (scrollable) */}
+                <div style={{ flex: 1, overflowY: 'auto', padding: '16px 24px', background: '#f9fafb' }}>
+                  
+                  {/* Original Report as first message */}
+                  <div style={{ marginBottom: '12px', display: 'flex', justifyContent: 'flex-end' }}>
+                    <div style={{ maxWidth: '75%', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+                      <div style={{ padding: '4px 12px', fontSize: '10px', fontWeight: 700, background: '#1565c0', color: 'white', letterSpacing: '0.5px' }}>
+                        👤 USER · {new Date(selectedReport.created_at).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                      </div>
+                      <div style={{ padding: '10px 14px', fontSize: '13px', whiteSpace: 'pre-wrap', background: '#e3f2fd', color: '#1a1a2e', borderLeft: '3px solid #1565c0' }}>
+                        {selectedReport.details}
+                      </div>
                     </div>
                   </div>
-                )}
 
-                {/* Reply Box */}
-                <div style={{ borderTop: '1px solid #e5e7eb', paddingTop: '14px' }}>
-                  <textarea value={reportReplyText} onChange={e => setReportReplyText(e.target.value)}
-                    placeholder="Type your reply to the user..."
-                    rows={3}
-                    style={{ width: '100%', padding: '10px 14px', border: '2px solid #e5e7eb', borderRadius: '8px', fontSize: '14px', resize: 'vertical', boxSizing: 'border-box', fontFamily: 'inherit' }}
-                  />
-                  {/* Quick Replies */}
+                  {/* Replies */}
+                  {reportReplies.map((r: any) => (
+                    <div key={r.id} style={{ marginBottom: '12px', display: 'flex', justifyContent: r.sender_type === 'admin' ? 'flex-start' : 'flex-end' }}>
+                      <div style={{ maxWidth: '75%', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+                        <div style={{ padding: '4px 12px', fontSize: '10px', fontWeight: 700, letterSpacing: '0.5px', background: r.sender_type === 'admin' ? '#6b4b3e' : '#1565c0', color: 'white' }}>
+                          {r.sender_type === 'admin' ? '🔵 YOU (ADMIN)' : '👤 USER'} · {new Date(r.created_at).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                          {r.read_at && r.sender_type === 'admin' ? ' ✓✓' : ''}
+                        </div>
+                        <div style={{ padding: '10px 14px', fontSize: '13px', whiteSpace: 'pre-wrap', background: r.sender_type === 'admin' ? '#faf5f2' : '#e3f2fd', color: '#1a1a2e', borderLeft: r.sender_type === 'admin' ? '3px solid #6b4b3e' : '3px solid #1565c0' }}>
+                          {r.body}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+
+                  {reportReplies.length === 0 && (
+                    <div style={{ textAlign: 'center', padding: '20px', color: '#aaa', fontSize: '13px', fontStyle: 'italic' }}>
+                      No replies yet. Send a message below.
+                    </div>
+                  )}
+                </div>
+
+                {/* Input Area (fixed at bottom) */}
+                <div style={{ padding: '12px 24px', borderTop: '2px solid #f3f4f6', background: 'white', flexShrink: 0 }}>
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-end' }}>
+                    <textarea value={reportReplyText} onChange={e => setReportReplyText(e.target.value)}
+                      placeholder="Type your reply to the user..."
+                      rows={2}
+                      onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendReportReply(selectedReport.id); } }}
+                      style={{ flex: 1, padding: '10px 14px', border: '2px solid #e5e7eb', borderRadius: '8px', fontSize: '13px', resize: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }}
+                    />
+                    <button onClick={() => sendReportReply(selectedReport.id)} disabled={reportReplyLoading || !reportReplyText.trim()}
+                      style={{ padding: '10px 18px', background: reportReplyLoading || !reportReplyText.trim() ? '#a8927e' : '#6b4b3e', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: 600, whiteSpace: 'nowrap' }}>
+                      {reportReplyLoading ? '...' : 'Send ▶'}
+                    </button>
+                  </div>
+                  {/* Quick replies */}
                   <div style={{ display: 'flex', gap: '6px', marginTop: '8px', flexWrap: 'wrap' }}>
                     {[
-                      { label: '📸 Ask screenshot', text: 'Can you please share a screenshot of the issue?' },
-                      { label: '✅ Fixed in update', text: 'This has been fixed. Please update to the latest version.' },
+                      { label: '📸 Screenshot?', text: 'Can you please share a screenshot of the issue?' },
+                      { label: '✅ Fixed', text: 'This has been fixed. Please update to the latest version.' },
                       { label: '❓ More info', text: 'Can you provide more details about when this happens?' },
-                      { label: '🔄 Try restart', text: 'Please try restarting the application and let me know if the issue persists.' },
+                      { label: '🔄 Restart', text: 'Please try restarting the application and let me know if the issue persists.' },
                     ].map(q => (
                       <button key={q.label} onClick={() => setReportReplyText(q.text)}
-                        style={{ padding: '4px 10px', background: '#f3f4f6', border: '1px solid #e5e7eb', borderRadius: '4px', cursor: 'pointer', fontSize: '11px', color: '#555' }}>
+                        style={{ padding: '3px 8px', background: '#f3f4f6', border: '1px solid #e5e7eb', borderRadius: '4px', cursor: 'pointer', fontSize: '10px', color: '#555' }}>
                         {q.label}
                       </button>
                     ))}
-                  </div>
-                  <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '12px' }}>
-                    <button onClick={() => { updateReportStatus(selectedReport.id, 'Resolved'); }}
-                      style={{ padding: '8px 16px', background: '#16a34a', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', fontWeight: 600 }}>
-                      🟢 Mark Resolved
-                    </button>
-                    <button onClick={() => sendReportReply(selectedReport.id)} disabled={reportReplyLoading || !reportReplyText.trim()}
-                      style={{ padding: '8px 16px', background: reportReplyLoading || !reportReplyText.trim() ? '#a8927e' : '#6b4b3e', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', fontWeight: 600 }}>
-                      {reportReplyLoading ? 'Sending...' : 'Send Reply ▶'}
-                    </button>
                   </div>
                 </div>
               </div>
