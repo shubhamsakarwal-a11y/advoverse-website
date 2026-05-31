@@ -194,3 +194,38 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
+
+
+// ══════════════════════════════════════════════════════════════════════════════
+// DELETE /api/admin/reports — Delete a report and its replies
+// ══════════════════════════════════════════════════════════════════════════════
+export async function DELETE(req: NextRequest) {
+  try {
+    const admin = await verifyAdmin(req);
+    if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+    const { supabase } = admin;
+    const { searchParams } = new URL(req.url);
+    const reportId = searchParams.get('reportId');
+
+    if (!reportId) {
+      return NextResponse.json({ error: 'reportId is required' }, { status: 400 });
+    }
+
+    // Delete replies first (cascade should handle this, but be explicit)
+    await supabase.from('caseline_report_replies').delete().eq('report_id', reportId);
+    
+    // Delete the report
+    const { error } = await supabase.from('caseline_reports').delete().eq('id', reportId);
+
+    if (error) {
+      console.error('Delete report error:', error);
+      return NextResponse.json({ error: 'Failed to delete report' }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true, data: { message: 'Report deleted' } });
+  } catch (error) {
+    console.error('DELETE /api/admin/reports error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}

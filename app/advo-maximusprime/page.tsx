@@ -259,6 +259,17 @@ export default function AdminDashboard() {
     setReportReplyLoading(false);
   };
 
+  const deleteReport = async (reportId: string) => {
+    if (!confirm('Delete this report and all its replies? This cannot be undone.')) return;
+    const token = await getToken();
+    const res = await fetch(`/api/admin/reports?reportId=${reportId}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
+    if (res.ok) {
+      setReports(prev => prev.filter(r => r.id !== reportId));
+      setSelectedReport(null);
+      setReportReplies([]);
+    }
+  };
+
 
   const filteredCaseline = caselineUsers.filter(u => !userSearch || u.email.toLowerCase().includes(userSearch.toLowerCase()) || (u.name || '').toLowerCase().includes(userSearch.toLowerCase()));
   const filteredAdv = advUsers.filter(u => !userSearch || u.email.toLowerCase().includes(userSearch.toLowerCase()) || (u.full_name || '').toLowerCase().includes(userSearch.toLowerCase()));
@@ -1379,8 +1390,12 @@ export default function AdminDashboard() {
                         {selectedReport.app_version && <span>v{selectedReport.app_version}</span>}
                       </div>
                     </div>
-                    <button onClick={() => { setSelectedReport(null); setReportReplies([]); }}
-                      style={{ background: '#f3f4f6', border: 'none', fontSize: '16px', cursor: 'pointer', color: '#888', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✖</button>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button onClick={() => deleteReport(selectedReport.id)}
+                        style={{ background: '#fee2e2', border: 'none', fontSize: '12px', cursor: 'pointer', color: '#991b1b', borderRadius: '6px', padding: '6px 12px', fontWeight: 600 }}>🗑️ Delete</button>
+                      <button onClick={() => { setSelectedReport(null); setReportReplies([]); }}
+                        style={{ background: '#f3f4f6', border: 'none', fontSize: '16px', cursor: 'pointer', color: '#888', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✖</button>
+                    </div>
                   </div>
                   
                   {/* Status & Priority row */}
@@ -1413,11 +1428,11 @@ export default function AdminDashboard() {
                   
                   {/* Original Report as first message */}
                   <div style={{ marginBottom: '12px', display: 'flex', justifyContent: 'flex-end' }}>
-                    <div style={{ maxWidth: '75%', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-                      <div style={{ padding: '4px 12px', fontSize: '10px', fontWeight: 700, background: '#1565c0', color: 'white', letterSpacing: '0.5px' }}>
-                        👤 USER · {new Date(selectedReport.created_at).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                    <div style={{ maxWidth: '70%', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 2px 6px rgba(0,0,0,0.08)' }}>
+                      <div style={{ padding: '6px 14px', fontSize: '11px', fontWeight: 700, background: '#0d47a1', color: 'white' }}>
+                        👤 USER (Original Report) · {new Date(selectedReport.created_at).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
                       </div>
-                      <div style={{ padding: '10px 14px', fontSize: '13px', whiteSpace: 'pre-wrap', background: '#e3f2fd', color: '#1a1a2e', borderLeft: '3px solid #1565c0' }}>
+                      <div style={{ padding: '12px 16px', fontSize: '14px', whiteSpace: 'pre-wrap', lineHeight: '1.5', background: '#e3f2fd', color: '#1a1a2e', borderLeft: '4px solid #1565c0' }}>
                         {selectedReport.details}
                       </div>
                     </div>
@@ -1425,13 +1440,13 @@ export default function AdminDashboard() {
 
                   {/* Replies */}
                   {reportReplies.map((r: any) => (
-                    <div key={r.id} style={{ marginBottom: '12px', display: 'flex', justifyContent: r.sender_type === 'admin' ? 'flex-start' : 'flex-end' }}>
-                      <div style={{ maxWidth: '75%', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-                        <div style={{ padding: '4px 12px', fontSize: '10px', fontWeight: 700, letterSpacing: '0.5px', background: r.sender_type === 'admin' ? '#6b4b3e' : '#1565c0', color: 'white' }}>
-                          {r.sender_type === 'admin' ? '🔵 YOU (ADMIN)' : '👤 USER'} · {new Date(r.created_at).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                    <div key={r.id} style={{ display: 'flex', justifyContent: r.sender_type === 'admin' ? 'flex-start' : 'flex-end', marginBottom: '12px' }}>
+                      <div style={{ maxWidth: '70%', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 2px 6px rgba(0,0,0,0.08)' }}>
+                        <div style={{ padding: '6px 14px', fontSize: '11px', fontWeight: 700, background: r.sender_type === 'admin' ? '#4a3728' : '#0d47a1', color: 'white' }}>
+                          {r.sender_type === 'admin' ? '🛡️ ADMIN' : '👤 USER'} · {new Date(r.created_at).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
                           {r.read_at && r.sender_type === 'admin' ? ' ✓✓' : ''}
                         </div>
-                        <div style={{ padding: '10px 14px', fontSize: '13px', whiteSpace: 'pre-wrap', background: r.sender_type === 'admin' ? '#faf5f2' : '#e3f2fd', color: '#1a1a2e', borderLeft: r.sender_type === 'admin' ? '3px solid #6b4b3e' : '3px solid #1565c0' }}>
+                        <div style={{ padding: '12px 16px', fontSize: '14px', whiteSpace: 'pre-wrap', lineHeight: '1.5', background: r.sender_type === 'admin' ? '#fff8f3' : '#e3f2fd', color: '#1a1a2e', borderLeft: r.sender_type === 'admin' ? '4px solid #6b4b3e' : '4px solid #1565c0' }}>
                           {r.body}
                         </div>
                       </div>
