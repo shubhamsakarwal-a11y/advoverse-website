@@ -174,44 +174,6 @@ export default function AdminDashboard() {
       setPinLoading(false);
     };
   
-  // ── Report Tab Functions ──
-  const loadReports = async () => {
-    setReportsLoading(true);
-    const token = await getToken();
-    const res = await fetch('/api/admin/reports', { headers: { Authorization: `Bearer ${token}` } });
-    if (res.ok) { const d = await res.json(); setReports(d.data || []); }
-    setReportsLoading(false);
-  };
-
-  const loadReportReplies = async (reportId: string) => {
-    const token = await getToken();
-    const res = await fetch(`/api/admin/reports/replies?reportId=${reportId}`, { headers: { Authorization: `Bearer ${token}` } });
-    if (res.ok) { const d = await res.json(); setReportReplies(d.data || []); }
-  };
-
-  const updateReportStatus = async (reportId: string, status: string) => {
-    const token = await getToken();
-    await fetch('/api/admin/reports', { method: 'PATCH', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ reportId, status }) });
-    setReports(prev => prev.map(r => r.id === reportId ? { ...r, status } : r));
-    if (selectedReport?.id === reportId) setSelectedReport((prev: any) => ({ ...prev, status }));
-  };
-
-  const updateReportPriority = async (reportId: string, priority: string) => {
-    const token = await getToken();
-    await fetch('/api/admin/reports', { method: 'PATCH', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ reportId, priority }) });
-    setReports(prev => prev.map(r => r.id === reportId ? { ...r, priority } : r));
-    if (selectedReport?.id === reportId) setSelectedReport((prev: any) => ({ ...prev, priority }));
-  };
-
-  const sendReportReply = async (reportId: string) => {
-    if (!reportReplyText.trim()) return;
-    setReportReplyLoading(true);
-    const token = await getToken();
-    const res = await fetch('/api/admin/reports', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ reportId, message: reportReplyText }) });
-    if (res.ok) { setReportReplyText(''); await loadReportReplies(reportId); setReports(prev => prev.map(r => r.id === reportId ? { ...r, status: 'Query', reply_count: (r.reply_count || 0) + 1 } : r)); if (selectedReport?.id === reportId) setSelectedReport((prev: any) => ({ ...prev, status: 'Query' })); }
-    setReportReplyLoading(false);
-  };
-
   return (
       <div style={{ minHeight: '100vh', background: '#1a1a2e', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter, sans-serif' }}>
         <div style={{ background: 'white', borderRadius: '16px', padding: '48px', maxWidth: '380px', width: '90%', textAlign: 'center', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }}>
@@ -258,6 +220,45 @@ export default function AdminDashboard() {
       { id: 'broadcast', label: 'Broadcast', icon: '📢' },
     { id: 'reports', label: 'Reports', icon: '🐛' },
   ];
+
+  // ── Report Tab Functions ──
+  const loadReports = async () => {
+    setReportsLoading(true);
+    const token = await getToken();
+    const res = await fetch('/api/admin/reports', { headers: { Authorization: `Bearer ${token}` } });
+    if (res.ok) { const d = await res.json(); setReports(d.data || []); }
+    setReportsLoading(false);
+  };
+
+  const loadReportReplies = async (reportId: string) => {
+    const token = await getToken();
+    const res = await fetch(`/api/admin/reports/replies?reportId=${reportId}`, { headers: { Authorization: `Bearer ${token}` } });
+    if (res.ok) { const d = await res.json(); setReportReplies(d.data || []); }
+  };
+
+  const updateReportStatus = async (reportId: string, status: string) => {
+    const token = await getToken();
+    await fetch('/api/admin/reports', { method: 'PATCH', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ reportId, status }) });
+    setReports(prev => prev.map(r => r.id === reportId ? { ...r, status } : r));
+    if (selectedReport?.id === reportId) setSelectedReport((prev: any) => ({ ...prev, status }));
+  };
+
+  const updateReportPriority = async (reportId: string, priority: string) => {
+    const token = await getToken();
+    await fetch('/api/admin/reports', { method: 'PATCH', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ reportId, priority }) });
+    setReports(prev => prev.map(r => r.id === reportId ? { ...r, priority } : r));
+    if (selectedReport?.id === reportId) setSelectedReport((prev: any) => ({ ...prev, priority }));
+  };
+
+  const sendReportReply = async (reportId: string) => {
+    if (!reportReplyText.trim()) return;
+    setReportReplyLoading(true);
+    const token = await getToken();
+    const res = await fetch('/api/admin/reports', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ reportId, message: reportReplyText }) });
+    if (res.ok) { setReportReplyText(''); await loadReportReplies(reportId); setReports(prev => prev.map(r => r.id === reportId ? { ...r, status: 'Query', reply_count: (r.reply_count || 0) + 1 } : r)); if (selectedReport?.id === reportId) setSelectedReport((prev: any) => ({ ...prev, status: 'Query' })); }
+    setReportReplyLoading(false);
+  };
+
 
   const filteredCaseline = caselineUsers.filter(u => !userSearch || u.email.toLowerCase().includes(userSearch.toLowerCase()) || (u.name || '').toLowerCase().includes(userSearch.toLowerCase()));
   const filteredAdv = advUsers.filter(u => !userSearch || u.email.toLowerCase().includes(userSearch.toLowerCase()) || (u.full_name || '').toLowerCase().includes(userSearch.toLowerCase()));
