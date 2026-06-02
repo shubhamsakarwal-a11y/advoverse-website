@@ -374,6 +374,9 @@ export default function AdvoverseWebsite() {
               { title: 'Todo Lists', desc: '10 customisable task lists with time allocation, duration tracking and daily repeat mode for structured work habits.' },
               { title: 'Advo Tools', desc: 'Curated set of daily-use tools designed for advocates in routine practice.' },
               { title: 'Appointments Diary', desc: 'Schedule and manage all your appointments, conferences and consultations from one unified dashboard.' },
+              { title: 'Daily Planner', desc: 'Plan your day hour by hour with color-coded time blocks, recurring routines, templates and auto-imported court hearings.' },
+              { title: 'Advoverse Network', desc: 'Connect with advocates across India. Search by state, district and area of practice. Message, build connections and grow your professional network.' },
+              { title: 'Chamber Accounting', desc: 'Track income, expenses, salaries and case-wise profitability. Generate invoices, view reports and export to Excel — all built for advocate chambers.' },
             ].map((feature, i) => (
               <div key={i} className="bg-white rounded-2xl transition-transform hover:-translate-y-1.5" style={{ padding: '35px', boxShadow: '0 10px 30px rgba(0,0,0,0.05)' }}>
                 <h3 className="mb-5" style={{ fontSize: '26px', color: '#3b2a22', fontFamily: 'Playfair Display, serif' }}>

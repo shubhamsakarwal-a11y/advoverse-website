@@ -1159,6 +1159,27 @@ export default function AdminDashboard() {
                           }} />
                           Internal Chatroom
                         </label>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer' }}>
+                          <input type="checkbox" checked={editingPlan?.features?.includes('daily_planner')} onChange={(e) => {
+                            const f = editingPlan?.features || [];
+                            setEditingPlan({...editingPlan, features: e.target.checked ? [...f, 'daily_planner'] : f.filter((x: string) => x !== 'daily_planner')});
+                          }} />
+                          Daily Planner
+                        </label>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer' }}>
+                          <input type="checkbox" checked={editingPlan?.features?.includes('advoverse_network')} onChange={(e) => {
+                            const f = editingPlan?.features || [];
+                            setEditingPlan({...editingPlan, features: e.target.checked ? [...f, 'advoverse_network'] : f.filter((x: string) => x !== 'advoverse_network')});
+                          }} />
+                          Advoverse Network
+                        </label>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer' }}>
+                          <input type="checkbox" checked={editingPlan?.features?.includes('chamber_accounting')} onChange={(e) => {
+                            const f = editingPlan?.features || [];
+                            setEditingPlan({...editingPlan, features: e.target.checked ? [...f, 'chamber_accounting'] : f.filter((x: string) => x !== 'chamber_accounting')});
+                          }} />
+                          Chamber Accounting
+                        </label>
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: '10px' }}>
