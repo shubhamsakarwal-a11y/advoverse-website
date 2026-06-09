@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 
-type AdminTab = 'overview' | 'users' | 'flagged' | 'removals' | 'transactions' | 'activate' | 'referrals' | 'invoices' | 'support' | 'backup' | 'managePlans' | 'auditLog' | 'broadcast' | 'reports';
+type AdminTab = 'overview' | 'users' | 'flagged' | 'removals' | 'transactions' | 'activate' | 'referrals' | 'invoices' | 'support' | 'backup' | 'managePlans' | 'auditLog' | 'broadcast' | 'reports' | 'deployUpdates';
 
 interface CaselineUser {
   id: number; email: string; name: string; created_at: string; status?: string;
@@ -75,6 +75,19 @@ export default function AdminDashboard() {
   const [reportReplyText, setReportReplyText] = useState('');
   const [reportReplyLoading, setReportReplyLoading] = useState(false);
   const [reportFilter, setReportFilter] = useState<string>('all');
+  // Deploy Updates state
+  const [appUpdates, setAppUpdates] = useState<any[]>([]);
+  const [updatesLoading, setUpdatesLoading] = useState(false);
+  const [newUpdateVersion, setNewUpdateVersion] = useState('');
+  const [newUpdateTitle, setNewUpdateTitle] = useState('');
+  const [newUpdateChangelog, setNewUpdateChangelog] = useState('');
+  const [newUpdateUrl, setNewUpdateUrl] = useState('');
+  const [newUpdateMandatory, setNewUpdateMandatory] = useState(false);
+  const [newUpdatePlatform, setNewUpdatePlatform] = useState('windows');
+  const [newUpdateFileSize, setNewUpdateFileSize] = useState('');
+  const [newUpdateMinVersion, setNewUpdateMinVersion] = useState('');
+  const [updateMsg, setUpdateMsg] = useState<{type:'ok'|'err';text:string}|null>(null);
+  const [showUpdateForm, setShowUpdateForm] = useState(false);
   const router = useRouter();
 
   useEffect(() => { checkAndLoad(); }, []);
@@ -219,6 +232,7 @@ export default function AdminDashboard() {
       { id: 'auditLog', label: 'Audit Log', icon: '📜' },
       { id: 'broadcast', label: 'Broadcast', icon: '📢' },
     { id: 'reports', label: 'Reports', icon: '🐛' },
+    { id: 'deployUpdates', label: 'Deploy Updates', icon: '🚀' },
   ];
 
   // ── Report Tab Functions ──
@@ -268,6 +282,77 @@ export default function AdminDashboard() {
       setSelectedReport(null);
       setReportReplies([]);
     }
+  };
+
+  // ── Deploy Updates Tab Functions ──
+  const loadAppUpdates = async () => {
+    setUpdatesLoading(true);
+    const token = await getToken();
+    const res = await fetch('/api/admin/deploy-update', { headers: { Authorization: `Bearer ${token}` } });
+    if (res.ok) { const d = await res.json(); setAppUpdates(d.updates || []); }
+    setUpdatesLoading(false);
+  };
+
+  const publishUpdate = async () => {
+    if (!newUpdateVersion || !newUpdateTitle || !newUpdateUrl) {
+      setUpdateMsg({ type: 'err', text: 'Version, title, and download URL are required.' });
+      return;
+    }
+    setUpdatesLoading(true);
+    setUpdateMsg(null);
+    const token = await getToken();
+    const res = await fetch('/api/admin/deploy-update', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({
+        version: newUpdateVersion,
+        title: newUpdateTitle,
+        changelog: newUpdateChangelog,
+        download_url: newUpdateUrl,
+        is_mandatory: newUpdateMandatory,
+        platform: newUpdatePlatform,
+        file_size: newUpdateFileSize || null,
+        min_version: newUpdateMinVersion || null,
+      }),
+    });
+    const d = await res.json();
+    if (res.ok) {
+      setUpdateMsg({ type: 'ok', text: `✅ v${newUpdateVersion} published successfully!` });
+      setNewUpdateVersion(''); setNewUpdateTitle(''); setNewUpdateChangelog('');
+      setNewUpdateUrl(''); setNewUpdateMandatory(false); setNewUpdateFileSize('');
+      setNewUpdateMinVersion(''); setShowUpdateForm(false);
+      await loadAppUpdates();
+    } else {
+      setUpdateMsg({ type: 'err', text: d.error || 'Failed to publish update.' });
+    }
+    setUpdatesLoading(false);
+  };
+
+  const toggleUpdateActive = async (id: string, currentActive: boolean) => {
+    const token = await getToken();
+    await fetch('/api/admin/deploy-update', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ id, is_active: !currentActive }),
+    });
+    setAppUpdates(prev => prev.map(u => u.id === id ? { ...u, is_active: !currentActive } : u));
+  };
+
+  const toggleUpdateMandatory = async (id: string, currentMandatory: boolean) => {
+    const token = await getToken();
+    await fetch('/api/admin/deploy-update', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ id, is_mandatory: !currentMandatory }),
+    });
+    setAppUpdates(prev => prev.map(u => u.id === id ? { ...u, is_mandatory: !currentMandatory } : u));
+  };
+
+  const deleteUpdate = async (id: string, version: string) => {
+    if (!confirm(`Delete update v${version}? This cannot be undone.`)) return;
+    const token = await getToken();
+    const res = await fetch(`/api/admin/deploy-update?id=${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
+    if (res.ok) setAppUpdates(prev => prev.filter(u => u.id !== id));
   };
 
 
@@ -1629,6 +1714,172 @@ export default function AdminDashboard() {
                 </div>
               );
             })()}
+          </div>
+        )}
+
+        {/* DEPLOY UPDATES */}
+        {tab === 'deployUpdates' && (
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
+              <h2 style={{ fontFamily: 'Playfair Display, serif', fontSize: '26px', color: '#3b2a22', margin: 0 }}>🚀 Deploy Updates</h2>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button onClick={loadAppUpdates} style={{ padding: '10px 20px', background: '#6b4b3e', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: 600 }}>
+                  {updatesLoading ? '⏳ Loading...' : '🔄 Refresh'}
+                </button>
+                <button onClick={() => setShowUpdateForm(!showUpdateForm)} style={{ padding: '10px 20px', background: '#16a34a', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: 600 }}>
+                  {showUpdateForm ? '✕ Cancel' : '+ Publish New Update'}
+                </button>
+              </div>
+            </div>
+
+            {/* Desktop app endpoint info */}
+            <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '10px', padding: '14px 18px', marginBottom: '20px', fontSize: '13px', color: '#1e40af' }}>
+              <strong>Desktop Check-Update Endpoint:</strong>{' '}
+              <code style={{ background: '#dbeafe', padding: '2px 8px', borderRadius: '4px' }}>GET /api/desktop/check-update?currentVersion=1.0.0&platform=windows</code>
+            </div>
+
+            {updateMsg && (
+              <div style={{ padding: '12px 18px', borderRadius: '10px', marginBottom: '16px', background: updateMsg.type === 'ok' ? '#dcfce7' : '#fee2e2', color: updateMsg.type === 'ok' ? '#166534' : '#991b1b', fontSize: '14px', fontWeight: 500 }}>
+                {updateMsg.text}
+              </div>
+            )}
+
+            {/* Publish New Update Form */}
+            {showUpdateForm && (
+              <div style={{ background: 'white', borderRadius: '14px', padding: '28px', boxShadow: '0 2px 12px rgba(0,0,0,0.05)', border: '1px solid #e5e7eb', marginBottom: '24px' }}>
+                <h3 style={{ margin: '0 0 20px', color: '#3b2a22', fontSize: '18px' }}>📦 Publish New Version</h3>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', color: '#555', marginBottom: '4px', fontWeight: 600 }}>Version *</label>
+                    <input type="text" placeholder="e.g. 2.1.0" value={newUpdateVersion} onChange={e => setNewUpdateVersion(e.target.value)}
+                      style={{ width: '100%', padding: '10px 14px', border: '2px solid #e5e7eb', borderRadius: '8px', fontSize: '14px', boxSizing: 'border-box' }} />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', color: '#555', marginBottom: '4px', fontWeight: 600 }}>Title *</label>
+                    <input type="text" placeholder="e.g. Performance improvements & bug fixes" value={newUpdateTitle} onChange={e => setNewUpdateTitle(e.target.value)}
+                      style={{ width: '100%', padding: '10px 14px', border: '2px solid #e5e7eb', borderRadius: '8px', fontSize: '14px', boxSizing: 'border-box' }} />
+                  </div>
+                  <div style={{ gridColumn: '1 / -1' }}>
+                    <label style={{ display: 'block', fontSize: '12px', color: '#555', marginBottom: '4px', fontWeight: 600 }}>Download URL *</label>
+                    <input type="text" placeholder="https://github.com/your-repo/releases/download/v2.1.0/CaselineSetup.exe" value={newUpdateUrl} onChange={e => setNewUpdateUrl(e.target.value)}
+                      style={{ width: '100%', padding: '10px 14px', border: '2px solid #e5e7eb', borderRadius: '8px', fontSize: '14px', boxSizing: 'border-box' }} />
+                  </div>
+                  <div style={{ gridColumn: '1 / -1' }}>
+                    <label style={{ display: 'block', fontSize: '12px', color: '#555', marginBottom: '4px', fontWeight: 600 }}>Changelog</label>
+                    <textarea placeholder="- Fixed login issues&#10;- Improved sync performance&#10;- Added dark mode" value={newUpdateChangelog} onChange={e => setNewUpdateChangelog(e.target.value)} rows={4}
+                      style={{ width: '100%', padding: '10px 14px', border: '2px solid #e5e7eb', borderRadius: '8px', fontSize: '14px', resize: 'vertical', boxSizing: 'border-box' }} />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', color: '#555', marginBottom: '4px', fontWeight: 600 }}>Platform</label>
+                    <select value={newUpdatePlatform} onChange={e => setNewUpdatePlatform(e.target.value)}
+                      style={{ width: '100%', padding: '10px 14px', border: '2px solid #e5e7eb', borderRadius: '8px', fontSize: '14px' }}>
+                      <option value="windows">Windows</option>
+                      <option value="mac">macOS</option>
+                      <option value="linux">Linux</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', color: '#555', marginBottom: '4px', fontWeight: 600 }}>File Size</label>
+                    <input type="text" placeholder="e.g. 85 MB" value={newUpdateFileSize} onChange={e => setNewUpdateFileSize(e.target.value)}
+                      style={{ width: '100%', padding: '10px 14px', border: '2px solid #e5e7eb', borderRadius: '8px', fontSize: '14px', boxSizing: 'border-box' }} />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', color: '#555', marginBottom: '4px', fontWeight: 600 }}>Min Version (force update below this)</label>
+                    <input type="text" placeholder="e.g. 1.5.0" value={newUpdateMinVersion} onChange={e => setNewUpdateMinVersion(e.target.value)}
+                      style={{ width: '100%', padding: '10px 14px', border: '2px solid #e5e7eb', borderRadius: '8px', fontSize: '14px', boxSizing: 'border-box' }} />
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px', color: '#3b2a22' }}>
+                      <input type="checkbox" checked={newUpdateMandatory} onChange={e => setNewUpdateMandatory(e.target.checked)}
+                        style={{ width: '18px', height: '18px', cursor: 'pointer' }} />
+                      <span style={{ fontWeight: 600 }}>🚨 Mandatory Update</span>
+                    </label>
+                    <span style={{ fontSize: '11px', color: '#888' }}>(Forces all users to update)</span>
+                  </div>
+                </div>
+                <div style={{ marginTop: '20px', display: 'flex', gap: '12px' }}>
+                  <button onClick={publishUpdate} disabled={updatesLoading}
+                    style={{ padding: '12px 28px', background: updatesLoading ? '#888' : '#16a34a', color: 'white', border: 'none', borderRadius: '8px', cursor: updatesLoading ? 'not-allowed' : 'pointer', fontSize: '14px', fontWeight: 600 }}>
+                    {updatesLoading ? '⏳ Publishing...' : '🚀 Publish Update'}
+                  </button>
+                  <button onClick={() => setShowUpdateForm(false)}
+                    style={{ padding: '12px 28px', background: '#f3f4f6', color: '#555', border: '1px solid #e5e7eb', borderRadius: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: 500 }}>
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Updates History Table */}
+            <div style={{ background: 'white', borderRadius: '14px', boxShadow: '0 2px 12px rgba(0,0,0,0.05)', border: '1px solid #e5e7eb', overflow: 'hidden' }}>
+              <div style={{ padding: '18px 24px', borderBottom: '1px solid #e5e7eb' }}>
+                <h3 style={{ margin: 0, color: '#3b2a22', fontSize: '17px' }}>Version History</h3>
+              </div>
+              {appUpdates.length === 0 ? (
+                <div style={{ padding: '40px', textAlign: 'center', color: '#888' }}>
+                  {updatesLoading ? '⏳ Loading updates...' : 'No updates published yet. Click "Refresh" to load or "Publish New Update" to deploy one.'}
+                </div>
+              ) : (
+                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                  <thead style={{ background: '#f9fafb' }}>
+                    <tr>
+                      {['Version', 'Title', 'Platform', 'Size', 'Mandatory', 'Status', 'Published', 'Actions'].map(h => (
+                        <th key={h} style={{ padding: '12px 16px', textAlign: 'left', fontSize: '11px', color: '#6b7280', textTransform: 'uppercase', fontWeight: 600 }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {appUpdates.map((u: any) => (
+                      <tr key={u.id} style={{ borderBottom: '1px solid #f3f4f6', opacity: u.is_active ? 1 : 0.5 }}>
+                        <td style={{ padding: '12px 16px', fontSize: '14px', fontWeight: 700, color: '#3b2a22' }}>v{u.version}</td>
+                        <td style={{ padding: '12px 16px', fontSize: '13px', color: '#555', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{u.title}</td>
+                        <td style={{ padding: '12px 16px' }}>
+                          <span style={{ background: '#e0e7ff', color: '#3730a3', padding: '3px 10px', borderRadius: '10px', fontSize: '11px', fontWeight: 600 }}>
+                            {u.platform === 'windows' ? '🪟' : u.platform === 'mac' ? '🍎' : '🐧'} {u.platform}
+                          </span>
+                        </td>
+                        <td style={{ padding: '12px 16px', fontSize: '12px', color: '#888' }}>{u.file_size || '—'}</td>
+                        <td style={{ padding: '12px 16px' }}>
+                          <button onClick={() => toggleUpdateMandatory(u.id, u.is_mandatory)}
+                            style={{ background: u.is_mandatory ? '#fee2e2' : '#f3f4f6', color: u.is_mandatory ? '#991b1b' : '#6b7280', border: 'none', padding: '4px 10px', borderRadius: '8px', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}>
+                            {u.is_mandatory ? '🚨 Yes' : '— No'}
+                          </button>
+                        </td>
+                        <td style={{ padding: '12px 16px' }}>
+                          <button onClick={() => toggleUpdateActive(u.id, u.is_active)}
+                            style={{ background: u.is_active ? '#dcfce7' : '#fee2e2', color: u.is_active ? '#166534' : '#991b1b', border: 'none', padding: '4px 12px', borderRadius: '8px', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}>
+                            {u.is_active ? '🟢 Active' : '🔴 Disabled'}
+                          </button>
+                        </td>
+                        <td style={{ padding: '12px 16px', fontSize: '12px', color: '#888' }}>
+                          {new Date(u.published_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                          <div style={{ fontSize: '10px', color: '#aaa' }}>{u.published_by}</div>
+                        </td>
+                        <td style={{ padding: '12px 16px' }}>
+                          <button onClick={() => deleteUpdate(u.id, u.version)}
+                            style={{ background: '#dc2626', color: 'white', border: 'none', padding: '5px 12px', borderRadius: '6px', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}>
+                            🗑️ Delete
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+
+            {/* Latest Active Version Summary */}
+            {appUpdates.filter(u => u.is_active).length > 0 && (
+              <div style={{ marginTop: '20px', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '10px', padding: '16px 20px' }}>
+                <div style={{ fontSize: '13px', color: '#166534', fontWeight: 600, marginBottom: '4px' }}>📡 Currently Live Version</div>
+                <div style={{ fontSize: '20px', fontWeight: 700, color: '#166534' }}>
+                  v{appUpdates.find(u => u.is_active)?.version} — {appUpdates.find(u => u.is_active)?.title}
+                </div>
+                <div style={{ fontSize: '12px', color: '#4ade80', marginTop: '4px' }}>
+                  Users hitting <code>/api/desktop/check-update</code> will see this version
+                </div>
+              </div>
+            )}
           </div>
         )}
 
