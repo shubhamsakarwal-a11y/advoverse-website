@@ -505,9 +505,12 @@ export default function AdvoverseWebsite() {
           <p style={{ color: '#c9c1b8', fontSize: '14px' }}>
             Professional litigation management infrastructure for advocates and chambers.
           </p>
-          <div style={{ marginTop: '16px', display: 'flex', justifyContent: 'center', gap: '24px', fontSize: '13px' }}>
+          <div style={{ marginTop: '16px', display: 'flex', justifyContent: 'center', gap: '20px', fontSize: '13px', flexWrap: 'wrap' }}>
+            <a href="/eula" style={{ color: '#f59e0b', textDecoration: 'none' }}>EULA</a>
             <a href="/subscription-policy" style={{ color: '#f59e0b', textDecoration: 'none' }}>Subscription & Refund Policy</a>
             <a href="/data-processing-terms" style={{ color: '#f59e0b', textDecoration: 'none' }}>Data Processing Terms</a>
+            <a href="/legal-disclaimer" style={{ color: '#f59e0b', textDecoration: 'none' }}>Legal Disclaimer</a>
+            <a href="/acceptable-use" style={{ color: '#f59e0b', textDecoration: 'none' }}>Acceptable Use Policy</a>
           </div>
         </div>
       </footer>
