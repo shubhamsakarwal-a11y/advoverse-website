@@ -507,6 +507,7 @@ export default function AdvoverseWebsite() {
           </p>
           <div style={{ marginTop: '16px', display: 'flex', justifyContent: 'center', gap: '24px', fontSize: '13px' }}>
             <a href="/subscription-policy" style={{ color: '#f59e0b', textDecoration: 'none' }}>Subscription & Refund Policy</a>
+            <a href="/data-processing-terms" style={{ color: '#f59e0b', textDecoration: 'none' }}>Data Processing Terms</a>
           </div>
         </div>
       </footer>
