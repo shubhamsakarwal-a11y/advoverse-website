@@ -505,6 +505,9 @@ export default function AdvoverseWebsite() {
           <p style={{ color: '#c9c1b8', fontSize: '14px' }}>
             Professional litigation management infrastructure for advocates and chambers.
           </p>
+          <div style={{ marginTop: '16px', display: 'flex', justifyContent: 'center', gap: '24px', fontSize: '13px' }}>
+            <a href="/subscription-policy" style={{ color: '#f59e0b', textDecoration: 'none' }}>Subscription & Refund Policy</a>
+          </div>
         </div>
       </footer>
 
