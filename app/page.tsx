@@ -342,6 +342,11 @@ export default function AdvoverseWebsite() {
               <p style={{ color: '#666', fontSize: '12px' }}>Launch app and start your 21-day free trial</p>
             </div>
           </div>
+          <div className="text-center mt-6">
+            <a href="/user-guide.html" target="_blank" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '10px 24px', background: '#1E3A5F', color: 'white', borderRadius: '8px', textDecoration: 'none', fontSize: '14px', fontWeight: 600 }}>
+              📖 Read User Manual
+            </a>
+          </div>
         </div>
       </section>
 

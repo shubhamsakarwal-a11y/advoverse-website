@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Caseline — First-Time User Guide</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#1E3A5F;--navy-light:#2C5282;--gold:#D4A843;--green:#2E7D32;--green-light:#E8F5E9;--red:#C62828;--red-light:#FFEBEE;--gray-50:#F8FAFC;--gray-100:#F1F5F9;--gray-200:#E2E8F0;--gray-600:#475569;--gray-800:#1E293B;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Inter',sans-serif;background:#fff;color:var(--gray-800);line-height:1.7;font-size:15px;}
+#progress-bar{position:fixed;top:0;left:0;height:4px;background:linear-gradient(90deg,var(--navy),var(--gold));z-index:99999;transition:width 0.2s;}
+#back-to-top{position:fixed;bottom:30px;right:30px;width:44px;height:44px;background:var(--navy);color:white;border:none;border-radius:50%;font-size:20px;cursor:pointer;display:none;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.2);transition:all 0.3s;}
+#back-to-top:hover{transform:scale(1.1);background:var(--gold);}
+.sidebar{position:fixed;left:0;top:4px;width:220px;height:100vh;background:#F8FAFC;border-right:1px solid #E2E8F0;padding:20px 12px;overflow-y:auto;z-index:999;font-size:12px;}
+.sidebar h3{font-family:'Playfair Display',serif;color:var(--navy);font-size:14px;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid var(--gold);}
+.sidebar a{display:block;padding:6px 10px;color:var(--gray-600);text-decoration:none;border-radius:4px;margin-bottom:2px;transition:all 0.2s;}
+.sidebar a:hover,.sidebar a.active{background:var(--navy);color:white;}
+.main{margin-left:220px;padding:40px 48px;max-width:960px;}
+h1,h2,h3,h4{font-family:'Playfair Display',serif;color:var(--navy);}
+h2.ch{font-size:1.8rem;margin-top:50px;margin-bottom:20px;padding-bottom:10px;border-bottom:3px solid var(--navy);scroll-margin-top:20px;}
+h3{font-size:1.3rem;margin-top:28px;margin-bottom:10px;color:var(--navy-light);}
+h4{font-size:1.05rem;margin-top:20px;margin-bottom:8px;}
+p{margin-bottom:12px;}
+table{width:100%;border-collapse:collapse;margin:12px 0 18px;font-size:13px;box-shadow:0 1px 4px rgba(0,0,0,0.06);border-radius:6px;overflow:hidden;}
+thead th{background:var(--navy);color:white;padding:10px 12px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;}
+tbody td{padding:8px 12px;border-bottom:1px solid var(--gray-200);}
+tbody tr:nth-child(even){background:var(--gray-50);}
+ul,ol{margin:8px 0 14px 22px;}li{margin-bottom:4px;}
+.img-box{margin:16px 0;text-align:center;opacity:0;transform:translateY(20px);transition:opacity 0.6s ease,transform 0.6s ease;}
+.img-box.visible{opacity:1;transform:translateY(0);}
+.img-box img{max-width:100%;border:1px solid #ddd;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.08);cursor:pointer;transition:transform 0.3s,box-shadow 0.3s;}
+.img-box img:hover{transform:scale(1.015);box-shadow:0 6px 16px rgba(0,0,0,0.14);}
+.img-cap{font-size:11px;color:var(--gray-600);font-style:italic;margin-top:5px;}
+.tip{background:var(--green-light);border-left:4px solid var(--green);padding:11px 15px;border-radius:0 6px 6px 0;margin:12px 0;font-size:13px;}
+.tip::before{content:"💡 Tip";font-weight:700;color:var(--green);display:block;font-size:10px;text-transform:uppercase;margin-bottom:2px;}
+.warn{background:var(--red-light);border-left:4px solid var(--red);padding:11px 15px;border-radius:0 6px 6px 0;margin:12px 0;font-size:13px;}
+.warn::before{content:"⚠️ Warning";font-weight:700;color:var(--red);display:block;font-size:10px;text-transform:uppercase;margin-bottom:2px;}
+.quickstart{background:linear-gradient(135deg,#EBF4FF,#F0F9FF);border:2px solid var(--navy-light);border-radius:10px;padding:22px;margin:20px 0;}
+.quickstart h2{font-size:1.2rem;margin-bottom:10px;}
+code{background:var(--gray-100);padding:1px 4px;border-radius:3px;font-size:12px;}
+strong{font-weight:600;}
+.footer{text-align:center;padding:30px;margin-top:40px;border-top:2px solid var(--gray-200);color:var(--gray-600);font-size:12px;}
+#lightbox{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.88);z-index:999999;align-items:center;justify-content:center;cursor:pointer;}
+#lightbox img{max-width:92%;max-height:92%;border-radius:6px;}
+@media print{.sidebar,#progress-bar,#back-to-top,#lightbox{display:none!important;}.main{margin-left:0;padding:20px;max-width:100%;}.img-box{opacity:1!important;transform:none!important;}}
+</style>
+</head>
+<body>
+<div id="progress-bar" style="width:0%"></div>
+<button id="back-to-top" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+<div id="lightbox" onclick="this.style.display='none'"><img id="lb-img" src=""></div>
+<nav class="sidebar"><h3>⚖ User Guide</h3>
+<a href="#quickstart">🚀 Quickstart</a><a href="#ch1">1. Console</a><a href="#ch2">2. Adding Data</a><a href="#ch3">3. All Cases</a><a href="#ch4">4. Case Overlay</a><a href="#ch5">5. Todo Lists</a><a href="#ch6">6. Appointments</a><a href="#ch7">7. Daily Planner</a><a href="#ch8">8. User Mgmt</a><a href="#ch9">9. Accounting</a><a href="#ch10">10. Work Space</a><a href="#ch11">11. Study</a><a href="#ch12">12. Forms</a><a href="#ch13">13. Advo Tools</a><a href="#ch14">14. eCourts Sync</a><a href="#ch15">15. Advoverse</a><a href="#ch16">16. Settings</a><a href="#workflow">📋 Workflow</a>
+</nav>
+<div class="main">
+<h1 style="font-size:2.2rem;margin-bottom:4px;">⚖ CASELINE — First-Time User Guide</h1>
+<p style="color:var(--gray-600);margin-bottom:28px;">Chamber Management System | v1.0 | June 2026</p>
+<div class="quickstart" id="quickstart"><h2>🚀 5-Minute Quickstart</h2><ol><li><strong>Import cases</strong> → IMPORT XLS → Select Excel → Done</li><li><strong>Check today</strong> → Left panel shows hearings by date</li><li><strong>Open a case</strong> → Click party name (blue link) → Case file opens</li></ol></div>
+
+<h2 class="ch" id="ch1">Chapter 1: Console Overview</h2>
+<p>The Caseline console is divided into 4 functional zones.</p>
+<div class="img-box"><img src="manual-images/01-main-console.png" alt="Main Console"><p class="img-cap">Full console showing all zones: top toolbar, left case panel, right navigation, and footer</p></div>
+<h3>Zone 1 — Top Toolbar</h3>
+<div class="img-box"><img src="manual-images/16-main-toolbar.png" alt="Top Toolbar"><p class="img-cap">Top toolbar: connection status, Manual, Report, Messages, Hindi, user name, Admin, Refresh, Logout, Notifications</p></div>
+<table><thead><tr><th>Button</th><th>Purpose</th></tr></thead><tbody><tr><td>🟢 Connected</td><td>Server connection status</td></tr><tr><td>📖 Manual</td><td>Opens this user guide</td></tr><tr><td>📋 Report</td><td>Submit bugs/suggestions</td></tr><tr><td>💬 Messages</td><td>Chamber messaging</td></tr><tr><td>हिंदी</td><td>Language toggle</td></tr><tr><td>🔄 Refresh</td><td>Reload all data</td></tr><tr><td>🔔 Notifications</td><td>Alerts & reminders</td></tr></tbody></table>
+<h3>Zone 2 — Right Panel</h3>
+<div class="img-box"><img src="manual-images/03-right-panel.png" alt="Right Panel"><p class="img-cap">Right panel: navigation buttons, calendar heat map, and filter lists (Drafting, Summons, Argument, etc.)</p></div>
+<p><strong>Navigation Buttons:</strong> ALL CASES | ✅ TODO LISTS | 📅 APPOINTMENT DIARY | 📋 DAILY PLANNER | ▼ MENU</p>
+<p><strong>Calendar Heat Map:</strong> 🔵 Blue = 1-30 cases | 🟡 Yellow = 31-60 | 🔴 Orange = 61+. Click any date to jump.</p>
+<p><strong>Filter Lists:</strong> Cases grouped by task type — DRAFTING, SUMMONS, ARGUMENT, SUBMIT DOCS, CROSS EXAM, UPCOMING APPOINTMENTS.</p>
+<h3>Zone 3 — Left Panel (Main Content)</h3>
+<div class="img-box"><img src="manual-images/02-left-panel.png" alt="Left Panel"><p class="img-cap">Cases displayed in time sections: Today, Tomorrow, Next 7 Days, Next 30 Days, Undated Cases</p></div>
+<div class="tip">Click any <strong>party name</strong> (blue link) to open the full Case Overlay.</div>
+
+<h2 class="ch" id="ch2">Chapter 2: Adding Data</h2>
+<p>3 ways to add cases:</p>
+<h3>Method 1: New Entry</h3>
+<div class="img-box"><img src="manual-images/04-new-entry.png" alt="New Entry Form"><p class="img-cap">New Entry form: Court, Judge, Type, Case No.*, CNR, Plaintiff*, Defendant, Next Date, Our Side, Task</p></div>
+<p><strong>Steps:</strong> Click NEW ENTRY → Fill form → Click ADD. Required: Case No. and Plaintiff.</p>
+<h3>Method 2: Import Excel</h3>
+<div class="img-box"><img src="manual-images/06-export-import-btns.png" alt="Export Import Buttons"><p class="img-cap">EXPORT XLS and IMPORT XLS buttons in the right panel menu</p></div>
+<div class="img-box"><img src="manual-images/05-excel-export.png" alt="Excel Format"><p class="img-cap">Excel format: Sr, Court, Judge, Type, Case No., Parties, Next Date, Fixed For, Previous Date, CNR No.</p></div>
+<div class="img-box"><img src="manual-images/08-import-result.png" alt="Import Result"><p class="img-cap">Import result dialog showing added cases and errors</p></div>
+<div class="warn">Importing creates NEW entries. To edit existing cases, use the Case Overlay.</div>
+<h3>Method 3: Export</h3>
+<p>Click EXPORT XLS → File saves as <code>Caseline_Cases.xlsx</code> → Edit in Excel → Re-import if needed.</p>
+
+<h2 class="ch" id="ch3">Chapter 3: All Cases Window</h2>
+<div class="img-box"><img src="manual-images/09-all-cases.png" alt="All Cases"><p class="img-cap">All Cases window: search, sort, navigate, edit mode, history, update, and pin features</p></div>
+<table><thead><tr><th>Feature</th><th>How</th></tr></thead><tbody><tr><td>Search</td><td>Type in search box — matches case no., parties, court</td></tr><tr><td>Sort</td><td>Click Sort dropdown</td></tr><tr><td>Edit Mode</td><td>Click 🖊 EDIT MODE for inline editing</td></tr><tr><td>History</td><td>Click "History" on any row</td></tr><tr><td>Update</td><td>Click "Update" to quick-change next date/task</td></tr><tr><td>Pin</td><td>Pin important cases to top</td></tr></tbody></table>
+
+<h2 class="ch" id="ch4">Chapter 4: Case Overlay</h2>
+<div class="img-box"><img src="manual-images/10-case-overlay.png" alt="Case Overlay"><p class="img-cap">Case Overlay: complete case file with party details, documents, module buttons, and hearing history</p></div>
+<h3>Top Bar</h3>
+<div class="img-box"><img src="manual-images/15-case-topbar.png" alt="Case Top Bar"><p class="img-cap">Top bar: CNR (editable), ⟳ Sync Case, View in eCourts, Status dropdown, Stage, Detach, Pin, Close</p></div>
+<h3>Case Details Row</h3>
+<div class="img-box"><img src="manual-images/14-case-details-row.png" alt="Details Row"><p class="img-cap">Next Date | Nature of Dispute | Filing Date | Total Hearings</p></div>
+<h3>Document Tabs (per party)</h3>
+<div class="img-box"><img src="manual-images/12-case-icons-tabs.png" alt="Document Tabs"><p class="img-cap">Pleadings | List of Docs | Applications | Chief & Cross | Other — available for both Plaintiff and Defendant</p></div>
+<h3>Quick Drafts</h3>
+<div class="img-box"><img src="manual-images/13-quick-drafts.png" alt="Quick Drafts"><p class="img-cap">Side-tab for quick working notes on the current case</p></div>
+<h3>Module Buttons</h3>
+<div class="img-box"><img src="manual-images/11-case-module-btns.png" alt="Module Buttons"><p class="img-cap">Issues Framed | Court Orders | Order Sheet | Case Diary | Case Compendium | File Inspection | Working Drafts | Financials Diary</p></div>
+
+<h2 class="ch" id="ch5">Chapter 5: Todo Lists (Work Dashboard)</h2>
+<div class="img-box"><img src="manual-images/17-todo-window.png" alt="Todo Window"><p class="img-cap">Work Dashboard: 10 categorized task lists in a grid layout</p></div>
+<h3>Toolbar</h3>
+<div class="img-box"><img src="manual-images/18-todo-toolbar.png" alt="Todo Toolbar"><p class="img-cap">Close | ◀ TODAY ▶ | WORK DASHBOARD | ? | Detach | +ENTRY | BULK | HISTORY | SUMMARY | +LIST | PRINT | FORMAT | 🎨 | A-/A+</p></div>
+<h3>Task Controls</h3>
+<div class="img-box"><img src="manual-images/19-todo-task.png" alt="Task Controls"><p class="img-cap">Each task: ☐ Complete (green) | ✖ Delete (red) | R Recurring | ! Priority | ⏱ Timer | Date</p></div>
+<h3>Add New Task</h3>
+<div class="img-box"><img src="manual-images/20-todo-new-task.png" alt="New Task"><p class="img-cap">Form: Task name, List, Schedule date, Due date, Priority, Recurring checkbox</p></div>
+<h3>Bulk Add</h3>
+<div class="img-box"><img src="manual-images/21-todo-bulk.png" alt="Bulk Add"><p class="img-cap">One task per line. Prefix codes: DD_=Drafting, AA_=Argument, CC_=Client, etc. !! = High Priority, R: = Recurring</p></div>
+
+<h2 class="ch" id="ch6">Chapter 6: Appointments Diary</h2>
+<div class="img-box"><img src="manual-images/22-appointments.png" alt="Appointments"><p class="img-cap">Left: today's appointments | Right: calendar heat map | Bottom: upcoming appointments table</p></div>
+<div class="img-box"><img src="manual-images/23-appointment-form.png" alt="Add Appointment"><p class="img-cap">Form: Title*, Date*, Time, Location, Status, Notes, Linked Case, Recurrence, Reminder</p></div>
+
+<h2 class="ch" id="ch7">Chapter 7: Daily Planner</h2>
+<div class="img-box"><img src="manual-images/24-daily-planner.png" alt="Daily Planner"><p class="img-cap">Hour-by-hour time grid (3:30 AM–3:00 AM). Red NOW line shows current time. Footer shows hours per category.</p></div>
+<div class="img-box"><img src="manual-images/25-planner-toolbar.png" alt="Planner Toolbar"><p class="img-cap">+ Add Block | Save Template | Templates | Routines | Share | Auto-Import ON/OFF | Clear Day</p></div>
+<div class="img-box"><img src="manual-images/26-planner-entry.png" alt="Add Block"><p class="img-cap">New Time Block: From/To time, Category (Court/Office/Travel/Client/Drafting/Break/Personal), Note, Make Recurring</p></div>
+
+<h2 class="ch" id="ch8">Chapter 8: User Management</h2>
+<p>Admin only. Click 👥 USER MANAGEMENT to manage team members.</p>
+<div class="img-box"><img src="manual-images/55-permissions.png" alt="Permissions"><p class="img-cap">Permission categories: Cases, Documents, Financial, Reports, Backup, Administration. Levels: Grant / Default / Deny</p></div>
+<table><thead><tr><th>Role</th><th>Default Access</th></tr></thead><tbody><tr><td>Admin</td><td>Full system access</td></tr><tr><td>Advocate</td><td>Cases, documents, financial view, export/print</td></tr><tr><td>Clerk</td><td>Cases (view/create), limited features</td></tr></tbody></table>
+
+<h2 class="ch" id="ch9">Chapter 9: Accounting (Chamber Ledger)</h2>
+<div class="img-box"><img src="manual-images/40-accounting-main.png" alt="Accounting Main"><p class="img-cap">4 categories: Case Accounts & Income | Chamber Expenses | Invoice Generator | Reports & Export</p></div>
+<div class="img-box"><img src="manual-images/43-accounting-cats.png" alt="Categories"><p class="img-cap">Sub-categories: Case Accounts, Client Accounts, Pending Payments, Client Advances, Other Professional Incomes</p></div>
+<div class="img-box"><img src="manual-images/45-accounting-case.png" alt="Case Accounting"><p class="img-cap">Per-case: Fee Structure, Hearing Charge Tracker, Payments Received, Case Expenses</p></div>
+<div class="img-box"><img src="manual-images/41-accounting-expenses.png" alt="Expenses"><p class="img-cap">Chamber Expenses: Office Rent, Salaries, Travel, Fuel, Utilities, Professional, Printing, Communication</p></div>
+<div class="img-box"><img src="manual-images/44-invoice.png" alt="Invoice"><p class="img-cap">Invoice Generator: professional invoices with letterhead, line items, auto-totals, amount in words</p></div>
+<div class="img-box"><img src="manual-images/42-reports.png" alt="Reports"><p class="img-cap">Reports: Monthly P&L, Case Profitability, Client Outstanding, Expense by Category, Salary Summary, Annual Summary, Cash Book, Export All</p></div>
+
+<h2 class="ch" id="ch10">Chapter 10: Work Space</h2>
+<div class="img-box"><img src="manual-images/46-workspace.png" alt="Workspace"><p class="img-cap">Left: case folder tree (per case: Plaintiff→Pleadings/Docs/Applications, Defendant, Court Documents, Working Drafts). Right: file upload zone.</p></div>
+<div class="img-box"><img src="manual-images/47-workspace-toolbar.png" alt="Workspace Toolbar"><p class="img-cap">Toolbar: Back | Home | Search | Grid/List | Recent | Fav | +New | Templates</p></div>
+<div class="tip">Documents uploaded here appear in the Case Overlay under respective tabs. Working Drafts sync between both views.</div>
+
+<h2 class="ch" id="ch11">Chapter 11: Study Material</h2>
+<div class="img-box"><img src="manual-images/27-study-forms-btns.png" alt="Study Forms Buttons"><p class="img-cap">STUDY and FORMS buttons in the right panel menu</p></div>
+<p><strong>Categories:</strong> Bare Acts (legislation) | Case Compendium (case law by topic) | Research Papers | Misc Material</p>
+<p><strong>Case Compendium sub-categories:</strong> Civil Laws, Criminal Laws, Evidence, Constitutional Law, Others, + Add Category</p>
+
+<h2 class="ch" id="ch12">Chapter 12: Forms Library</h2>
+<p>Court forms organized by type: Civil Court | Criminal Court | Executive Court | Nagar Nigam | Tehsil | High Court | Supreme Court | + Add Category</p>
+<p><strong>Quick Access:</strong> 10 slots for frequently used forms — click empty slot to assign a PDF for instant access.</p>
+
+<h2 class="ch" id="ch13">Chapter 13: Advo Tools</h2>
+<div class="img-box"><img src="manual-images/48-advo-tools-main.png" alt="Advo Tools"><p class="img-cap">17 tools in 3 sections: Essentials (6), Productivity (7), Legal Reference (5)</p></div>
+<table><thead><tr><th>Section</th><th>Tools</th></tr></thead><tbody><tr><td>⚡ Essentials</td><td>Calculator, Days Calculator, Land Converter, Hindi Typing, Pincode Finder, Post Tracking</td></tr><tr><td>🚀 Productivity</td><td>Pomodoro Timer, Stopwatch, Countdown, Quick Links, Doc Converter, Word Counter, Password Gen</td></tr><tr><td>⚖ Legal Reference</td><td>Court Fee, Stamp Duty, Limitation, Legal Dict, QR Code</td></tr></tbody></table>
+<div class="img-box"><img src="manual-images/49-calculator.png" alt="Calculator"><p class="img-cap">Dual-screen calculator + Compound Interest Calculator + Quick Geometry (area/perimeter)</p></div>
+<div class="img-box"><img src="manual-images/50-hindi-typing.png" alt="Hindi Typing"><p class="img-cap">Hindi Transliterator: type English phonetically → get Hindi output. Copy as Unicode or Kruti Dev.</p></div>
+
+<h2 class="ch" id="ch14">Chapter 14: eCourts Sync</h2>
+<div class="img-box"><img src="manual-images/51-ecourts-cases.png" alt="eCourts Cases"><p class="img-cap">Cases tab: view linked cases with CNR, sync individually, see changes (date/stage updates in green banners)</p></div>
+<p><strong>4 Tabs:</strong> Cases | CNR Dump | Report | Settings</p>
+<p><strong>How to sync:</strong> Case needs CNR → Click 🔄 Sync → System opens eCourts, fills CNR, solves CAPTCHA, downloads data (30-60 sec)</p>
+<div class="img-box"><img src="manual-images/52-ecourts-cnr-dump.png" alt="CNR Dump"><p class="img-cap">Bulk CNR Dump: paste multiple CNR numbers (one per line), click Parse & Match to link to existing cases</p></div>
+<div class="img-box"><img src="manual-images/53-ecourts-settings.png" alt="eCourts Settings"><p class="img-cap">Settings: What to Download, Schedule (auto-sync time/strategy/max per day), Sync Mode (Browser free / API paid), Conflict Resolution, Notifications</p></div>
+
+<h2 class="ch" id="ch15">Chapter 15: Advoverse Network</h2>
+<p>Professional networking for advocates across India.</p>
+<p><strong>3 Tabs:</strong> 🔍 Directory (search advocates by state) | 💬 Connections | 💬 Messages</p>
+<p><strong>How:</strong> Search → Connect → Message. Set your profile (name, state, district, practice areas).</p>
+
+<h2 class="ch" id="ch16">Chapter 16: Settings</h2>
+<div class="img-box"><img src="manual-images/31-settings-top.png" alt="Settings Top"><p class="img-cap">Settings: Display (font size), Calendar Heat Map thresholds, Backup schedule, Chamber Information</p></div>
+<div class="img-box"><img src="manual-images/32-settings-bottom.png" alt="Settings Bottom"><p class="img-cap">System Format (Clear Entries / Full Format), Account (password), Subscription & License, Cloud Storage</p></div>
+<div class="img-box"><img src="manual-images/33-themes.png" alt="Themes"><p class="img-cap">6 themes: Classic Navy | Royal Court | Modern Minimalist | Warm Mahogany | Dark Mode | Silver Forge</p></div>
+<div class="img-box"><img src="manual-images/38-backup-restore.png" alt="Backup"><p class="img-cap">Backup & Restore: 3 backup types (Case List / Cases+Docs / Full System), Auto Schedule, Saved Backups with Download/Restore/Delete</p></div>
+
+<h2 class="ch" id="workflow">💡 Daily Workflow — Quick Reference</h2>
+<table><thead><tr><th>Time</th><th>Action</th><th>Where</th></tr></thead><tbody><tr><td>Morning</td><td>Check today's board</td><td>Main console (left)</td></tr><tr><td>Morning</td><td>Plan the day</td><td>Daily Planner</td></tr><tr><td>Before court</td><td>Review case files</td><td>Case Overlay</td></tr><tr><td>At court</td><td>Note next date</td><td>Case Overlay → Save</td></tr><tr><td>After court</td><td>Update tasks</td><td>Todo Lists</td></tr><tr><td>Evening</td><td>Log appointments</td><td>Appointment Diary</td></tr><tr><td>Weekly</td><td>Sync with eCourts</td><td>eCourts Sync → Sync All</td></tr><tr><td>Monthly</td><td>Review financials</td><td>Accounting → Reports</td></tr><tr><td>Always</td><td>Backup data</td><td>Settings → Backup</td></tr></tbody></table>
+
+<div class="footer">© 2026 Shubham Sakarwal | Caseline User Guide v1.0<br><span style="font-size:11px;color:#94A3B8;">Caseline® — Chamber Management System by Advoverse Technologies</span></div>
+</div>
+
+<script>
+// Progress bar
+window.addEventListener('scroll',function(){var h=document.documentElement;var pct=(h.scrollTop/(h.scrollHeight-h.clientHeight))*100;document.getElementById('progress-bar').style.width=pct+'%';document.getElementById('back-to-top').style.display=h.scrollTop>400?'block':'none';});
+// Fade-in images
+var obs=new IntersectionObserver(function(entries){entries.forEach(function(e){if(e.isIntersecting){e.target.classList.add('visible');obs.unobserve(e.target);}});},{threshold:0.1});
+document.querySelectorAll('.img-box').forEach(function(el){obs.observe(el);});
+// Lightbox
+document.querySelectorAll('.img-box img').forEach(function(img){img.addEventListener('click',function(){var lb=document.getElementById('lightbox');document.getElementById('lb-img').src=this.src;lb.style.display='flex';});});
+// Active TOC
+var chapters=document.querySelectorAll('h2.ch,.quickstart');var tocLinks=document.querySelectorAll('.sidebar a');
+window.addEventListener('scroll',function(){var current='';chapters.forEach(function(ch){if(ch.getBoundingClientRect().top<100)current=ch.id;});tocLinks.forEach(function(a){a.classList.toggle('active',a.getAttribute('href')==='#'+current);});});
+// Smooth scroll
+document.querySelectorAll('.sidebar a').forEach(function(a){a.addEventListener('click',function(e){e.preventDefault();var t=document.querySelector(this.getAttribute('href'));if(t)t.scrollIntoView({behavior:'smooth'});});});
+</script>
+</body>
+</html>
