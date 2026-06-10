@@ -325,6 +325,7 @@ export default function AdvoverseWebsite() {
                 Download for Windows
               </button>
               <p className="text-center mt-2" style={{ color: '#6b4b3e', fontSize: '11px', fontStyle: 'italic' }}>Coming Soon</p>
+              <a href="/user-guide.html" target="_blank" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', marginTop: '10px', padding: '6px 14px', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '6px', color: '#166534', fontSize: '12px', fontWeight: 500, textDecoration: 'none' }}>📖 Read User Manual</a>
             </div>
             <div className="bg-white rounded-xl text-center" style={{ padding: '24px', boxShadow: '0 4px 16px rgba(0,0,0,0.04)' }}>
               <div className="mb-3" style={{ fontSize: '36px' }}>📥</div>
