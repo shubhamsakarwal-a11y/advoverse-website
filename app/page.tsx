@@ -302,6 +302,92 @@ export default function AdvoverseWebsite() {
         </div>
       </section>
 
+      {/* SCREENSHOT SHOWCASE */}
+      <section className="py-16" style={{ background: '#fff' }}>
+        <div className="max-w-[1100px] mx-auto w-[90%]">
+          <h2 className="text-center mb-2" style={{ fontFamily: 'Playfair Display, serif', fontSize: '32px', color: '#3b2a22' }}>
+            See Caseline in Action
+          </h2>
+          <p className="text-center mb-10" style={{ color: '#666', fontSize: '14px' }}>
+            A complete chamber management ecosystem — designed by an advocate, for advocates.
+          </p>
+
+          {/* Hero Screenshot - Full Console */}
+          <div className="mb-12" style={{ borderRadius: '12px', overflow: 'hidden', boxShadow: '0 8px 40px rgba(59,42,34,0.12)', border: '1px solid #e5e0da' }}>
+            <img src="/screenshots/console.png" alt="Caseline Command Centre" style={{ width: '100%', display: 'block' }} />
+            <div style={{ padding: '20px 24px', background: '#faf8f5', borderTop: '1px solid #e5e0da' }}>
+              <h3 style={{ fontFamily: 'Playfair Display, serif', fontSize: '20px', color: '#3b2a22', margin: '0 0 6px' }}>📊 Command Centre</h3>
+              <p style={{ color: '#555', fontSize: '14px', margin: 0 }}>Your entire practice on one screen. Today's hearings, upcoming cases, calendar heat map, and task filters — all visible without a single click.</p>
+            </div>
+          </div>
+
+          {/* Two-Column Grid */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '24px', marginBottom: '32px' }}>
+            {/* Right Panel */}
+            <div style={{ borderRadius: '12px', overflow: 'hidden', boxShadow: '0 4px 20px rgba(0,0,0,0.06)', border: '1px solid #e5e0da' }}>
+              <img src="/screenshots/right-panel.png" alt="Smart Calendar & Filters" style={{ width: '100%', display: 'block' }} />
+              <div style={{ padding: '16px 20px', background: '#faf8f5' }}>
+                <h4 style={{ fontFamily: 'Playfair Display, serif', fontSize: '16px', color: '#3b2a22', margin: '0 0 4px' }}>📅 Smart Calendar & Filters</h4>
+                <p style={{ color: '#666', fontSize: '13px', margin: 0 }}>Color-coded heat map shows case load per day. Filters auto-group cases by stage: Drafting, Summons, Arguments, Cross Exam.</p>
+              </div>
+            </div>
+            {/* Left Panel */}
+            <div style={{ borderRadius: '12px', overflow: 'hidden', boxShadow: '0 4px 20px rgba(0,0,0,0.06)', border: '1px solid #e5e0da' }}>
+              <img src="/screenshots/left-panel.png" alt="Timeline View" style={{ width: '100%', display: 'block' }} />
+              <div style={{ padding: '16px 20px', background: '#faf8f5' }}>
+                <h4 style={{ fontFamily: 'Playfair Display, serif', fontSize: '16px', color: '#3b2a22', margin: '0 0 4px' }}>📋 Timeline View</h4>
+                <p style={{ color: '#666', fontSize: '13px', margin: 0 }}>Cases organized by date: Today, Tomorrow, Next 7 Days, 30 Days. Click any party name to open the full case file instantly.</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Case Overlay - Full Width */}
+          <div className="mb-8" style={{ borderRadius: '12px', overflow: 'hidden', boxShadow: '0 8px 40px rgba(59,42,34,0.12)', border: '1px solid #e5e0da' }}>
+            <img src="/screenshots/case-overlay.png" alt="Complete Case File" style={{ width: '100%', display: 'block' }} />
+            <div style={{ padding: '20px 24px', background: '#faf8f5', borderTop: '1px solid #e5e0da' }}>
+              <h3 style={{ fontFamily: 'Playfair Display, serif', fontSize: '20px', color: '#3b2a22', margin: '0 0 6px' }}>📁 Complete Case File</h3>
+              <p style={{ color: '#555', fontSize: '14px', margin: 0 }}>Every detail in one view — party cards, documents, hearing history, court orders, financial diary. One-click eCourts sync auto-updates dates, judges, and orders.</p>
+            </div>
+          </div>
+
+          {/* Four-Column Grid */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '20px' }}>
+            {/* Appointments */}
+            <div style={{ borderRadius: '10px', overflow: 'hidden', boxShadow: '0 4px 16px rgba(0,0,0,0.05)', border: '1px solid #e5e0da' }}>
+              <img src="/screenshots/appointments.png" alt="Appointments Diary" style={{ width: '100%', display: 'block' }} />
+              <div style={{ padding: '14px 16px', background: '#faf8f5' }}>
+                <h4 style={{ fontFamily: 'Playfair Display, serif', fontSize: '14px', color: '#3b2a22', margin: '0 0 4px' }}>📅 Appointments Diary</h4>
+                <p style={{ color: '#666', fontSize: '12px', margin: 0 }}>Schedule meetings & consultations with calendar heat map and reminders.</p>
+              </div>
+            </div>
+            {/* Planner */}
+            <div style={{ borderRadius: '10px', overflow: 'hidden', boxShadow: '0 4px 16px rgba(0,0,0,0.05)', border: '1px solid #e5e0da' }}>
+              <img src="/screenshots/planner.png" alt="Daily Planner" style={{ width: '100%', display: 'block' }} />
+              <div style={{ padding: '14px 16px', background: '#faf8f5' }}>
+                <h4 style={{ fontFamily: 'Playfair Display, serif', fontSize: '14px', color: '#3b2a22', margin: '0 0 4px' }}>⏰ Daily Planner</h4>
+                <p style={{ color: '#666', fontSize: '12px', margin: 0 }}>Plan hour by hour with color-coded blocks, templates, and recurring routines.</p>
+              </div>
+            </div>
+            {/* Advoverse */}
+            <div style={{ borderRadius: '10px', overflow: 'hidden', boxShadow: '0 4px 16px rgba(0,0,0,0.05)', border: '1px solid #e5e0da' }}>
+              <img src="/screenshots/advoverse.png" alt="Advoverse Network" style={{ width: '100%', display: 'block' }} />
+              <div style={{ padding: '14px 16px', background: '#faf8f5' }}>
+                <h4 style={{ fontFamily: 'Playfair Display, serif', fontSize: '14px', color: '#3b2a22', margin: '0 0 4px' }}>🌐 Advoverse Network</h4>
+                <p style={{ color: '#666', fontSize: '12px', margin: 0 }}>Connect with advocates across India. Search by state, district, and practice area.</p>
+              </div>
+            </div>
+            {/* Accounting */}
+            <div style={{ borderRadius: '10px', overflow: 'hidden', boxShadow: '0 4px 16px rgba(0,0,0,0.05)', border: '1px solid #e5e0da' }}>
+              <img src="/screenshots/accounting.png" alt="Chamber Ledger" style={{ width: '100%', display: 'block' }} />
+              <div style={{ padding: '14px 16px', background: '#faf8f5' }}>
+                <h4 style={{ fontFamily: 'Playfair Display, serif', fontSize: '14px', color: '#3b2a22', margin: '0 0 4px' }}>💰 Chamber Ledger</h4>
+                <p style={{ color: '#666', fontSize: '12px', margin: 0 }}>Track fees, payments, expenses, and generate invoices. Full P&L reports.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* DOWNLOAD APPLICATION */}
       <section id="download" className="py-14" style={{ background: '#f1ebe4' }}>
         <div className="max-w-[1100px] mx-auto w-[90%]">
